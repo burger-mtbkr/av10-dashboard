@@ -1,0 +1,71 @@
+{
+  "appTitle": "Home Theater Status",
+  "dashboard": {
+    "title": "Home Theater Status",
+    "connectionStatus": {
+      "connected": "Connected",
+      "disconnected": "Disconnected",
+      "connecting": "Connecting..."
+    }
+  },
+  "cards": {
+    "speakers": {
+      "title": "Speaker Configuration",
+      "groups": {
+        "ear": "Ear Level",
+        "height": "Height / Atmos",
+        "sub": "Subwoofers",
+        "wide": "Wide",
+        "back": "Surround Back"
+      }
+    },
+    "volume": {
+      "title": "Volume",
+      "muted": "Muted",
+      "level": "Level"
+    },
+    "input": {
+      "title": "Input Source",
+      "currentInput": "Current Input",
+      "selectInput": "Select Input"
+    },
+    "video": {
+      "title": "Video Signal",
+      "inputResolution": "Input",
+      "outputResolution": "Output",
+      "hdrFormat": "HDR",
+      "hdmiOutput": "HDMI Output",
+      "signalFlow": "Signal Flow"
+    },
+    "audio": {
+      "title": "Audio Signal",
+      "inputFormat": "Input Format",
+      "soundMode": "Sound Mode",
+      "samplingRate": "Sampling Rate",
+      "surroundMode": "Surround Mode",
+      "dialogEnhancer": "Dialog Enhancer",
+      "dynamicEq": "Dynamic EQ",
+      "dynamicVolume": "Dynamic Volume",
+      "multEq": "MultEQ"
+    },
+    "subwoofer": {
+      "title": "Subwoofer Settings",
+      "outputLevel": "Output Level",
+      "crossover": "LFE Crossover",
+      "sub": "Sub {{number}}"
+    },
+    "system": {
+      "title": "System Info",
+      "power": "Power",
+      "ecoMode": "ECO Mode",
+      "lastUpdate": "Last Update"
+    }
+  },
+  "common": {
+    "on": "On",
+    "off": "Off",
+    "auto": "Auto",
+    "unknown": "Unknown",
+    "noSignal": "No Signal"
+  }
+}

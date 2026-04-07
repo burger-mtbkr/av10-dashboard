@@ -1,0 +1,21 @@
+{
+  "app": {
+    "title": "Home Theater Status",
+    "defaultLanguage": "en",
+    "refreshInterval": 30000
+  },
+  "avr": {
+    "host": "${AVR_HOST}",
+    "telnetPort": "${AVR_PORT}",
+    "httpPort": "${AVR_HTTP_PORT}",
+    "connectionTimeout": 5000,
+    "reconnectInterval": 10000
+  },
+  "inputLabels": {
+    "comment": "Override input labels here. If empty, custom names from the receiver are used. If the receiver has no custom name, the default source name is used.",
+    "overrides": {}
+  },
+  "speakerLayout": {
+    "comment": "Auto-detected from receiver. No manual config needed."
+  }
+}
