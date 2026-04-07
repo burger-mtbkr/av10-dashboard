@@ -136,8 +136,14 @@ export default function SpeakerCard({ speakers }: SpeakerCardProps) {
 
   if (!speakers.length) {
     return (
-      <Card>
-        <CardContent>
+      <Card sx={{ height: "100%" }}>
+        <CardContent
+          sx={{
+            height: "100%",
+            display: "flex",
+            flexDirection: "column",
+          }}
+        >
           <Typography variant="h6" gutterBottom sx={{ color: "primary.main" }}>
             <SpeakerIcon sx={{ mr: 1, verticalAlign: "middle" }} />
             {t("cards.speakers.title")}
@@ -177,8 +183,14 @@ export default function SpeakerCard({ speakers }: SpeakerCardProps) {
   });
 
   return (
-    <Card>
-      <CardContent>
+    <Card sx={{ height: "100%" }}>
+      <CardContent
+        sx={{
+          height: "100%",
+          display: "flex",
+          flexDirection: "column",
+        }}
+      >
         <Box
           sx={{
             display: "flex",
@@ -213,7 +225,8 @@ export default function SpeakerCard({ speakers }: SpeakerCardProps) {
         <Box
           sx={{
             position: "relative",
-            height: { xs: 360, sm: 440 },
+            flexGrow: 1,
+            minHeight: { xs: 360, sm: 440 },
             borderRadius: 2,
             overflow: "hidden",
             border: "1px solid rgba(255,255,255,0.08)",

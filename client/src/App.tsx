@@ -132,13 +132,8 @@ export default function App() {
         {/* Dashboard Grid */}
         <Container maxWidth="lg">
           <Grid container spacing={2.5}>
-            {/* Speaker Configuration — full width */}
+            {/* Volume control — full width at the top */}
             <Grid size={{ xs: 12 }}>
-              <SpeakerCard speakers={status.speakers} />
-            </Grid>
-
-            {/* Volume — left half */}
-            <Grid size={{ xs: 12, md: 6 }}>
               <VolumeCard
                 volume={status.volume}
                 volumeDisplay={status.volumeDisplay}
@@ -151,7 +146,15 @@ export default function App() {
               />
             </Grid>
 
-            {/* Input — right half */}
+            {/* Subwoofer settings */}
+            <Grid size={{ xs: 12, md: 6 }}>
+              <SubwooferCard
+                subwoofers={status.subwoofers}
+                lfeLevel={status.lfeLevel}
+              />
+            </Grid>
+
+            {/* Input source */}
             <Grid size={{ xs: 12, md: 6 }}>
               <InputCard
                 currentInput={status.input}
@@ -160,29 +163,30 @@ export default function App() {
               />
             </Grid>
 
-            {/* Video Signal */}
             <Grid size={{ xs: 12, md: 6 }}>
-              <VideoCard video={status.video} />
+              <Grid container spacing={2.5}>
+                {/* Audio signal */}
+                <Grid size={{ xs: 12 }}>
+                  <AudioCard
+                    audio={status.audio}
+                    surroundMode={status.surroundMode}
+                  />
+                </Grid>
+
+                {/* Video signal */}
+                <Grid size={{ xs: 12 }}>
+                  <VideoCard video={status.video} />
+                </Grid>
+              </Grid>
             </Grid>
 
-            {/* Audio Signal */}
+            {/* Speaker configuration */}
             <Grid size={{ xs: 12, md: 6 }}>
-              <AudioCard
-                audio={status.audio}
-                surroundMode={status.surroundMode}
-              />
+              <SpeakerCard speakers={status.speakers} />
             </Grid>
 
-            {/* Subwoofer Settings */}
-            <Grid size={{ xs: 12, md: 6 }}>
-              <SubwooferCard
-                subwoofers={status.subwoofers}
-                lfeLevel={status.lfeLevel}
-              />
-            </Grid>
-
-            {/* System Info */}
-            <Grid size={{ xs: 12, md: 6 }}>
+            {/* System info */}
+            <Grid size={{ xs: 12 }}>
               <SystemCard
                 power={status.power}
                 ecoMode={status.ecoMode}
