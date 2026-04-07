@@ -18,7 +18,7 @@ try {
 }
 
 // --- Config from env / settings ---
-const AVR_HOST = process.env.AVR_HOST || '192.168.1.100';
+const AVR_HOST = process.env.AVR_HOST || '192.168.1.170';
 const AVR_PORT = parseInt(process.env.AVR_PORT || '23', 10);
 const AVR_HTTP_PORT = parseInt(process.env.AVR_HTTP_PORT || '8080', 10);
 const SERVER_PORT = parseInt(process.env.SERVER_PORT || '3001', 10);
