@@ -1,0 +1,326 @@
+{
+    "type": "status",
+    "data": {
+        "power": "ON",
+        "volume": -30.5,
+        "volumeDisplay": "-30.5 dB",
+        "maxVolume": -5,
+        "muted": false,
+        "input": {
+            "id": "SAT/CBL",
+            "name": "CBL/SAT",
+            "selected": true
+        },
+        "availableInputs": [
+            {
+                "id": "SAT/CBL",
+                "name": "CBL/SAT",
+                "selected": false
+            },
+            {
+                "id": "BD",
+                "name": "Blu-ray",
+                "selected": false
+            },
+            {
+                "id": "DVD",
+                "name": "DVD",
+                "selected": false
+            },
+            {
+                "id": "GAME",
+                "name": "Game",
+                "selected": false
+            },
+            {
+                "id": "AUX1",
+                "name": "AUX",
+                "selected": false
+            },
+            {
+                "id": "AUX2",
+                "name": "AUX2",
+                "selected": false
+            },
+            {
+                "id": "TV",
+                "name": "TV Audio",
+                "selected": false
+            },
+            {
+                "id": "MPLAY",
+                "name": "Media Player",
+                "selected": false
+            },
+            {
+                "id": "CD",
+                "name": "CD",
+                "selected": false
+            },
+            {
+                "id": "PHONO",
+                "name": "Phono",
+                "selected": false
+            },
+            {
+                "id": "TUNER",
+                "name": "Tuner",
+                "selected": false
+            },
+            {
+                "id": "NET",
+                "name": "NETWORK",
+                "selected": false
+            },
+            {
+                "id": "BT",
+                "name": "Bluetooth",
+                "selected": false
+            },
+            {
+                "id": "USB/IPOD",
+                "name": "iPod/USB",
+                "selected": false
+            }
+        ],
+        "speakers": [
+            {
+                "code": "FL",
+                "name": "Front Left",
+                "active": false,
+                "group": "ear"
+            },
+            {
+                "code": "FR",
+                "name": "Front Right",
+                "active": false,
+                "group": "ear"
+            },
+            {
+                "code": "C",
+                "name": "Center",
+                "active": false,
+                "group": "ear"
+            },
+            {
+                "code": "SW",
+                "name": "Subwoofer",
+                "active": false,
+                "group": "sub"
+            },
+            {
+                "code": "SW2",
+                "name": "Subwoofer 2",
+                "active": false,
+                "group": "sub"
+            },
+            {
+                "code": "SW3",
+                "name": "Subwoofer 3",
+                "active": false,
+                "group": "sub"
+            },
+            {
+                "code": "SW4",
+                "name": "Subwoofer 4",
+                "active": false,
+                "group": "sub"
+            },
+            {
+                "code": "SL",
+                "name": "Surround Left",
+                "active": false,
+                "group": "ear"
+            },
+            {
+                "code": "SR",
+                "name": "Surround Right",
+                "active": false,
+                "group": "ear"
+            },
+            {
+                "code": "SBL",
+                "name": "Surround Back Left",
+                "active": false,
+                "group": "back"
+            },
+            {
+                "code": "SBR",
+                "name": "Surround Back Right",
+                "active": false,
+                "group": "back"
+            },
+            {
+                "code": "SB",
+                "name": "Surround Back",
+                "active": false,
+                "group": "back"
+            },
+            {
+                "code": "FHL",
+                "name": "Front Height Left",
+                "active": false,
+                "group": "height"
+            },
+            {
+                "code": "FHR",
+                "name": "Front Height Right",
+                "active": false,
+                "group": "height"
+            },
+            {
+                "code": "FWL",
+                "name": "Front Wide Left",
+                "active": false,
+                "group": "wide"
+            },
+            {
+                "code": "FWR",
+                "name": "Front Wide Right",
+                "active": false,
+                "group": "wide"
+            },
+            {
+                "code": "TFL",
+                "name": "Top Front Left",
+                "active": false,
+                "group": "height"
+            },
+            {
+                "code": "TFR",
+                "name": "Top Front Right",
+                "active": false,
+                "group": "height"
+            },
+            {
+                "code": "TML",
+                "name": "Top Middle Left",
+                "active": false,
+                "group": "height"
+            },
+            {
+                "code": "TMR",
+                "name": "Top Middle Right",
+                "active": false,
+                "group": "height"
+            },
+            {
+                "code": "TRL",
+                "name": "Top Rear Left",
+                "active": false,
+                "group": "height"
+            },
+            {
+                "code": "TRR",
+                "name": "Top Rear Right",
+                "active": false,
+                "group": "height"
+            },
+            {
+                "code": "RHL",
+                "name": "Rear Height Left",
+                "active": false,
+                "group": "height"
+            },
+            {
+                "code": "RHR",
+                "name": "Rear Height Right",
+                "active": false,
+                "group": "height"
+            },
+            {
+                "code": "FDL",
+                "name": "Front Dolby Left",
+                "active": false,
+                "group": "height"
+            },
+            {
+                "code": "FDR",
+                "name": "Front Dolby Right",
+                "active": false,
+                "group": "height"
+            },
+            {
+                "code": "SDL",
+                "name": "Surround Dolby Left",
+                "active": false,
+                "group": "height"
+            },
+            {
+                "code": "SDR",
+                "name": "Surround Dolby Right",
+                "active": false,
+                "group": "height"
+            },
+            {
+                "code": "BDL",
+                "name": "Back Dolby Left",
+                "active": false,
+                "group": "height"
+            },
+            {
+                "code": "BDR",
+                "name": "Back Dolby Right",
+                "active": false,
+                "group": "height"
+            },
+            {
+                "code": "SHL",
+                "name": "Surround Height Left",
+                "active": false,
+                "group": "height"
+            },
+            {
+                "code": "SHR",
+                "name": "Surround Height Right",
+                "active": false,
+                "group": "height"
+            },
+            {
+                "code": "TS",
+                "name": "Top Surround",
+                "active": false,
+                "group": "height"
+            },
+            {
+                "code": "CH",
+                "name": "Center Height",
+                "active": false,
+                "group": "height"
+            }
+        ],
+        "video": {
+            "inputResolution": "---",
+            "outputResolution": "---",
+            "hdrFormat": "---",
+            "inputSignal": "---",
+            "hdmiOutput": "Auto"
+        },
+        "audio": {
+            "inputFormat": "---",
+            "soundMode": "---",
+            "samplingRate": "---",
+            "dialogEnhancer": "Off",
+            "dynamicEq": "ON",
+            "dynamicVolume": "OFF",
+            "multEq": "AUDYSSEY"
+        },
+        "subwoofers": [
+            {
+                "number": 1,
+                "level": "-5.0 dB",
+                "active": true
+            },
+            {
+                "number": 2,
+                "level": "-5.0 dB",
+                "active": true
+            }
+        ],
+        "lfeLevel": "0 dB",
+        "ecoMode": "---",
+        "surroundMode": "MULTI CH IN",
+        "connected": true,
+        "lastUpdate": "2026-04-07T02:25:12.341Z"
+    }
+}
