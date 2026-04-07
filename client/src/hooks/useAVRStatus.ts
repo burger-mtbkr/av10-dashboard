@@ -3,9 +3,9 @@ import type { AVRStatus, WSMessage } from '../types';
 
 const DEFAULT_STATUS: AVRStatus = {
   power: 'OFF',
-  volume: -80,
-  volumeDisplay: '--.- dB',
-  maxVolume: 18,
+  volume: 0,
+  volumeDisplay: '--',
+  maxVolume: 98,
   muted: false,
   input: { id: '', name: '---', selected: true },
   availableInputs: [],

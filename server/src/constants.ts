@@ -72,27 +72,26 @@ export const TELNET_EVENT_MAP: Record<string, string> = {
   EC: 'ecoMode',
 };
 
-/** Volume value mapping: Marantz sends 2-3 digit values
- *  e.g. "50" = -30dB, "505" = -29.5dB, "80" = 0dB, "995" = 19.5dB
- *  Formula: (value / 10) - 80 if 3 digits, value - 80 if 2 digits
+/** Volume value mapping: Marantz sends 2-3 digit absolute values (0-98 scale).
+ *  2-digit: integer steps, e.g. "50" → 50, "75" → 75
+ *  3-digit: half-step precision, e.g. "505" → 50.5, "755" → 75.5
  */
 export function parseVolume(raw: string): number {
   const num = parseInt(raw, 10);
   if (raw.length === 3) {
-    // e.g. "505" → 50.5 → 50.5 - 80 = -29.5
-    return (num / 10) - 80;
+    // e.g. "505" → 50.5
+    return num / 10;
   }
-  // e.g. "50" → 50 - 80 = -30
-  return num - 80;
+  // e.g. "50" → 50
+  return num;
 }
 
-/** Convert dB volume back to Marantz command value */
-export function volumeToCommand(db: number): string {
-  const raw = db + 80;
-  if (raw % 1 !== 0) {
-    // Half step: e.g. -29.5 → 50.5 → "505"
-    return String(Math.round(raw * 10)).padStart(3, '0');
+/** Convert an absolute volume (0-98) back to a Marantz command string */
+export function volumeToCommand(vol: number): string {
+  if (vol % 1 !== 0) {
+    // Half step: e.g. 50.5 → "505"
+    return String(Math.round(vol * 10)).padStart(3, '0');
   }
-  // Integer step: e.g. -30 → 50 → "50", but single digits need padding: 5 → "05"
-  return String(Math.round(raw)).padStart(2, '0');
+  // Integer step: e.g. 50 → "50", 5 → "05"
+  return String(Math.round(vol)).padStart(2, '0');
 }

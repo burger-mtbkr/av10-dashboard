@@ -39,7 +39,7 @@ describe('MarantzService', () => {
     it('should return a deep copy of the default status', () => {
       const status = service.getStatus();
       expect(status.power).toBe('OFF');
-      expect(status.volume).toBe(-80);
+      expect(status.volume).toBe(0);
       expect(status.muted).toBe(false);
       expect(status.connected).toBe(false);
       expect(status.speakers).toEqual([]);
@@ -53,7 +53,7 @@ describe('MarantzService', () => {
       status1.speakers.push({ code: 'FL', name: 'Front Left', active: true, group: 'ear' });
 
       const status2 = service.getStatus();
-      expect(status2.volume).toBe(-80);
+      expect(status2.volume).toBe(0);
       expect(status2.video.inputResolution).toBe('---');
       expect(status2.speakers).toEqual([]);
     });
@@ -129,18 +129,18 @@ describe('MarantzService', () => {
     it('should handle volume events', () => {
       (service as any).updateStatusFromEvent('MV', '50');
       const status = service.getStatus();
-      expect(status.volume).toBe(-30);
-      expect(status.volumeDisplay).toBe('-30.0 dB');
+      expect(status.volume).toBe(50);
+      expect(status.volumeDisplay).toBe('50');
     });
 
     it('should handle volume with half-step', () => {
       (service as any).updateStatusFromEvent('MV', '505');
-      expect(service.getStatus().volume).toBe(-29.5);
+      expect(service.getStatus().volume).toBe(50.5);
     });
 
     it('should handle volume max events', () => {
       (service as any).updateStatusFromEvent('MV', 'MAX 80');
-      expect(service.getStatus().maxVolume).toBe(0);
+      expect(service.getStatus().maxVolume).toBe(80);
     });
 
     it('should handle mute ON', () => {
@@ -263,7 +263,7 @@ describe('MarantzService', () => {
 
       expect(listener).toHaveBeenCalled();
       const status = service.getStatus();
-      expect(status.volume).toBe(-30);
+      expect(status.volume).toBe(50);
       expect(status.muted).toBe(true);
     });
 
@@ -288,7 +288,7 @@ describe('MarantzService', () => {
 
       const status = service.getStatus();
       expect(status.power).toBe('ON');
-      expect(status.volume).toBe(-30);
+      expect(status.volume).toBe(50);
       expect(status.input.id).toBe('SAT/CBL');
     });
   });

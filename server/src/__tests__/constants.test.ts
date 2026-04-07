@@ -3,54 +3,54 @@ import { parseVolume, volumeToCommand, CHANNEL_MAP, SOURCE_MAP, TELNET_EVENT_MAP
 
 describe('parseVolume', () => {
   it('should parse 2-digit integer volume values', () => {
-    expect(parseVolume('80')).toBe(0);     // 80 - 80 = 0 dB
-    expect(parseVolume('50')).toBe(-30);   // 50 - 80 = -30 dB
-    expect(parseVolume('00')).toBe(-80);   // 0 - 80 = -80 dB
-    expect(parseVolume('98')).toBe(18);    // 98 - 80 = 18 dB (max)
+    expect(parseVolume('80')).toBe(80);
+    expect(parseVolume('50')).toBe(50);
+    expect(parseVolume('00')).toBe(0);
+    expect(parseVolume('98')).toBe(98);
   });
 
   it('should parse 3-digit half-step volume values', () => {
-    expect(parseVolume('505')).toBe(-29.5);  // 50.5 - 80 = -29.5 dB
-    expect(parseVolume('805')).toBe(0.5);    // 80.5 - 80 = 0.5 dB
-    expect(parseVolume('995')).toBe(19.5);   // 99.5 - 80 = 19.5 dB
-    expect(parseVolume('005')).toBe(-79.5);  // 0.5 - 80 = -79.5 dB
+    expect(parseVolume('505')).toBe(50.5);
+    expect(parseVolume('805')).toBe(80.5);
+    expect(parseVolume('995')).toBe(99.5);
+    expect(parseVolume('005')).toBe(0.5);
   });
 
   it('should handle typical listening volumes', () => {
-    expect(parseVolume('45')).toBe(-35);    // Quiet
-    expect(parseVolume('55')).toBe(-25);    // Normal
-    expect(parseVolume('65')).toBe(-15);    // Loud
-    expect(parseVolume('455')).toBe(-34.5); // Half-step
+    expect(parseVolume('45')).toBe(45);
+    expect(parseVolume('55')).toBe(55);
+    expect(parseVolume('65')).toBe(65);
+    expect(parseVolume('455')).toBe(45.5);
   });
 });
 
 describe('volumeToCommand', () => {
-  it('should convert integer dB to 2-digit command', () => {
-    expect(volumeToCommand(0)).toBe('80');
-    expect(volumeToCommand(-30)).toBe('50');
-    expect(volumeToCommand(-80)).toBe('00');
-    expect(volumeToCommand(18)).toBe('98');
-    expect(volumeToCommand(-75)).toBe('05');
+  it('should convert integer volume to 2-digit command', () => {
+    expect(volumeToCommand(80)).toBe('80');
+    expect(volumeToCommand(50)).toBe('50');
+    expect(volumeToCommand(0)).toBe('00');
+    expect(volumeToCommand(98)).toBe('98');
+    expect(volumeToCommand(5)).toBe('05');
   });
 
-  it('should convert half-step dB to 3-digit command', () => {
-    expect(volumeToCommand(-29.5)).toBe('505');
-    expect(volumeToCommand(0.5)).toBe('805');
-    expect(volumeToCommand(-79.5)).toBe('005');
-    expect(volumeToCommand(-74.5)).toBe('055');
+  it('should convert half-step volume to 3-digit command', () => {
+    expect(volumeToCommand(50.5)).toBe('505');
+    expect(volumeToCommand(80.5)).toBe('805');
+    expect(volumeToCommand(0.5)).toBe('005');
+    expect(volumeToCommand(5.5)).toBe('055');
   });
 
   it('should be the inverse of parseVolume for integer values', () => {
-    for (let db = -80; db <= 18; db++) {
-      const cmd = volumeToCommand(db);
-      expect(parseVolume(cmd)).toBe(db);
+    for (let vol = 0; vol <= 98; vol++) {
+      const cmd = volumeToCommand(vol);
+      expect(parseVolume(cmd)).toBe(vol);
     }
   });
 
   it('should be the inverse of parseVolume for half-step values', () => {
-    for (let db = -79.5; db <= 18; db += 1) {
-      const cmd = volumeToCommand(db);
-      expect(parseVolume(cmd)).toBe(db);
+    for (let vol = 0.5; vol <= 98; vol += 1) {
+      const cmd = volumeToCommand(vol);
+      expect(parseVolume(cmd)).toBe(vol);
     }
   });
 });

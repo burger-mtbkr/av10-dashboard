@@ -30,9 +30,9 @@ export class MarantzService extends EventEmitter {
   private getDefaultStatus(): AVRStatus {
     return {
       power: 'OFF',
-      volume: -80,
-      volumeDisplay: '--.- dB',
-      maxVolume: 18,
+      volume: 0,
+      volumeDisplay: '--',
+      maxVolume: 98,
       muted: false,
       input: { id: '', name: '', selected: true },
       availableInputs: [],
@@ -193,7 +193,8 @@ export class MarantzService extends EventEmitter {
           this.status.maxVolume = parseVolume(maxVal);
         } else {
           this.status.volume = parseVolume(parameter);
-          this.status.volumeDisplay = `${this.status.volume.toFixed(1)} dB`;
+          const v = this.status.volume;
+          this.status.volumeDisplay = Number.isInteger(v) ? String(v) : v.toFixed(1);
         }
         changed = true;
         break;
@@ -230,6 +231,12 @@ export class MarantzService extends EventEmitter {
 
       case 'VS':
         this.handleVideoSetting(parameter);
+        changed = true;
+        break;
+
+      case 'SS':
+        // System settings — logged for debugging
+        console.log('[Marantz] System setting (SS):', parameter);
         changed = true;
         break;
 
@@ -332,10 +339,12 @@ export class MarantzService extends EventEmitter {
     // Merge power
     if (http.power) this.status.power = http.power;
 
-    // Merge volume
+    // Merge volume (HTTP returns dB like -30.0, convert to absolute)
     if (http.volume !== undefined) {
-      this.status.volume = http.volume;
-      this.status.volumeDisplay = `${http.volume.toFixed(1)} dB`;
+      const abs = http.volume + 80;
+      this.status.volume = Math.round(abs * 10) / 10;
+      const v = this.status.volume;
+      this.status.volumeDisplay = Number.isInteger(v) ? String(v) : v.toFixed(1);
     }
 
     // Merge mute
@@ -396,8 +405,8 @@ export class MarantzService extends EventEmitter {
     }
   }
 
-  setVolume(db: number): void {
-    const cmd = volumeToCommand(db);
+  setVolume(vol: number): void {
+    const cmd = volumeToCommand(vol);
     this.sendCommand(`MV${cmd}`);
   }
 

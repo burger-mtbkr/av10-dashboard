@@ -1,63 +1,78 @@
-import { describe, it, expect } from 'vitest';
-import { screen } from '@testing-library/react';
-import SystemCard from '../../components/SystemCard';
-import { renderWithProviders } from '../test-utils';
+import { describe, it, expect } from "vitest";
+import { screen } from "@testing-library/react";
+import SystemCard from "../../components/SystemCard";
+import { renderWithProviders } from "../test-utils";
 
-describe('SystemCard', () => {
-  it('should render the title', () => {
+describe("SystemCard", () => {
+  it("should render the title", () => {
     renderWithProviders(
-      <SystemCard power="ON" ecoMode="OFF" lastUpdate="2025-01-01T12:00:00.000Z" connected={true} />,
+      <SystemCard
+        power="ON"
+        ecoMode="OFF"
+        lastUpdate="2025-01-01T12:00:00.000Z"
+        connected={true}
+      />,
     );
-    expect(screen.getByText('System Info')).toBeInTheDocument();
+    expect(screen.getByText("System Info")).toBeInTheDocument();
   });
 
-  it('should display power state ON with success colour', () => {
+  it("should display power state ON with success colour", () => {
     renderWithProviders(
       <SystemCard power="ON" ecoMode="OFF" lastUpdate="" connected={true} />,
     );
-    expect(screen.getByText('ON')).toBeInTheDocument();
+    expect(screen.getByText("ON")).toBeInTheDocument();
   });
 
-  it('should display power state OFF', () => {
+  it("should display power state OFF", () => {
     renderWithProviders(
-      <SystemCard power="OFF" ecoMode="OFF" lastUpdate="" connected={false} />,
+      <SystemCard power="OFF" ecoMode="ON" lastUpdate="" connected={false} />,
     );
-    expect(screen.getByText('OFF')).toBeInTheDocument();
+    expect(screen.getByText("OFF")).toBeInTheDocument();
   });
 
-  it('should display power state STANDBY', () => {
+  it("should display power state STANDBY", () => {
     renderWithProviders(
-      <SystemCard power="STANDBY" ecoMode="OFF" lastUpdate="" connected={false} />,
+      <SystemCard
+        power="STANDBY"
+        ecoMode="OFF"
+        lastUpdate=""
+        connected={false}
+      />,
     );
-    expect(screen.getByText('STANDBY')).toBeInTheDocument();
+    expect(screen.getByText("STANDBY")).toBeInTheDocument();
   });
 
-  it('should display ECO mode', () => {
+  it("should display ECO mode", () => {
     renderWithProviders(
       <SystemCard power="ON" ecoMode="AUTO" lastUpdate="" connected={true} />,
     );
-    expect(screen.getByText('AUTO')).toBeInTheDocument();
+    expect(screen.getByText("AUTO")).toBeInTheDocument();
   });
 
   it('should show "---" for empty ECO mode', () => {
     renderWithProviders(
-      <SystemCard power="ON" ecoMode="" lastUpdate="" connected={true} />,
+      <SystemCard
+        power="ON"
+        ecoMode=""
+        lastUpdate="2025-01-01T12:00:00.000Z"
+        connected={true}
+      />,
     );
-    expect(screen.getByText('---')).toBeInTheDocument();
+    expect(screen.getByText("---")).toBeInTheDocument();
   });
 
-  it('should show connected status', () => {
+  it("should show connected status", () => {
     renderWithProviders(
       <SystemCard power="ON" ecoMode="OFF" lastUpdate="" connected={true} />,
     );
-    expect(screen.getByText('Connected')).toBeInTheDocument();
+    expect(screen.getByText("Connected")).toBeInTheDocument();
   });
 
-  it('should show disconnected status', () => {
+  it("should show disconnected status", () => {
     renderWithProviders(
       <SystemCard power="OFF" ecoMode="OFF" lastUpdate="" connected={false} />,
     );
-    expect(screen.getByText('Disconnected')).toBeInTheDocument();
+    expect(screen.getByText("Disconnected")).toBeInTheDocument();
   });
 
   it('should show "---" for empty lastUpdate', () => {
@@ -65,15 +80,20 @@ describe('SystemCard', () => {
       <SystemCard power="ON" ecoMode="OFF" lastUpdate="" connected={true} />,
     );
     // The formatTime function returns '---' for empty strings
-    expect(screen.getAllByText('---').length).toBeGreaterThan(0);
+    expect(screen.getAllByText("---").length).toBeGreaterThan(0);
   });
 
-  it('should format a valid ISO timestamp', () => {
+  it("should format a valid ISO timestamp", () => {
     renderWithProviders(
-      <SystemCard power="ON" ecoMode="OFF" lastUpdate="2025-01-01T12:00:00.000Z" connected={true} />,
+      <SystemCard
+        power="ON"
+        ecoMode="OFF"
+        lastUpdate="2025-01-01T12:00:00.000Z"
+        connected={true}
+      />,
     );
     // Should display a time string (exact format depends on locale)
-    const labels = ['Power', 'ECO Mode', 'Last Update'];
+    const labels = ["Power", "ECO Mode", "Last Update"];
     labels.forEach((label) => {
       expect(screen.getByText(label)).toBeInTheDocument();
     });

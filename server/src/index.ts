@@ -53,8 +53,8 @@ app.get('/api/status', (_req, res) => {
 // Set volume
 app.post('/api/volume', (req, res) => {
   const { volume } = req.body as { volume: number };
-  if (typeof volume !== 'number' || volume < -80 || volume > 18) {
-    res.status(400).json({ error: 'Volume must be a number between -80 and 18' });
+  if (typeof volume !== 'number' || volume < 0 || volume > 98) {
+    res.status(400).json({ error: 'Volume must be a number between 0 and 98' });
     return;
   }
   marantz.setVolume(volume);

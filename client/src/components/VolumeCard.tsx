@@ -1,12 +1,18 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback } from "react";
 import {
-  Card, CardContent, Typography, Box, Slider, IconButton, Chip,
-} from '@mui/material';
-import { useTranslation } from 'react-i18next';
-import VolumeUpIcon from '@mui/icons-material/VolumeUp';
-import VolumeDownIcon from '@mui/icons-material/VolumeDown';
-import VolumeOffIcon from '@mui/icons-material/VolumeOff';
-import VolumeMuteIcon from '@mui/icons-material/VolumeMute';
+  Card,
+  CardContent,
+  Typography,
+  Box,
+  Slider,
+  IconButton,
+  Chip,
+} from "@mui/material";
+import { useTranslation } from "react-i18next";
+import VolumeUpIcon from "@mui/icons-material/VolumeUp";
+import VolumeDownIcon from "@mui/icons-material/VolumeDown";
+import VolumeOffIcon from "@mui/icons-material/VolumeOff";
+import VolumeMuteIcon from "@mui/icons-material/VolumeMute";
 
 interface VolumeCardProps {
   volume: number;
@@ -34,10 +40,13 @@ export default function VolumeCard({
 
   const displayVol = localVolume !== null ? localVolume : volume;
 
-  const handleSliderChange = useCallback((_: Event, value: number | number[]) => {
-    const v = Array.isArray(value) ? value[0] : value;
-    setLocalVolume(v);
-  }, []);
+  const handleSliderChange = useCallback(
+    (_: Event, value: number | number[]) => {
+      const v = Array.isArray(value) ? value[0] : value;
+      setLocalVolume(v);
+    },
+    [],
+  );
 
   const handleSliderCommit = useCallback(
     (_: React.SyntheticEvent | Event, value: number | number[]) => {
@@ -48,27 +57,40 @@ export default function VolumeCard({
     [onVolumeChange],
   );
 
-  // Color based on volume level
+  // Color based on volume level (absolute 0-98 scale)
   const getVolumeColor = (vol: number): string => {
-    if (vol >= -10) return '#ef5350'; // loud - red
-    if (vol >= -25) return '#ffa726'; // medium - orange
-    return '#66bb6a'; // normal - green
+    if (vol >= 70) return "#ef5350"; // loud - red
+    if (vol >= 55) return "#ffa726"; // medium - orange
+    return "#66bb6a"; // normal - green
   };
 
-  const volumePercent = Math.round(((displayVol + 80) / (maxVolume + 80)) * 100);
+  const volumePercent = Math.round((displayVol / maxVolume) * 100);
+
+  const displayText = Number.isInteger(displayVol)
+    ? String(displayVol)
+    : displayVol.toFixed(1);
 
   return (
     <Card>
       <CardContent>
-        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
-          <Typography variant="h6" sx={{ color: 'primary.main' }}>
-            <VolumeUpIcon sx={{ mr: 1, verticalAlign: 'middle', fontSize: 22 }} />
-            {t('cards.volume.title')}
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            mb: 2,
+          }}
+        >
+          <Typography variant="h6" sx={{ color: "primary.main" }}>
+            <VolumeUpIcon
+              sx={{ mr: 1, verticalAlign: "middle", fontSize: 22 }}
+            />
+            {t("cards.volume.title")}
           </Typography>
           {muted && (
             <Chip
               icon={<VolumeOffIcon />}
-              label={t('cards.volume.muted')}
+              label={t("cards.volume.muted")}
               color="error"
               size="small"
               variant="outlined"
@@ -77,45 +99,45 @@ export default function VolumeCard({
         </Box>
 
         {/* Big volume display */}
-        <Box sx={{ textAlign: 'center', mb: 2 }}>
+        <Box sx={{ textAlign: "center", mb: 2 }}>
           <Typography
             variant="h3"
             sx={{
               fontWeight: 800,
-              color: muted ? 'error.main' : getVolumeColor(displayVol),
-              fontVariantNumeric: 'tabular-nums',
+              color: muted ? "error.main" : getVolumeColor(displayVol),
+              fontVariantNumeric: "tabular-nums",
               opacity: muted ? 0.5 : 1,
-              textDecoration: muted ? 'line-through' : 'none',
+              textDecoration: muted ? "line-through" : "none",
               lineHeight: 1,
             }}
           >
-            {displayVol.toFixed(1)}
+            {displayText}
           </Typography>
           <Typography variant="body2" sx={{ mt: 0.5 }}>
-            dB ({volumePercent}%)
+            ({volumePercent}%)
           </Typography>
         </Box>
 
         {/* Slider with controls */}
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, px: 1 }}>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1, px: 1 }}>
           <IconButton
             onClick={onVolumeDown}
             size="small"
-            sx={{ color: 'primary.main' }}
+            sx={{ color: "primary.main" }}
           >
             <VolumeDownIcon />
           </IconButton>
 
           <Slider
             value={displayVol}
-            min={-80}
+            min={0}
             max={maxVolume}
-            step={0.5}
+            step={1}
             onChange={handleSliderChange}
             onChangeCommitted={handleSliderCommit}
             sx={{
               color: getVolumeColor(displayVol),
-              '& .MuiSlider-track': {
+              "& .MuiSlider-track": {
                 background: `linear-gradient(90deg, #66bb6a 0%, #ffa726 60%, #ef5350 100%)`,
               },
             }}
@@ -124,7 +146,7 @@ export default function VolumeCard({
           <IconButton
             onClick={onVolumeUp}
             size="small"
-            sx={{ color: 'primary.main' }}
+            sx={{ color: "primary.main" }}
           >
             <VolumeUpIcon />
           </IconButton>
@@ -132,7 +154,7 @@ export default function VolumeCard({
           <IconButton
             onClick={onToggleMute}
             size="small"
-            sx={{ color: muted ? 'error.main' : 'text.secondary' }}
+            sx={{ color: muted ? "error.main" : "text.secondary" }}
           >
             {muted ? <VolumeOffIcon /> : <VolumeMuteIcon />}
           </IconButton>

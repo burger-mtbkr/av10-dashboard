@@ -1,16 +1,23 @@
-import { ThemeProvider, CssBaseline, Container, Typography, Box, Chip } from '@mui/material';
-import Grid from '@mui/material/Grid2';
-import { useTranslation } from 'react-i18next';
-import theme from './theme';
-import { useAVRStatus } from './hooks/useAVRStatus';
-import SpeakerCard from './components/SpeakerCard';
-import VolumeCard from './components/VolumeCard';
-import InputCard from './components/InputCard';
-import VideoCard from './components/VideoCard';
-import AudioCard from './components/AudioCard';
-import SubwooferCard from './components/SubwooferCard';
-import SystemCard from './components/SystemCard';
-import FiberManualRecordIcon from '@mui/icons-material/FiberManualRecord';
+import {
+  ThemeProvider,
+  CssBaseline,
+  Container,
+  Typography,
+  Box,
+  Chip,
+} from "@mui/material";
+import Grid from "@mui/material/Grid2";
+import { useTranslation } from "react-i18next";
+import theme from "./theme";
+import { useAVRStatus } from "./hooks/useAVRStatus";
+import SpeakerCard from "./components/SpeakerCard";
+import VolumeCard from "./components/VolumeCard";
+import InputCard from "./components/InputCard";
+import VideoCard from "./components/VideoCard";
+import AudioCard from "./components/AudioCard";
+import SubwooferCard from "./components/SubwooferCard";
+import SystemCard from "./components/SystemCard";
+import FiberManualRecordIcon from "@mui/icons-material/FiberManualRecord";
 
 export default function App() {
   const { t } = useTranslation();
@@ -29,8 +36,9 @@ export default function App() {
       <CssBaseline />
       <Box
         sx={{
-          minHeight: '100vh',
-          background: 'linear-gradient(180deg, #0a0a0f 0%, #0d0d1a 50%, #0a0a0f 100%)',
+          minHeight: "100vh",
+          background:
+            "linear-gradient(180deg, #0a0a0f 0%, #0d0d1a 50%, #0a0a0f 100%)",
           pb: 4,
         }}
       >
@@ -41,44 +49,59 @@ export default function App() {
             pb: 2,
             px: 2,
             mb: 3,
-            borderBottom: '1px solid rgba(255,255,255,0.06)',
-            background: 'linear-gradient(180deg, rgba(79,195,247,0.03) 0%, transparent 100%)',
+            borderBottom: "1px solid rgba(255,255,255,0.06)",
+            background:
+              "linear-gradient(180deg, rgba(79,195,247,0.03) 0%, transparent 100%)",
           }}
         >
           <Container maxWidth="lg">
-            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 1 }}>
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                flexWrap: "wrap",
+                gap: 1,
+              }}
+            >
               <Typography
                 variant="h4"
                 sx={{
-                  color: 'primary.main',
+                  color: "primary.main",
                   fontWeight: 800,
-                  letterSpacing: '-0.03em',
+                  letterSpacing: "-0.03em",
                 }}
               >
-                {t('dashboard.title')}
+                {t("dashboard.title")}
               </Typography>
-              <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+              <Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
                 {/* AVR Connection status */}
                 <Chip
                   icon={
                     <FiberManualRecordIcon
                       sx={{
                         fontSize: 10,
-                        color: status.connected ? '#66bb6a' : '#ef5350',
-                        animation: status.connected ? 'none' : 'pulse 1.5s infinite',
-                        '@keyframes pulse': {
-                          '0%, 100%': { opacity: 1 },
-                          '50%': { opacity: 0.3 },
+                        color: status.connected ? "#66bb6a" : "#ef5350",
+                        animation: status.connected
+                          ? "none"
+                          : "pulse 1.5s infinite",
+                        "@keyframes pulse": {
+                          "0%, 100%": { opacity: 1 },
+                          "50%": { opacity: 0.3 },
                         },
                       }}
                     />
                   }
-                  label={status.connected ? 'AVR Connected' : 'AVR Disconnected'}
+                  label={
+                    status.connected ? "AVR Connected" : "AVR Disconnected"
+                  }
                   variant="outlined"
                   size="small"
                   sx={{
-                    borderColor: status.connected ? 'rgba(102,187,106,0.3)' : 'rgba(239,83,80,0.3)',
-                    color: status.connected ? 'success.main' : 'error.main',
+                    borderColor: status.connected
+                      ? "rgba(102,187,106,0.3)"
+                      : "rgba(239,83,80,0.3)",
+                    color: status.connected ? "success.main" : "error.main",
                   }}
                 />
                 {/* WebSocket status */}
@@ -87,16 +110,18 @@ export default function App() {
                     <FiberManualRecordIcon
                       sx={{
                         fontSize: 10,
-                        color: wsConnected ? '#4fc3f7' : '#ef5350',
+                        color: wsConnected ? "#4fc3f7" : "#ef5350",
                       }}
                     />
                   }
-                  label={wsConnected ? 'Live' : 'Offline'}
+                  label={wsConnected ? "Live" : "Offline"}
                   variant="outlined"
                   size="small"
                   sx={{
-                    borderColor: wsConnected ? 'rgba(79,195,247,0.3)' : 'rgba(239,83,80,0.3)',
-                    color: wsConnected ? 'primary.main' : 'error.main',
+                    borderColor: wsConnected
+                      ? "rgba(79,195,247,0.3)"
+                      : "rgba(239,83,80,0.3)",
+                    color: wsConnected ? "primary.main" : "error.main",
                   }}
                 />
               </Box>
@@ -142,12 +167,18 @@ export default function App() {
 
             {/* Audio Signal */}
             <Grid size={{ xs: 12, md: 6 }}>
-              <AudioCard audio={status.audio} surroundMode={status.surroundMode} />
+              <AudioCard
+                audio={status.audio}
+                surroundMode={status.surroundMode}
+              />
             </Grid>
 
             {/* Subwoofer Settings */}
             <Grid size={{ xs: 12, md: 6 }}>
-              <SubwooferCard subwoofers={status.subwoofers} lfeLevel={status.lfeLevel} />
+              <SubwooferCard
+                subwoofers={status.subwoofers}
+                lfeLevel={status.lfeLevel}
+              />
             </Grid>
 
             {/* System Info */}

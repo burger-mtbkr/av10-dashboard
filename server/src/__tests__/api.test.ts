@@ -5,9 +5,9 @@ import request from 'supertest';
 // Create a mock status object
 const mockStatus = {
   power: 'ON',
-  volume: -35,
-  volumeDisplay: '-35.0 dB',
-  maxVolume: 18,
+  volume: 45,
+  volumeDisplay: '45',
+  maxVolume: 75,
   muted: false,
   input: { id: 'SAT/CBL', name: 'CBL/SAT', selected: true },
   availableInputs: [
@@ -69,8 +69,8 @@ function buildTestApp() {
 
   app.post('/api/volume', (req, res) => {
     const { volume } = req.body as { volume: number };
-    if (typeof volume !== 'number' || volume < -80 || volume > 18) {
-      res.status(400).json({ error: 'Volume must be a number between -80 and 18' });
+    if (typeof volume !== 'number' || volume < 0 || volume > 98) {
+      res.status(400).json({ error: 'Volume must be a number between 0 and 98' });
       return;
     }
     mockMarantz.setVolume(volume);
@@ -139,7 +139,7 @@ describe('API Routes', () => {
       const res = await request(app).get('/api/status');
       expect(res.status).toBe(200);
       expect(res.body.power).toBe('ON');
-      expect(res.body.volume).toBe(-35);
+      expect(res.body.volume).toBe(45);
       expect(res.body.muted).toBe(false);
       expect(res.body.input.id).toBe('SAT/CBL');
       expect(res.body.connected).toBe(true);
@@ -162,24 +162,24 @@ describe('API Routes', () => {
     it('should accept valid volume', async () => {
       const res = await request(app)
         .post('/api/volume')
-        .send({ volume: -30 });
+        .send({ volume: 50 });
       expect(res.status).toBe(200);
       expect(res.body.success).toBe(true);
-      expect(mockMarantz.setVolume).toHaveBeenCalledWith(-30);
+      expect(mockMarantz.setVolume).toHaveBeenCalledWith(50);
     });
 
-    it('should reject volume below -80', async () => {
+    it('should reject volume below 0', async () => {
       const res = await request(app)
         .post('/api/volume')
-        .send({ volume: -90 });
+        .send({ volume: -1 });
       expect(res.status).toBe(400);
       expect(res.body.error).toBeDefined();
     });
 
-    it('should reject volume above 18', async () => {
+    it('should reject volume above 98', async () => {
       const res = await request(app)
         .post('/api/volume')
-        .send({ volume: 25 });
+        .send({ volume: 99 });
       expect(res.status).toBe(400);
     });
 
