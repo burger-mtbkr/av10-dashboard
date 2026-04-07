@@ -14,6 +14,11 @@ ht_status/
 ├── README.md
 ├── STRUCTURE.md
 ├── settings.json
+├── sample-data.json
+├── playwright.config.ts
+│
+├── e2e/
+│   └── dashboard.spec.ts
 │
 ├── server/
 │   ├── .env
@@ -22,12 +27,17 @@ ht_status/
 │   ├── package.json
 │   ├── package-lock.json
 │   ├── tsconfig.json
+│   ├── vitest.config.ts
 │   └── src/
 │       ├── index.ts
 │       ├── marantz-service.ts
 │       ├── http-client.ts
 │       ├── constants.ts
-│       └── types.ts
+│       ├── types.ts
+│       └── __tests__/
+│           ├── api.test.ts
+│           ├── constants.test.ts
+│           └── marantz-service.test.ts
 │
 └── client/
     ├── .gitignore
@@ -36,6 +46,7 @@ ht_status/
     ├── package-lock.json
     ├── tsconfig.json
     ├── vite.config.ts
+    ├── vitest.config.ts
     ├── vite-env.d.ts
     ├── public/
     │   └── vite.svg
@@ -44,6 +55,17 @@ ht_status/
         ├── main.tsx
         ├── theme.ts
         ├── types.ts
+        ├── __tests__/
+        │   ├── setup.ts
+        │   ├── test-utils.tsx
+        │   └── components/
+        │       ├── AudioCard.test.tsx
+        │       ├── InputCard.test.tsx
+        │       ├── SpeakerCard.test.tsx
+        │       ├── SubwooferCard.test.tsx
+        │       ├── SystemCard.test.tsx
+        │       ├── VideoCard.test.tsx
+        │       └── VolumeCard.test.tsx
         ├── hooks/
         │   └── useAVRStatus.ts
         ├── components/
@@ -74,6 +96,8 @@ These files live at the top level of the monorepo and control the overall projec
 | `README.md` | Main project documentation — architecture, features, quick start guide, configuration reference, protocol details, and tech stack. |
 | `STRUCTURE.md` | This file. Detailed breakdown of every folder and file in the project with purpose descriptions. |
 | `settings.json` | Non-sensitive application configuration: dashboard title, default language, input label overrides. Read by the backend at startup and shared with the frontend via API. This is the single config file for both local and future AWS Amplify deployments. |
+| `sample-data.json` | Sample AVR status JSON payload used for development and testing without a live receiver. |
+| `playwright.config.ts` | Configuration for Playwright E2E tests (browser automation). |
 
 ---
 
@@ -91,6 +115,7 @@ The backend is a **Node.js + Express + WebSocket** server that acts as a bridge 
 | `package.json` | Server dependencies (`express`, `ws`, `xml2js`, `dotenv`, `cors`) and dev dependencies (`typescript`, `tsx`, `@types/*`). Defines `dev` (tsx watch), `build` (tsc), and `start` (node) scripts. |
 | `package-lock.json` | Lock file for deterministic server dependency installs. |
 | `tsconfig.json` | TypeScript configuration targeting ES2022 with ESNext modules, bundler module resolution, Node.js type definitions, and output to `dist/`. |
+| `vitest.config.ts` | Vitest configuration for server unit tests. |
 
 ### Server Source Files (`server/src/`)
 
@@ -99,7 +124,7 @@ The backend is a **Node.js + Express + WebSocket** server that acts as a bridge 
 | `index.ts` | **Main entry point.** Loads environment variables via `dotenv`, reads `settings.json`, creates the Express app with CORS, defines REST API routes (`/api/status`, `/api/volume`, `/api/input`, `/api/mute`, `/api/health`, `/api/settings`), starts the HTTP server, attaches the WebSocket server, initialises the `MarantzService`, and wires up event listeners to broadcast real-time status to all connected browser clients. |
 | `marantz-service.ts` | **Core Marantz communication service.** Extends `EventEmitter`. Opens a persistent TCP/telnet connection (port 23) to the receiver for real-time event streaming. Parses incoming telnet events (e.g. `MV50` → volume change, `SIBD` → input change) and updates an internal `AVRStatus` object. Also triggers periodic HTTP polling as a backup. Emits `statusChanged`, `connected`, and `disconnected` events consumed by `index.ts`. Provides `setVolume()` and `setInput()` methods for control. |
 | `http-client.ts` | **HTTP/XML API client.** Makes HTTP GET and POST requests to the receiver's XML endpoints (`/goform/formMainZone_MainZoneXmlStatus.xml`, `/goform/AppCommand.xml`, `/goform/AppCommand0300.xml`). Parses XML responses with `xml2js` to extract: main zone status (power, volume, mute, input, surround mode), active speakers (`GetActiveSpeaker`), custom source names (`GetSourceRename`), video info (`GetVideoInfo`), and audio info (`GetAudioInfo`). |
-| `constants.ts` | **Protocol constants and lookup tables.** Maps speaker channel codes to human-readable names and groups (e.g. `FL` → "Front Left" / ear level). Maps source IDs to default names (e.g. `SAT/CBL` → "CBL/SAT"). Maps telnet event prefixes to status fields. Contains `parseVolume()` and `volumeToCommand()` functions for converting between Marantz's raw volume format and dB values. |
+| `constants.ts` | **Protocol constants and lookup tables.** Maps speaker channel codes to human-readable names and groups (e.g. `FL` → "Front Left" / ear level). Maps source IDs to default names (e.g. `SAT/CBL` → "CBL/SAT"). Maps telnet event prefixes to status fields. Contains `parseVolume()` and `volumeToCommand()` functions for converting between Marantz's raw volume format and absolute 0-98 values. |
 | `types.ts` | **Shared TypeScript type definitions.** Defines all interfaces used across the backend: `AVRStatus`, `SpeakerStatus`, `VideoInfo`, `AudioInfo`, `SubwooferInfo`, `InputSource`, `WSMessage`, and `TelnetEvent`. These same shapes are mirrored on the client side. |
 
 ---
@@ -118,6 +143,7 @@ The frontend is a **React 19 + Vite + MUI 6** single-page application that conne
 | `package-lock.json` | Lock file for deterministic client dependency installs. |
 | `tsconfig.json` | TypeScript configuration for the browser: ES2022 + DOM + DOM.Iterable libs, React JSX transform, bundler module resolution, path alias `@/*` → `src/*`, `noEmit` (Vite handles bundling). |
 | `vite.config.ts` | Vite bundler configuration. Enables the React plugin, sets up the `@` path alias, configures the dev server on port 5173 with proxy rules that forward `/api` requests to the backend at `localhost:3001` and upgrade `/ws` to WebSocket. Production build outputs to `dist/`. |
+| `vitest.config.ts` | Vitest configuration for client component unit tests. |
 | `vite-env.d.ts` | Type declaration file that references Vite's client types, enabling TypeScript to understand Vite-specific imports (e.g. `import.meta.env`). |
 
 ### Static Assets (`client/public/`)
@@ -148,7 +174,7 @@ Each component is a self-contained MUI `Card` responsible for one section of the
 | File | Purpose |
 |------|---------|
 | `SpeakerCard.tsx` | **Speaker configuration display.** Renders a block layout of speaker icons grouped by type (ear level, height/Atmos, subwoofer). Active speakers are highlighted in green, inactive ones are dimmed. Auto-detects any speaker configuration (7.2.4, 9.2.4, 5.1.2, etc.) and displays the layout label as a chip. Supports all Dolby Atmos and DTS:X channel codes. |
-| `VolumeCard.tsx` | **Volume control.** Shows the current volume in a large colour-coded dB display (green ≤ -25dB, orange ≤ -10dB, red above). Provides a slider for precise adjustment, +/- buttons for step changes, and a mute toggle. The slider uses local state during drag to avoid jitter, committing the value on release. |
+| `VolumeCard.tsx` | **Volume control.** Shows the current volume in a large colour-coded display using the absolute 0-98 scale (green < 55, orange < 70, red ≥ 70). Provides a slider for precise adjustment, +/- buttons for step changes, and a mute toggle. The slider uses local state during drag to avoid jitter, committing the value on release. |
 | `InputCard.tsx` | **Input source selector.** Displays the currently selected input as a prominent chip and provides a dropdown `Select` to switch inputs. Shows both the custom label and the raw source ID for each option. Calls the backend API on change. |
 | `VideoCard.tsx` | **Video signal information.** Displays a visual signal flow: input resolution → output resolution (e.g. "1080p → 4K"). Shows HDR format as a badge (HDR10, Dolby Vision, HLG) when active, plus HDMI output target and input signal type. |
 | `AudioCard.tsx` | **Audio signal information.** Highlights the current surround mode (e.g. "Dolby Atmos", "DTS:X") as a prominent chip. Lists input audio format, sampling rate, Dynamic EQ, Dynamic Volume, MultEQ mode, and Dialog Enhancer in an info-row layout. |
@@ -161,3 +187,37 @@ Each component is a self-contained MUI `Card` responsible for one section of the
 |------|---------|
 | `index.ts` | **i18next configuration.** Initialises i18next with the `react-i18next` plugin, loads the English translation resource, sets `en` as the default and fallback language. To add a new language (e.g. Afrikaans), import the JSON file and add it to the `resources` object. |
 | `en.json` | **English translations.** Contains every user-facing string in the application: dashboard title, connection status labels, card titles, speaker group names, volume/input/video/audio/subwoofer/system labels, and common terms (on, off, auto, unknown). All components reference these keys via the `useTranslation()` hook. |
+
+---
+
+## E2E Tests (`e2e/`)
+
+| File | Purpose |
+|------|---------|
+| `dashboard.spec.ts` | **Playwright E2E test.** Browser automation tests that verify the full dashboard renders and functions correctly end-to-end. |
+
+---
+
+## Test Infrastructure
+
+### Server Tests (`server/src/__tests__/`)
+
+| File | Purpose |
+|------|---------|
+| `api.test.ts` | Tests the Express REST API routes (`/api/status`, `/api/volume`, `/api/input`, `/api/mute`, `/api/health`) including input validation and error handling. |
+| `constants.test.ts` | Tests `parseVolume()` / `volumeToCommand()` round-trip correctness on the absolute 0-98 scale, plus `CHANNEL_MAP`, `SOURCE_MAP`, and `TELNET_EVENT_MAP` coverage. |
+| `marantz-service.test.ts` | Tests `MarantzService` event parsing (MV, MU, SI, MS, etc.), telnet buffer processing, deep-copy isolation, and connection state management. |
+
+### Client Tests (`client/src/__tests__/`)
+
+| File | Purpose |
+|------|---------|
+| `setup.ts` | Test environment setup — configures jsdom globals and testing-library matchers. |
+| `test-utils.tsx` | Shared test helpers — `renderWithProviders()` wraps components in MUI theme + i18n context, provides default mock `AVRStatus`. |
+| `components/AudioCard.test.tsx` | Tests AudioCard rendering of codec, surround mode, and Audyssey fields. |
+| `components/InputCard.test.tsx` | Tests InputCard chip display, select dropdown, and empty-state fallback. |
+| `components/SpeakerCard.test.tsx` | Tests SpeakerCard block layout, active/inactive highlighting, and config label. |
+| `components/SubwooferCard.test.tsx` | Tests SubwooferCard level display, progress bars, and LFE badge. |
+| `components/SystemCard.test.tsx` | Tests SystemCard power/ECO/connection chips and timestamp formatting. |
+| `components/VideoCard.test.tsx` | Tests VideoCard signal flow, HDR badge, and resolution display. |
+| `components/VolumeCard.test.tsx` | Tests VolumeCard absolute volume display, slider range (0 to maxVolume), colour thresholds, mute toggle, and percentage calculation. |
