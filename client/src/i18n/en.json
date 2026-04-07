@@ -1,7 +1,7 @@
 {
-  "appTitle": "Home Theater Status",
+  "appTitle": "Marantz AV10 Status",
   "dashboard": {
-    "title": "Home Theater Status",
+    "title": "Marantz AV10 Status",
     "connectionStatus": {
       "connected": "Connected",
       "disconnected": "Disconnected",
