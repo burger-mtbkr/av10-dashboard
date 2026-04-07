@@ -12,6 +12,7 @@ vi.mock("../hooks/useAVRStatus", () => ({
     volumeDown: vi.fn(),
     setInput: vi.fn(),
     toggleMute: vi.fn(),
+    selectSmartPreset: vi.fn(),
   }),
 }));
 
@@ -27,7 +28,7 @@ describe("App", () => {
 
     const volume = screen.getByText("Volume");
     const subwoofer = screen.getByText("Subwoofer Settings");
-    const input = screen.getByText("Input Source");
+    const input = screen.getByText("Smart Select");
     const audio = screen.getByText("Audio Signal");
     const video = screen.getByText("Video Signal");
     const speaker = screen.getByText("Speaker Configuration");

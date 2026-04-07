@@ -67,8 +67,21 @@ export const SOURCE_MAP: Record<string, string> = {
   'USB/IPOD':'iPod/USB',
 };
 
+/** Smart Select preset numbers (Marantz AV10 supports 1-4) */
+export const SMART_SELECT_SLOTS = [1, 2, 3, 4] as const;
+
+/** Default Smart Select names when the receiver provides no custom label */
+export const SMART_SELECT_DEFAULTS: Record<number, string> = {
+  1: 'Smart Select 1',
+  2: 'Smart Select 2',
+  3: 'Smart Select 3',
+  4: 'Smart Select 4',
+};
+
 /** Telnet event prefixes to status field mapping */
 export const TELNET_EVENT_MAP: Record<string, string> = {
+  MSSMART: 'smartSelect',
+  MSQUICK: 'smartSelect',
   MV: 'volume',
   SI: 'input',
   MS: 'surroundMode',

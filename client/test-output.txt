@@ -1,0 +1,806 @@
+﻿
+[1m[46m RUN [49m[22m [36mv4.1.2 [39m[90mC:/dev/av10-dashboard/client[39m
+
+[90mstdout[2m | src/__tests__/components/VideoCard.test.tsx
+[22m[39m≡ƒîÉ i18next is made possible by our own product, Locize ΓÇö consider powering your project with managed localization (AI, CDN, integrations): https://locize.com ≡ƒÆÖ
+
+[90mstdout[2m | src/__tests__/components/InputCard.test.tsx
+[22m[39m≡ƒîÉ i18next is made possible by our own product, Locize ΓÇö consider powering your project with managed localization (AI, CDN, integrations): https://locize.com ≡ƒÆÖ
+
+[90mstdout[2m | src/__tests__/components/SubwooferCard.test.tsx
+[22m[39m≡ƒîÉ i18next is made possible by our own product, Locize ΓÇö consider powering your project with managed localization (AI, CDN, integrations): https://locize.com ≡ƒÆÖ
+
+[90mstdout[2m | src/__tests__/components/SystemCard.test.tsx
+[22m[39m≡ƒîÉ i18next is made possible by our own product, Locize ΓÇö consider powering your project with managed localization (AI, CDN, integrations): https://locize.com ≡ƒÆÖ
+
+[90mstdout[2m | src/__tests__/components/SpeakerCard.test.tsx
+[22m[39m≡ƒîÉ i18next is made possible by our own product, Locize ΓÇö consider powering your project with managed localization (AI, CDN, integrations): https://locize.com ≡ƒÆÖ
+
+[90mstdout[2m | src/__tests__/components/AudioCard.test.tsx
+[22m[39m≡ƒîÉ i18next is made possible by our own product, Locize ΓÇö consider powering your project with managed localization (AI, CDN, integrations): https://locize.com ≡ƒÆÖ
+
+[90mstdout[2m | src/__tests__/App.test.tsx
+[22m[39m≡ƒîÉ i18next is made possible by our own product, Locize ΓÇö consider powering your project with managed localization (AI, CDN, integrations): https://locize.com ≡ƒÆÖ
+
+[90mstdout[2m | src/__tests__/components/VolumeCard.test.tsx
+[22m[39m≡ƒîÉ i18next is made possible by our own product, Locize ΓÇö consider powering your project with managed localization (AI, CDN, integrations): https://locize.com ≡ƒÆÖ
+
+ [32mΓ£ô[39m src/__tests__/components/SubwooferCard.test.tsx[2m > [22mSubwooferCard[2m > [22mshould render the title[32m 96[2mms[22m[39m
+ [32mΓ£ô[39m src/__tests__/components/AudioCard.test.tsx[2m > [22mAudioCard[2m > [22mshould render the title[32m 101[2mms[22m[39m
+ [32mΓ£ô[39m src/__tests__/components/AudioCard.test.tsx[2m > [22mAudioCard[2m > [22mshould display surround mode as prominent chip[32m 21[2mms[22m[39m
+ [32mΓ£ô[39m src/__tests__/components/AudioCard.test.tsx[2m > [22mAudioCard[2m > [22mshould display all audio info rows[32m 27[2mms[22m[39m
+ [32mΓ£ô[39m src/__tests__/components/AudioCard.test.tsx[2m > [22mAudioCard[2m > [22mshould show row labels from i18n[32m 24[2mms[22m[39m
+ [32mΓ£ô[39m src/__tests__/components/AudioCard.test.tsx[2m > [22mAudioCard[2m > [22mshould show "---" for empty surround mode[32m 20[2mms[22m[39m
+ [32mΓ£ô[39m src/__tests__/components/SubwooferCard.test.tsx[2m > [22mSubwooferCard[2m > [22mshould display LFE level[32m 20[2mms[22m[39m
+ [32mΓ£ô[39m src/__tests__/components/SubwooferCard.test.tsx[2m > [22mSubwooferCard[2m > [22mshould show "no data" when subwoofers array is empty[32m 13[2mms[22m[39m
+ [32mΓ£ô[39m src/__tests__/components/SubwooferCard.test.tsx[2m > [22mSubwooferCard[2m > [22mshould render subwoofer entries[32m 70[2mms[22m[39m
+ [32mΓ£ô[39m src/__tests__/components/InputCard.test.tsx[2m > [22mInputCard[2m > [22mshould render the title[32m 142[2mms[22m[39m
+ [31m├ù[39m src/__tests__/components/InputCard.test.tsx[2m > [22mInputCard[2m > [22mshould render all 4 preset buttons[32m 24[2mms[22m[39m
+[31m   ΓåÆ Found multiple elements with the text: Apple TV
+
+Here are the matching elements:
+
+Ignored nodes: comments, script, style
+[36m<p[31m
+  [33mclass[31m=[32m"MuiTypography-root MuiTypography-body1 css-1bgrsvy-MuiTypography-root"[31m
+[36m>[31m
+  [0mApple TV[0m
+[36m</p>[31m
+
+Ignored nodes: comments, script, style
+[36m<p[31m
+  [33mclass[31m=[32m"MuiTypography-root MuiTypography-body1 css-jv9vss-MuiTypography-root"[31m
+[36m>[31m
+  [0mApple TV[0m
+[36m</p>[31m
+
+(If this is intentional, then use the `*AllBy*` variant of the query (like `queryAllByText`, `getAllByText`, or `findAllByText`)).
+
+Ignored nodes: comments, script, style
+[36m<body>[31m
+  [36m<div>[31m
+    [36m<div[31m
+      [33mclass[31m=[32m"MuiPaper-root MuiPaper-elevation MuiPaper-rounded MuiPaper-elevation1 MuiCard-root css-1mrckrf-MuiPaper-root-MuiCard-root"[31m
+      [33mstyle[31m=[32m"--Paper-shadow: 0px 2px 1px -1px rgba(0,0,0,0.2),0px 1px 1px 0px rgba(0,0,0,0.14),0px 1px 3px 0px rgba(0,0,0,0.12); --Paper-overlay: linear-gradient(rgba(255, 255, 255, 0.051), rgba(255, 255, 255, 0.051));"[31m
+    [36m>[31m
+      [36m<div[31m
+        [33mclass[31m=[32m"MuiCardContent-root css-1mej7dh-MuiCardContent-root"[31m
+      [36m>[31m
+        [36m<h6[31m
+          [33mclass[31m=[32m"MuiTypography-root MuiTypography-h6 css-13ph8ww-MuiTypography-root"[31m
+        [36m>[31m
+          [36m<svg[31m
+            [33maria-hidden[31m=[32m"true"[31m
+            [33mclass[31m=[32m"MuiSvgIcon-root MuiSvgIcon-fontSizeMedium css-1cld87c-MuiSvgIcon-root"[31m
+            [33mdata-testid[31m=[32m"TouchAppIcon"[31m
+            [33mfocusable[31m=[32m"false"[31m
+            [33mviewBox[31m=[32m"0 0 24 24"[31m
+          [36m>[31m
+            [36m<path[31m
+              [33md[31m=[32m"M9 11.24V7.5C9 6.12 10.12 5 11.5 5S14 6.12 14 7.5v3.74c1.21-.81 2-2.18 2-3.74C16 5.01 13.99 3 11.5 3S7 5.01 7 7.5c0 1.56.79 2.93 2 3.74m9.84 4.63-4.54-2.26c-.17-.07-.35-.11-.54-.11H13v-6c0-.83-.67-1.5-1.5-1.5S10 6.67 10 7.5v10.74c-3.6-.76-3.54-.75-3.67-.75-.31 0-.59.13-.79.33l-.79.8 4.94 4.94c.27.27.65.44 1.06.44h6.79c.75 0 1.33-.55 1.44-1.28l.75-5.27c.01-.07.02-.14.02-.2 0-.62-.38-1.16-.91-1.38"[31m
+            [36m/>[31m
+          [36m</svg>[31m
+          [0mSmart Select[0m
+        [36m</h6>[31m
+        [36m<div[31m
+          [33mclass[31m=[32m"MuiBox-root css-1ot7oxw"[31m
+        [36m>[31m
+          [36m<div[31m
+            [33mclass[31m=[32m"MuiBox-root css-izuqqr"[31m
+          [36m>[31m
+            [36m<button[31m
+              [33mclass[31m=[32m"MuiButtonBase-root css-6yw1h3-MuiButtonBase-root"[31m
+              [33mtabindex[31m=[32m"0"[31m
+              [33mtype[31m=[32m"button"[31m
+            [36m>[31m
+              [36m<p[31m
+                [33mclass[31m=[32m"MuiTypography-root MuiTypography-body1 css-1bgrsvy-MuiTypography-root"[31m
+              [36m>[31m
+                [0mApple TV[0m
+              [36m</p>[31m
+            [36m</button>[31m
+            [36m<span[31m
+              [33mclass[31m=[32m"MuiTypography-root MuiTypography-caption css-h8jga0-MuiTypography-root"[31m
+            [36m>[31m
+              [0m1[0m
+            [36m</span>[31m
+          [36m</div>[31m
+          [36m<div[31m
+            [33mclass[31m=[32m"MuiBox-root css-izuqqr"[31m
+          [36m>[31m
+            [36m<button[31m
+              [33mclass[31m=[32m"MuiButtonBase-root css-13vi3yn-MuiButtonBase-root"[31m
+              [33mtabindex[31m=[32m"0"[31m
+              [33mtype[31m=[32m"button"[31m
+            [36m>[31m
+              [36m<p[31m
+                [33mclass[31m=[32m"MuiTypography-root MuiTypography-body1 css-1l98zvm-MuiTypography-root"[31m
+              [36m>[31m
+                [0mMusic[0m
+              [36m</p>[31m
+            [36m</button>[31m
+            [36m<span[31m
+              [33mclass[31m=[32m"MuiTypography-root MuiTypography-caption css-y1y48l-MuiTypography-root"[31m
+            [36m>[31m
+              [0m2[0m
+            [36m</span>[31m
+          [36m</div>[31m
+          [36m<div[31m
+            [33mclass[31m=[32m"MuiBox-root css-izuqqr"[31m
+          [36m>[31m
+            [36m<button[31m
+              [33mclass[31m=[32m"MuiButtonBase-root css-13vi3yn-MuiButtonBase-root"[31m
+              [33mtabindex[31m=[32m"0"[31m
+              [33mtype[31m=[32m"button"[31m
+            [36m>[31m
+              [36m<p[31m
+                [33mclass[31m=[32m"MuiTypography-root MuiTypography-body1 css-1l98zvm-MuiTypography-root"[31m
+              [36m>[31m
+                [0mPS3[0m
+              [36m</p>[31m
+            [36m</button>[31m
+            [36m<span[31m
+              [33mclass[31m=[32m"MuiTypography-root MuiTypography-caption css-y1y48l-MuiTypography-root"[31m
+            [36m>[31m
+              [0m3[0m
+            [36m</span>[31m
+          [36m</div>[31m
+          [36m<div[31m
+            [33mclass[31m=[32m"MuiBox-root css-izuqqr"[31m
+          [36m>[31m
+            [36m<button[31m
+              [33mclass[31m=[32m"MuiButtonBase-root css-13vi3yn-MuiButtonBase-root"[31m
+              [33mtabindex[31m=[32m"0"[31m
+              [33mtype[31m=[32m"button"[31m
+            [36m>[31m
+              [36m<p[31m
+                [33mclass[31m=[32m"MuiTypography-root MuiTypography-body1 css-1l98zvm-MuiTypography-root"[31m
+              [36m>[31m
+                [0mXbox[0m
+              [36m</p>[31m
+            [36m</button>[31m
+            [36m<span[31m
+              [33mclass[31m=[32m"MuiTypography-root MuiTypography-caption css-y1y48l-MuiTypography-root"[31m
+            [36m>[31m
+              [0m4[0m
+            [36m</span>[31m
+          [36m</div>[31m
+        [36m</div>[31m
+        [36m<div[31m
+          [33mclass[31m=[32m"MuiBox-root css-49a50q"[31m
+        [36m>[31m
+          [36m<span[31m
+            [33mclass[31m=[32m"MuiTypography-root MuiTypography-caption css-74esbj-MuiTypography-root"[31m
+          [36m>[31m
+            [0mActive Preset[0m
+          [36m</span>[31m
+          [36m<p[31m
+            [33mclass[31m=[32m"MuiTypography-root MuiTypography-body1 css-jv9vss-MuiTypography-root"[31m
+          [36m>[31m
+            [0mApple TV[0m
+          [36m</p>[31m
+          [36m<span[31m
+            [33mclass[31m=[32m"MuiTypography-root MuiTypography-caption css-1j6irex-MuiTypography-root"[31m
+          [36m>[31m
+            [0mCurrent Source[0m
+            [0m:[0m
+            [0m [0m
+            [0mCBL/SAT[0m
+          [36m</span>[31m
+        [36m</div>[31m
+      [36m</div>[31m
+    [36m</div>[31m
+  [36m</div>[31m
+[36m</body>[31m[39m
+ [32mΓ£ô[39m src/__tests__/components/InputCard.test.tsx[2m > [22mInputCard[2m > [22mshould show preset numbers[32m 33[2mms[22m[39m
+ [32mΓ£ô[39m src/__tests__/components/InputCard.test.tsx[2m > [22mInputCard[2m > [22mshould call onSelectPreset when a button is clicked[32m 30[2mms[22m[39m
+ [32mΓ£ô[39m src/__tests__/components/VideoCard.test.tsx[2m > [22mVideoCard[2m > [22mshould render the title[32m 182[2mms[22m[39m
+ [32mΓ£ô[39m src/__tests__/components/VideoCard.test.tsx[2m > [22mVideoCard[2m > [22mshould show input and output resolution[32m 22[2mms[22m[39m
+ [32mΓ£ô[39m src/__tests__/components/VideoCard.test.tsx[2m > [22mVideoCard[2m > [22mshould display HDR badge when HDR is active[32m 14[2mms[22m[39m
+ [32mΓ£ô[39m src/__tests__/components/VideoCard.test.tsx[2m > [22mVideoCard[2m > [22mshould NOT display HDR badge when hdrFormat is "---"[32m 13[2mms[22m[39m
+ [32mΓ£ô[39m src/__tests__/components/VideoCard.test.tsx[2m > [22mVideoCard[2m > [22mshould show HDMI output label[32m 18[2mms[22m[39m
+ [32mΓ£ô[39m src/__tests__/components/VideoCard.test.tsx[2m > [22mVideoCard[2m > [22mshould show input signal when not "---"[32m 14[2mms[22m[39m
+ [32mΓ£ô[39m src/__tests__/components/SystemCard.test.tsx[2m > [22mSystemCard[2m > [22mshould render the title[32m 157[2mms[22m[39m
+ [32mΓ£ô[39m src/__tests__/components/SystemCard.test.tsx[2m > [22mSystemCard[2m > [22mshould display power state ON with success colour[32m 21[2mms[22m[39m
+ [32mΓ£ô[39m src/__tests__/components/SystemCard.test.tsx[2m > [22mSystemCard[2m > [22mshould display power state OFF[32m 22[2mms[22m[39m
+ [32mΓ£ô[39m src/__tests__/components/SystemCard.test.tsx[2m > [22mSystemCard[2m > [22mshould display power state STANDBY[32m 16[2mms[22m[39m
+ [32mΓ£ô[39m src/__tests__/components/SystemCard.test.tsx[2m > [22mSystemCard[2m > [22mshould display ECO mode[32m 14[2mms[22m[39m
+ [32mΓ£ô[39m src/__tests__/components/SystemCard.test.tsx[2m > [22mSystemCard[2m > [22mshould show "---" for empty ECO mode[32m 19[2mms[22m[39m
+ [32mΓ£ô[39m src/__tests__/components/InputCard.test.tsx[2m > [22mInputCard[2m > [22mshould show metadata panel when a preset is active[32m 21[2mms[22m[39m
+ [32mΓ£ô[39m src/__tests__/components/InputCard.test.tsx[2m > [22mInputCard[2m > [22mshould not show metadata panel when no preset is active[32m 16[2mms[22m[39m
+ [32mΓ£ô[39m src/__tests__/components/InputCard.test.tsx[2m > [22mInputCard[2m > [22mshould show current source in metadata panel[32m 13[2mms[22m[39m
+ [32mΓ£ô[39m src/__tests__/components/InputCard.test.tsx[2m > [22mInputCard[2m > [22mshould render with default Smart Select names when no custom names[32m 11[2mms[22m[39m
+ [32mΓ£ô[39m src/__tests__/components/SubwooferCard.test.tsx[2m > [22mSubwooferCard[2m > [22mshould render up to 4 subwoofers[32m 21[2mms[22m[39m
+ [32mΓ£ô[39m src/__tests__/components/SubwooferCard.test.tsx[2m > [22mSubwooferCard[2m > [22mshould show progress bars for each subwoofer[32m 99[2mms[22m[39m
+ [32mΓ£ô[39m src/__tests__/components/SystemCard.test.tsx[2m > [22mSystemCard[2m > [22mshould show connected status[32m 21[2mms[22m[39m
+ [32mΓ£ô[39m src/__tests__/components/SystemCard.test.tsx[2m > [22mSystemCard[2m > [22mshould show disconnected status[32m 19[2mms[22m[39m
+ [32mΓ£ô[39m src/__tests__/components/SystemCard.test.tsx[2m > [22mSystemCard[2m > [22mshould show "---" for empty lastUpdate[32m 14[2mms[22m[39m
+ [32mΓ£ô[39m src/__tests__/components/SystemCard.test.tsx[2m > [22mSystemCard[2m > [22mshould format a valid ISO timestamp[32m 13[2mms[22m[39m
+ [32mΓ£ô[39m src/__tests__/components/SpeakerCard.test.tsx[2m > [22mSpeakerCard[2m > [22mshould render the title[32m 212[2mms[22m[39m
+ [32mΓ£ô[39m src/__tests__/components/SpeakerCard.test.tsx[2m > [22mSpeakerCard[2m > [22mshould show layout label (7.2.4) for a 7.2.4 setup[32m 26[2mms[22m[39m
+ [32mΓ£ô[39m src/__tests__/components/SpeakerCard.test.tsx[2m > [22mSpeakerCard[2m > [22mshould show active/total count[32m 34[2mms[22m[39m
+ [32mΓ£ô[39m src/__tests__/components/SpeakerCard.test.tsx[2m > [22mSpeakerCard[2m > [22mshould show room layout labels[32m 36[2mms[22m[39m
+ [32mΓ£ô[39m src/__tests__/components/VolumeCard.test.tsx[2m > [22mVolumeCard[2m > [22mshould render the title[32m 203[2mms[22m[39m
+ [32mΓ£ô[39m src/__tests__/components/VolumeCard.test.tsx[2m > [22mVolumeCard[2m > [22mshould display the current volume[32m 17[2mms[22m[39m
+ [32mΓ£ô[39m src/__tests__/components/VolumeCard.test.tsx[2m > [22mVolumeCard[2m > [22mshould display percentage label[32m 16[2mms[22m[39m
+ [32mΓ£ô[39m src/__tests__/components/VolumeCard.test.tsx[2m > [22mVolumeCard[2m > [22mshould show muted chip when muted[32m 34[2mms[22m[39m
+ [32mΓ£ô[39m src/__tests__/components/VolumeCard.test.tsx[2m > [22mVolumeCard[2m > [22mshould not show muted chip when not muted[32m 19[2mms[22m[39m
+ [32mΓ£ô[39m src/__tests__/components/SpeakerCard.test.tsx[2m > [22mSpeakerCard[2m > [22mshould display speaker codes[32m 30[2mms[22m[39m
+ [32mΓ£ô[39m src/__tests__/components/SpeakerCard.test.tsx[2m > [22mSpeakerCard[2m > [22mshould render fallback when no speakers[32m 8[2mms[22m[39m
+ [32mΓ£ô[39m src/__tests__/components/SpeakerCard.test.tsx[2m > [22mSpeakerCard[2m > [22mshould handle partially active speakers[32m 24[2mms[22m[39m
+ [32mΓ£ô[39m src/__tests__/components/SpeakerCard.test.tsx[2m > [22mSpeakerCard[2m > [22mshould compute correct layout for 5.1.2[32m 16[2mms[22m[39m
+ [31m├ù[39m src/__tests__/App.test.tsx[2m > [22mApp[2m > [22mrenders dashboard cards in the requested order[33m 434[2mms[22m[39m
+[31m   ΓåÆ Unable to find an element with the text: Input Source. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[31m
+  [36m<div>[31m
+    [36m<div[31m
+      [33mclass[31m=[32m"MuiBox-root css-10h8ttx"[31m
+    [36m>[31m
+      [36m<div[31m
+        [33mclass[31m=[32m"MuiBox-root css-1yy7dwh"[31m
+      [36m>[31m
+        [36m<div[31m
+          [33mclass[31m=[32m"MuiContainer-root MuiContainer-maxWidthLg css-5c1adp-MuiContainer-root"[31m
+        [36m>[31m
+          [36m<div[31m
+            [33mclass[31m=[32m"MuiBox-root css-oi2hu2"[31m
+          [36m>[31m
+            [36m<h4[31m
+              [33mclass[31m=[32m"MuiTypography-root MuiTypography-h4 css-12uczs7-MuiTypography-root"[31m
+            [36m>[31m
+              [0mMarantz AV10 Status[0m
+            [36m</h4>[31m
+            [36m<div[31m
+              [33mclass[31m=[32m"MuiBox-root css-1c1kq07"[31m
+            [36m>[31m
+              [36m<div[31m
+                [33mclass[31m=[32m"MuiChip-root MuiChip-outlined MuiChip-sizeSmall MuiChip-colorDefault MuiChip-outlinedDefault css-17gahcc-MuiChip-root"[31m
+              [36m>[31m
+                [36m<svg[31m
+                  [33maria-hidden[31m=[32m"true"[31m
+                  [33mclass[31m=[32m"MuiSvgIcon-root MuiSvgIcon-fontSizeMedium MuiChip-icon MuiChip-iconSmall MuiChip-iconColorDefault css-viiy9c-MuiSvgIcon-root"[31m
+                  [33mdata-testid[31m=[32m"FiberManualRecordIcon"[31m
+                  [33mfocusable[31m=[32m"false"[31m
+                  [33mviewBox[31m=[32m"0 0 24 24"[31m
+                [36m>[31m
+                  [36m<circle[31m
+                    [33mcx[31m=[32m"12"[31m
+                    [33mcy[31m=[32m"12"[31m
+                    [33mr[31m=[32m"8"[31m
+                  [36m/>[31m
+                [36m</svg>[31m
+                [36m<span[31m
+                  [33mclass[31m=[32m"MuiChip-label MuiChip-labelSmall css-txwpof-MuiChip-label"[31m
+                [36m>[31m
+                  [0mAVR Connected[0m
+                [36m</span>[31m
+              [36m</div>[31m
+              [36m<div[31m
+                [33mclass[31m=[32m"MuiChip-root MuiChip-outlined MuiChip-sizeSmall MuiChip-colorDefault MuiChip-outlinedDefault css-16s8pcp-MuiChip-root"[31m
+              [36m>[31m
+                [36m<svg[31m
+                  [33maria-hidden[31m=[32m"true"[31m
+                  [33mclass[31m=[32m"MuiSvgIcon-root MuiSvgIcon-fontSizeMedium MuiChip-icon MuiChip-iconSmall MuiChip-iconColorDefault css-1m4l5uf-MuiSvgIcon-root"[31m
+                  [33mdata-testid[31m=[32m"FiberManualRecordIcon"[31m
+                  [33mfocusable[31m=[32m"false"[31m
+                  [33mviewBox[31m=[32m"0 0 24 24"[31m
+                [36m>[31m
+                  [36m<circle[31m
+                    [33mcx[31m=[32m"12"[31m
+                    [33mcy[31m=[32m"12"[31m
+                    [33mr[31m=[32m"8"[31m
+                  [36m/>[31m
+                [36m</svg>[31m
+                [36m<span[31m
+                  [33mclass[31m=[32m"MuiChip-label MuiChip-labelSmall css-txwpof-MuiChip-label"[31m
+                [36m>[31m
+                  [0mLive[0m
+                [36m</span>[31m
+              [36m</div>[31m
+            [36m</div>[31m
+          [36m</div>[31m
+        [36m</div>[31m
+      [36m</div>[31m
+      [36m<div[31m
+        [33mclass[31m=[32m"MuiContainer-root MuiContainer-maxWidthLg css-5c1adp-MuiContainer-root"[31m
+      [36m>[31m
+        [36m<div[31m
+          [33mclass[31m=[32m"MuiGrid2-root MuiGrid2-container MuiGrid2-direction-xs-row MuiGrid2-spacing-xs-2.5 css-4udl9f-MuiGrid2-root"[31m
+        [36m>[31m
+          [36m<div[31m
+            [33mclass[31m=[32m"MuiGrid2-root MuiGrid2-direction-xs-row MuiGrid2-grid-xs-12 css-1j0u08r-MuiGrid2-root"[31m
+          [36m>[31m
+            [36m<div[31m
+              [33mclass[31m=[32m"MuiPaper-root MuiPaper-elevation MuiPaper-rounded MuiPaper-elevation1 MuiCard-root css-g2g4q8-MuiPaper-root-MuiCard-root"[31m
+              [33mstyle[31m=[32m"--Paper-shadow: 0px 2px 1px -1px rgba(0,0,0,0.2),0px 1px 1px 0px rgba(0,0,0,0.14),0px 1px 3px 0px rgba(0,0,0,0.12); --Paper-overlay: linear-gradient(rgba(255, 255, 255, 0.051), rgba(255, 255, 255, 0.051));"[31m
+            [36m>[31m
+              [36m<div[31m
+                [33mclass[31m=[32m"MuiCardContent-root css-puupk7-MuiCardContent-root"[31m
+              [36m>[31m
+                [36m<div[31m
+                  [33mclass[31m=[32m"MuiBox-root css-mbx0dj"[31m
+                [36m>[31m
+                  [36m<h6[31m
+                    [33mclass[31m=[32m"MuiTypography-root MuiTypography-h6 css-1gp87qs-MuiTypography-root"[31m
+                  [36m>[31m
+                    [36m<svg[31m
+                      [33maria-hidden[31m=[32m"true"[31m
+                      [33mclass[31m=[32m"MuiSvgIcon-root MuiSvgIcon-fontSizeMedium css-1cld87c-MuiSvgIcon-root"[31m
+                      [33mdata-testid[31m=[32m"VolumeUpIcon"[31m
+                      [33mfocusable[31m=[32m"false"[31m
+                      [33mviewBox[31m=[32m"0 0 24 24"[31m
+                    [36m>[31m
+                      [36m<path[31m
+                        [33md[31m=[32m"M3 9v6h4l5 5V4L7 9zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02M14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77"[31m
+                      [36m/>[31m
+                    [36m</svg>[31m
+                    [0mVolume[0m
+                  [36m</h6>[31m
+                [36m</div>[31m
+                [36m<div[31m
+                  [33mclass[31m=[32m"MuiBox-root css-1wn58un"[31m
+                [36m>[31m
+                  [36m<h3[31m
+                    [33mclass[31m=[32m"MuiTypography-root MuiTypography-h3 css-fcz69k-MuiTypography-root"[31m
+                  [36m>[31m
+                    [0m45[0m
+                  [36m</h3>[31m
+                  [36m<p[31m
+                    [33mclass[31m=[32m"MuiTypography-root MuiTypography-body2 css-1onme8s-MuiTypography-root"[31m
+                  [36m>[31m
+                    [0m([0m
+                    [0m60[0m
+                    [0m%)[0m
+                  [36m</p>[31m
+                [36m</div>[31m
+                [36m<div[31m
+                  [33mclass[31m=[32m"MuiBox-root css-1fcteo4"[31m
+                [36m>[31m
+                  [36m<button[31m
+                    [33mclass[31m=[32m"MuiButtonBase-root MuiIconButton-root MuiIconButton-sizeSmall css-1lso2qg-MuiButtonBase-root-MuiIconButton-root"[31m
+                    [33mtabindex[31m=[32m"0"[31m
+                    [33mtype[31m=[32m"button"[31m
+                  [36m>[31m
+                    [36m<svg[31m
+                      [33maria-hidden[31m=[32m"true"[31m
+                      [33mclass[31m=[32m"MuiSvgIcon-root MuiSvgIcon-fontSizeMedium css-...[39m
+ [32mΓ£ô[39m src/__tests__/components/VolumeCard.test.tsx[2m > [22mVolumeCard[2m > [22mshould call onVolumeUp when up button clicked[32m 100[2mms[22m[39m
+ [32mΓ£ô[39m src/__tests__/components/VolumeCard.test.tsx[2m > [22mVolumeCard[2m > [22mshould call onVolumeDown when down button clicked[32m 35[2mms[22m[39m
+ [32mΓ£ô[39m src/__tests__/components/VolumeCard.test.tsx[2m > [22mVolumeCard[2m > [22mshould call onToggleMute when mute button clicked[32m 27[2mms[22m[39m
+ [32mΓ£ô[39m src/__tests__/components/VolumeCard.test.tsx[2m > [22mVolumeCard[2m > [22mshould render the slider[32m 26[2mms[22m[39m
+ [32mΓ£ô[39m src/__tests__/components/VolumeCard.test.tsx[2m > [22mVolumeCard[2m > [22mshould display different volumes correctly[32m 12[2mms[22m[39m
+node.exe : 
+At line:1 char:1
++ & "C:\Program Files\nodejs/node.exe" "C:\Program Files\nodejs/node_mo ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+[31mΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[39m[1m[41m Failed Tests 2 
+[49m[22m[31mΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[39m
+
+[41m[1m FAIL [22m[49m src/__tests__/App.test.tsx[2m > [22mApp[2m > 
+[22mrenders dashboard cards in the requested order
+[31m[1mTestingLibraryElementError[22m[39m: Unable to find an element with 
+the text: Input Source. This could be because the text is broken up by 
+multiple elements. In this case, you can provide a function for your text 
+matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"MuiBox-root css-10h8ttx"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"MuiBox-root css-1yy7dwh"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"MuiContainer-root MuiContainer-maxWidthLg 
+css-5c1adp-MuiContainer-root"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"MuiBox-root css-oi2hu2"[39m
+          [36m>[39m
+            [36m<h4[39m
+              [33mclass[39m=[32m"MuiTypography-root MuiTypography-h4 
+css-12uczs7-MuiTypography-root"[39m
+            [36m>[39m
+              [0mMarantz AV10 Status[0m
+            [36m</h4>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"MuiBox-root css-1c1kq07"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"MuiChip-root MuiChip-outlined 
+MuiChip-sizeSmall MuiChip-colorDefault MuiChip-outlinedDefault 
+css-17gahcc-MuiChip-root"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"MuiSvgIcon-root 
+MuiSvgIcon-fontSizeMedium MuiChip-icon MuiChip-iconSmall 
+MuiChip-iconColorDefault css-viiy9c-MuiSvgIcon-root"[39m
+                  [33mdata-testid[39m=[32m"FiberManualRecordIcon"[39m
+                  [33mfocusable[39m=[32m"false"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [36m>[39m
+                  [36m<circle[39m
+                    [33mcx[39m=[32m"12"[39m
+                    [33mcy[39m=[32m"12"[39m
+                    [33mr[39m=[32m"8"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"MuiChip-label MuiChip-labelSmall 
+css-txwpof-MuiChip-label"[39m
+                [36m>[39m
+                  [0mAVR Connected[0m
+                [36m</span>[39m
+              [36m</div>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"MuiChip-root MuiChip-outlined 
+MuiChip-sizeSmall MuiChip-colorDefault MuiChip-outlinedDefault 
+css-16s8pcp-MuiChip-root"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"MuiSvgIcon-root 
+MuiSvgIcon-fontSizeMedium MuiChip-icon MuiChip-iconSmall 
+MuiChip-iconColorDefault css-1m4l5uf-MuiSvgIcon-root"[39m
+                  [33mdata-testid[39m=[32m"FiberManualRecordIcon"[39m
+                  [33mfocusable[39m=[32m"false"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [36m>[39m
+                  [36m<circle[39m
+                    [33mcx[39m=[32m"12"[39m
+                    [33mcy[39m=[32m"12"[39m
+                    [33mr[39m=[32m"8"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"MuiChip-label MuiChip-labelSmall 
+css-txwpof-MuiChip-label"[39m
+                [36m>[39m
+                  [0mLive[0m
+                [36m</span>[39m
+              [36m</div>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"MuiContainer-root MuiContainer-maxWidthLg 
+css-5c1adp-MuiContainer-root"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"MuiGrid2-root MuiGrid2-container 
+MuiGrid2-direction-xs-row MuiGrid2-spacing-xs-2.5 
+css-4udl9f-MuiGrid2-root"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"MuiGrid2-root MuiGrid2-direction-xs-row 
+MuiGrid2-grid-xs-12 css-1j0u08r-MuiGrid2-root"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"MuiPaper-root MuiPaper-elevation 
+MuiPaper-rounded MuiPaper-elevation1 MuiCard-root 
+css-g2g4q8-MuiPaper-root-MuiCard-root"[39m
+              [33mstyle[39m=[32m"--Paper-shadow: 0px 2px 1px -1px 
+rgba(0,0,0,0.2),0px 1px 1px 0px rgba(0,0,0,0.14),0px 1px 3px 0px 
+rgba(0,0,0,0.12); --Paper-overlay: linear-gradient(rgba(255, 255, 255, 0.051), 
+rgba(255, 255, 255, 0.051));"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"MuiCardContent-root 
+css-puupk7-MuiCardContent-root"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"MuiBox-root css-mbx0dj"[39m
+                [36m>[39m
+                  [36m<h6[39m
+                    [33mclass[39m=[32m"MuiTypography-root MuiTypography-h6 
+css-1gp87qs-MuiTypography-root"[39m
+                  [36m>[39m
+                    [36m<svg[39m
+                      [33maria-hidden[39m=[32m"true"[39m
+                      [33mclass[39m=[32m"MuiSvgIcon-root 
+MuiSvgIcon-fontSizeMedium css-1cld87c-MuiSvgIcon-root"[39m
+                      [33mdata-testid[39m=[32m"VolumeUpIcon"[39m
+                      [33mfocusable[39m=[32m"false"[39m
+                      [33mviewBox[39m=[32m"0 0 24 24"[39m
+                    [36m>[39m
+                      [36m<path[39m
+                        [33md[39m=[32m"M3 9v6h4l5 5V4L7 9zm13.5 
+3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02M14 
+3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 
+7-8.77s-2.99-7.86-7-8.77"[39m
+                      [36m/>[39m
+                    [36m</svg>[39m
+                    [0mVolume[0m
+                  [36m</h6>[39m
+                [36m</div>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"MuiBox-root css-1wn58un"[39m
+                [36m>[39m
+                  [36m<h3[39m
+                    [33mclass[39m=[32m"MuiTypography-root MuiTypography-h3 
+css-fcz69k-MuiTypography-root"[39m
+                  [36m>[39m
+                    [0m45[0m
+                  [36m</h3>[39m
+                  [36m<p[39m
+                    [33mclass[39m=[32m"MuiTypography-root 
+MuiTypography-body2 css-1onme8s-MuiTypography-root"[39m
+                  [36m>[39m
+                    [0m([0m
+                    [0m60[0m
+                    [0m%)[0m
+                  [36m</p>[39m
+                [36m</div>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"MuiBox-root css-1fcteo4"[39m
+                [36m>[39m
+                  [36m<button[39m
+                    [33mclass[39m=[32m"MuiButtonBase-root 
+MuiIconButton-root MuiIconButton-sizeSmall 
+css-1lso2qg-MuiButtonBase-root-MuiIconButton-root"[39m
+                    [33mtabindex[39m=[32m"0"[39m
+                    [33mtype[39m=[32m"button"[39m
+                  [36m>[39m
+                    [36m<svg[39m
+                      [33maria-hidden[39m=[32m"true"[39m
+                      [33mclass[39m=[32m"MuiSvgIcon-root 
+MuiSvgIcon-fontSizeMedium css-...
+[90m [2mΓ¥»[22m Object.getElementError 
+node_modules/@testing-library/dom/dist/config.js:[2m37:19[22m[39m
+[90m [2mΓ¥»[22m 
+node_modules/@testing-library/dom/dist/query-helpers.js:[2m76:38[22m[39m
+[90m [2mΓ¥»[22m 
+node_modules/@testing-library/dom/dist/query-helpers.js:[2m52:17[22m[39m
+[90m [2mΓ¥»[22m 
+node_modules/@testing-library/dom/dist/query-helpers.js:[2m95:19[22m[39m
+[36m [2mΓ¥»[22m src/__tests__/App.test.tsx:[2m30:26[22m[39m
+    [90m 28|[39m     [35mconst[39m volume [33m=[39m 
+screen[33m.[39m[34mgetByText[39m([32m"Volume"[39m)[33m;[39m
+    [90m 29|[39m     [35mconst[39m subwoofer [33m=[39m 
+screen[33m.[39m[34mgetByText[39m([32m"Subwoofer Settings"[39m)[33m;[39m
+    [90m 30|[39m     [35mconst[39m input [33m=[39m 
+screen[33m.[39m[34mgetByText[39m([32m"Input Source"[39m)[33m;[39m
+    [90m   |[39m                          [31m^[39m
+    [90m 31|[39m     [35mconst[39m audio [33m=[39m 
+screen[33m.[39m[34mgetByText[39m([32m"Audio Signal"[39m)[33m;[39m
+    [90m 32|[39m     [35mconst[39m video [33m=[39m 
+screen[33m.[39m[34mgetByText[39m([32m"Video Signal"[39m)[33m;[39m
+
+[31m[2mΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»Γ
+Ä»[1/2]ΓÄ»[22m[39m
+
+[41m[1m FAIL [22m[49m src/__tests__/components/InputCard.test.tsx[2m > 
+[22mInputCard[2m > [22mshould render all 4 preset buttons
+[31m[1mTestingLibraryElementError[22m[39m: Found multiple elements with 
+the text: Apple TV
+
+Here are the matching elements:
+
+Ignored nodes: comments, script, style
+[36m<p[39m
+  [33mclass[39m=[32m"MuiTypography-root MuiTypography-body1 
+css-1bgrsvy-MuiTypography-root"[39m
+[36m>[39m
+  [0mApple TV[0m
+[36m</p>[39m
+
+Ignored nodes: comments, script, style
+[36m<p[39m
+  [33mclass[39m=[32m"MuiTypography-root MuiTypography-body1 
+css-jv9vss-MuiTypography-root"[39m
+[36m>[39m
+  [0mApple TV[0m
+[36m</p>[39m
+
+(If this is intentional, then use the `*AllBy*` variant of the query (like 
+`queryAllByText`, `getAllByText`, or `findAllByText`)).
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"MuiPaper-root MuiPaper-elevation MuiPaper-rounded 
+MuiPaper-elevation1 MuiCard-root css-1mrckrf-MuiPaper-root-MuiCard-root"[39m
+      [33mstyle[39m=[32m"--Paper-shadow: 0px 2px 1px -1px 
+rgba(0,0,0,0.2),0px 1px 1px 0px rgba(0,0,0,0.14),0px 1px 3px 0px 
+rgba(0,0,0,0.12); --Paper-overlay: linear-gradient(rgba(255, 255, 255, 0.051), 
+rgba(255, 255, 255, 0.051));"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"MuiCardContent-root 
+css-1mej7dh-MuiCardContent-root"[39m
+      [36m>[39m
+        [36m<h6[39m
+          [33mclass[39m=[32m"MuiTypography-root MuiTypography-h6 
+css-13ph8ww-MuiTypography-root"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"MuiSvgIcon-root MuiSvgIcon-fontSizeMedium 
+css-1cld87c-MuiSvgIcon-root"[39m
+            [33mdata-testid[39m=[32m"TouchAppIcon"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M9 11.24V7.5C9 6.12 10.12 5 11.5 5S14 6.12 14 
+7.5v3.74c1.21-.81 2-2.18 2-3.74C16 5.01 13.99 3 11.5 3S7 5.01 7 7.5c0 1.56.79 
+2.93 2 3.74m9.84 
+4.63-4.54-2.26c-.17-.07-.35-.11-.54-.11H13v-6c0-.83-.67-1.5-1.5-1.5S10 6.67 10 
+7.5v10.74c-3.6-.76-3.54-.75-3.67-.75-.31 0-.59.13-.79.33l-.79.8 4.94 
+4.94c.27.27.65.44 1.06.44h6.79c.75 0 1.33-.55 
+1.44-1.28l.75-5.27c.01-.07.02-.14.02-.2 0-.62-.38-1.16-.91-1.38"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [0mSmart Select[0m
+        [36m</h6>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"MuiBox-root css-1ot7oxw"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"MuiBox-root css-izuqqr"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"MuiButtonBase-root 
+css-6yw1h3-MuiButtonBase-root"[39m
+              [33mtabindex[39m=[32m"0"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"MuiTypography-root MuiTypography-body1 
+css-1bgrsvy-MuiTypography-root"[39m
+              [36m>[39m
+                [0mApple TV[0m
+              [36m</p>[39m
+            [36m</button>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"MuiTypography-root MuiTypography-caption 
+css-h8jga0-MuiTypography-root"[39m
+            [36m>[39m
+              [0m1[0m
+            [36m</span>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"MuiBox-root css-izuqqr"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"MuiButtonBase-root 
+css-13vi3yn-MuiButtonBase-root"[39m
+              [33mtabindex[39m=[32m"0"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"MuiTypography-root MuiTypography-body1 
+css-1l98zvm-MuiTypography-root"[39m
+              [36m>[39m
+                [0mMusic[0m
+              [36m</p>[39m
+            [36m</button>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"MuiTypography-root MuiTypography-caption 
+css-y1y48l-MuiTypography-root"[39m
+            [36m>[39m
+              [0m2[0m
+            [36m</span>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"MuiBox-root css-izuqqr"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"MuiButtonBase-root 
+css-13vi3yn-MuiButtonBase-root"[39m
+              [33mtabindex[39m=[32m"0"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+
+              [36m<p[39m
+                [33mclass[39m=[32m"MuiTypography-root MuiTypography-body1 
+css-1l98zvm-MuiTypography-root"[39m
+              [36m>[39m
+                [0mPS3[0m
+              [36m</p>[39m
+            [36m</button>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"MuiTypography-root MuiTypography-caption 
+css-y1y48l-MuiTypography-root"[39m
+            [36m>[39m
+              [0m3[0m
+            [36m</span>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"MuiBox-root css-izuqqr"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"MuiButtonBase-root 
+css-13vi3yn-MuiButtonBase-root"[39m
+              [33mtabindex[39m=[32m"0"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"MuiTypography-root MuiTypography-body1 
+css-1l98zvm-MuiTypography-root"[39m
+              [36m>[39m
+                [0mXbox[0m
+              [36m</p>[39m
+            [36m</button>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"MuiTypography-root MuiTypography-caption 
+css-y1y48l-MuiTypography-root"[39m
+            [36m>[39m
+              [0m4[0m
+            [36m</span>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"MuiBox-root css-49a50q"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"MuiTypography-root MuiTypography-caption 
+css-74esbj-MuiTypography-root"[39m
+          [36m>[39m
+[2m Test Files [22m [1m[31m2 failed[39m[22m[2m | [22m[1m[32m6 passed[39m[22m[90m (8)[39m
+[2m      Tests [22m [1m[31m2 failed[39m[22m[2m | [22m[1m[32m52 passed[39m[22m[90m (54)[39m
+[2m   Start at [22m 10:56:56
+[2m   Duration [22m 3.81s[2m (transform 813ms, setup 899ms, import 15.37s, tests 2.72s, environment 8.72s)[22m
+
+            [0mActive Preset[0m
+          [36m</span>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"MuiTypography-root MuiTypography-body1 
+css-jv9vss-MuiTypography-root"[39m
+          [36m>[39m
+            [0mApple TV[0m
+          [36m</p>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"MuiTypography-root MuiTypography-caption 
+css-1j6irex-MuiTypography-root"[39m
+          [36m>[39m
+            [0mCurrent Source[0m
+            [0m:[0m
+            [0m [0m
+            [0mCBL/SAT[0m
+          [36m</span>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+[90m [2mΓ¥»[22m Object.getElementError 
+node_modules/@testing-library/dom/dist/config.js:[2m37:19[22m[39m
+[90m [2mΓ¥»[22m getElementError 
+node_modules/@testing-library/dom/dist/query-helpers.js:[2m20:35[22m[39m
+[90m [2mΓ¥»[22m getMultipleElementsFoundError 
+node_modules/@testing-library/dom/dist/query-helpers.js:[2m23:10[22m[39m
+[90m [2mΓ¥»[22m 
+node_modules/@testing-library/dom/dist/query-helpers.js:[2m55:13[22m[39m
+[90m [2mΓ¥»[22m 
+node_modules/@testing-library/dom/dist/query-helpers.js:[2m95:19[22m[39m
+[36m [2mΓ¥»[22m 
+src/__tests__/components/InputCard.test.tsx:[2m27:19[22m[39m
+    [90m 25|[39m   [34mit[39m([32m"should render all 4 preset 
+buttons"[39m[33m,[39m () [33m=>[39m {
+    [90m 26|[39m     
+[34mrenderWithProviders[39m([33m<[39m[33mInputCard[39m 
+[33m{[39m[33m...[39mdefaultProps[33m}[39m 
+[33m/[39m[33m>[39m)[33m;[39m
+    [90m 27|[39m     
+[34mexpect[39m(screen[33m.[39m[34mgetByText[39m([32m"Apple 
+TV"[39m))[33m.[39m[34mtoBeInTheDocument[39m()[33m;[39m
+    [90m   |[39m                   [31m^[39m
+    [90m 28|[39m     [34mexpect[39m(screen[33m.[39m[34mgetByText[39m([
+32m"Music"[39m))[33m.[39m[34mtoBeInTheDocument[39m()[33m;[39m
+    [90m 29|[39m     [34mexpect[39m(screen[33m.[39m[34mgetByText[39m([
+32m"PS3"[39m))[33m.[39m[34mtoBeInTheDocument[39m()[33m;[39m
+
+[31m[2mΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»Γ
+Ä»[2/2]ΓÄ»[22m[39m
+

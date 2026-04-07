@@ -9,6 +9,12 @@ const DEFAULT_STATUS: AVRStatus = {
   muted: false,
   input: { id: '', name: '---', selected: true },
   availableInputs: [],
+  smartSelect: [
+    { number: 1, name: 'Smart Select 1', active: false },
+    { number: 2, name: 'Smart Select 2', active: false },
+    { number: 3, name: 'Smart Select 3', active: false },
+    { number: 4, name: 'Smart Select 4', active: false },
+  ],
   speakers: [],
   video: {
     inputResolution: '---',
@@ -128,6 +134,10 @@ export function useAVRStatus() {
     });
   }, [status.muted]);
 
+  const selectSmartPreset = useCallback(async (preset: number) => {
+    await fetch(`/api/smartselect/${preset}`, { method: 'POST' });
+  }, []);
+
   return {
     status,
     wsConnected,
@@ -136,5 +146,6 @@ export function useAVRStatus() {
     volumeDown,
     setInput,
     toggleMute,
+    selectSmartPreset,
   };
 }

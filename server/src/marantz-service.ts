@@ -1,7 +1,7 @@
 import * as net from 'net';
 import { EventEmitter } from 'events';
-import { CHANNEL_MAP, OPINFASP_CHANNEL_ORDER, SOURCE_MAP, TELNET_EVENT_MAP, parseVolume, volumeToCommand } from './constants.js';
-import { AVRStatus, SpeakerStatus, InputSource, SubwooferInfo, TelnetEvent } from './types.js';
+import { CHANNEL_MAP, OPINFASP_CHANNEL_ORDER, SOURCE_MAP, SMART_SELECT_DEFAULTS, SMART_SELECT_SLOTS, TELNET_EVENT_MAP, parseVolume, volumeToCommand } from './constants.js';
+import { AVRStatus, SpeakerStatus, InputSource, SmartSelectPreset, SubwooferInfo, TelnetEvent } from './types.js';
 import { fetchHttpStatus } from './http-client.js';
 
 export class MarantzService extends EventEmitter {
@@ -36,6 +36,11 @@ export class MarantzService extends EventEmitter {
       muted: false,
       input: { id: '', name: '', selected: true },
       availableInputs: [],
+      smartSelect: SMART_SELECT_SLOTS.map((n) => ({
+        number: n,
+        name: SMART_SELECT_DEFAULTS[n],
+        active: false,
+      })),
       speakers: [],
       video: {
         inputResolution: '---',
@@ -102,6 +107,7 @@ export class MarantzService extends EventEmitter {
       this.sendCommand('PSSWR ?');
       this.sendCommand('ECO?');
       this.sendCommand('OPINF?');
+      this.sendCommand('MSSMART ?');
     });
 
     this.socket.on('data', (data: string) => {
@@ -219,6 +225,12 @@ export class MarantzService extends EventEmitter {
         changed = true;
         break;
 
+      case 'MSSMART':
+      case 'MSQUICK':
+        this.handleSmartSelect(parameter);
+        changed = true;
+        break;
+
       case 'MS':
         this.status.surroundMode = parameter;
         this.status.audio.soundMode = parameter;
@@ -263,6 +275,20 @@ export class MarantzService extends EventEmitter {
       this.status.lastUpdate = new Date().toISOString();
       this.emit('statusChanged', this.status);
     }
+  }
+
+  private handleSmartSelect(param: string): void {
+    // MSQUICK events: "MSQUICK1", "MSQUICK2", etc. or query responses like "1", "2"
+    // After prefix stripping, param should be "1".."4" or contain a digit
+    const match = param.match(/(\d)/);
+    if (!match) return;
+    const num = parseInt(match[1], 10);
+    if (num < 1 || num > 4) return;
+
+    this.status.smartSelect = this.status.smartSelect.map((p) => ({
+      ...p,
+      active: p.number === num,
+    }));
   }
 
   private handleParameterSetting(param: string): void {
@@ -392,6 +418,16 @@ export class MarantzService extends EventEmitter {
       this.status.audio.soundMode = http.surroundMode;
     }
 
+    // Merge Smart Select
+    if (http.smartSelect?.length) {
+      // Preserve active state from telnet, update names from HTTP
+      const activeNum = this.status.smartSelect.find((p) => p.active)?.number;
+      this.status.smartSelect = http.smartSelect.map((p: SmartSelectPreset) => ({
+        ...p,
+        active: p.number === activeNum,
+      }));
+    }
+
     // Merge speakers from active speaker query
     if (http.speakers?.length) this.status.speakers = http.speakers;
 
@@ -444,6 +480,11 @@ export class MarantzService extends EventEmitter {
 
   setInput(sourceId: string): void {
     this.sendCommand(`SI${sourceId}`);
+  }
+
+  setSmartSelect(preset: number): void {
+    if (preset < 1 || preset > 4) return;
+    this.sendCommand(`MSSMART${preset}`);
   }
 
   disconnect(): void {

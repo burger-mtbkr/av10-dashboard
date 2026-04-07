@@ -292,6 +292,41 @@ describe('MarantzService', () => {
     });
   });
 
+  describe('smart select (MSQUICK)', () => {
+    it('should default to 4 presets, none active', () => {
+      const status = service.getStatus();
+      expect(status.smartSelect).toHaveLength(4);
+      expect(status.smartSelect.every((p: any) => !p.active)).toBe(true);
+      expect(status.smartSelect[0].number).toBe(1);
+      expect(status.smartSelect[3].number).toBe(4);
+    });
+
+    it('should activate a preset on MSQUICK event', () => {
+      (service as any).updateStatusFromEvent('MSQUICK', '2');
+      const status = service.getStatus();
+      expect(status.smartSelect.find((p: any) => p.number === 2).active).toBe(true);
+      expect(status.smartSelect.filter((p: any) => p.active)).toHaveLength(1);
+    });
+
+    it('should switch active preset when a different one is selected', () => {
+      (service as any).updateStatusFromEvent('MSQUICK', '1');
+      (service as any).updateStatusFromEvent('MSQUICK', '3');
+      const status = service.getStatus();
+      expect(status.smartSelect.find((p: any) => p.number === 1).active).toBe(false);
+      expect(status.smartSelect.find((p: any) => p.number === 3).active).toBe(true);
+    });
+
+    it('should ignore invalid preset numbers', () => {
+      (service as any).updateStatusFromEvent('MSQUICK', '5');
+      const status = service.getStatus();
+      expect(status.smartSelect.every((p: any) => !p.active)).toBe(true);
+    });
+
+    it('should not throw when not connected', () => {
+      expect(() => (service as any).setSmartSelect(1)).not.toThrow();
+    });
+  });
+
   describe('processBuffer (telnet line splitting)', () => {
     it('should process CR-terminated lines', () => {
       const listener = vi.fn();

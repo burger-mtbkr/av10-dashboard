@@ -32,6 +32,12 @@ const mockStatus = {
     multEq: 'AUDYSSEY',
   },
   subwoofers: [{ number: 1, level: '0.0 dB', active: true }],
+  smartSelect: [
+    { number: 1, name: 'Apple TV', active: true },
+    { number: 2, name: 'Music', active: false },
+    { number: 3, name: 'PS3', active: false },
+    { number: 4, name: 'Xbox', active: false },
+  ],
   lfeLevel: '0 dB',
   ecoMode: 'OFF',
   surroundMode: 'Dolby Atmos',
@@ -44,6 +50,7 @@ const mockMarantz = {
   getStatus: () => JSON.parse(JSON.stringify(mockStatus)),
   setVolume: vi.fn(),
   setInput: vi.fn(),
+  setSmartSelect: vi.fn(),
   sendCommand: vi.fn(),
 };
 
@@ -104,6 +111,16 @@ function buildTestApp() {
     const { muted } = req.body as { muted: boolean };
     mockMarantz.sendCommand(muted ? 'MUON' : 'MUOFF');
     res.json({ success: true, muted });
+  });
+
+  app.post('/api/smartselect/:preset', (req, res) => {
+    const num = parseInt(req.params.preset, 10);
+    if (isNaN(num) || num < 1 || num > 4) {
+      res.status(400).json({ error: 'Preset must be 1-4' });
+      return;
+    }
+    mockMarantz.setSmartSelect(num);
+    res.json({ success: true, preset: num });
   });
 
   return app;
@@ -262,6 +279,35 @@ describe('API Routes', () => {
         .send({ muted: false });
       expect(res.status).toBe(200);
       expect(mockMarantz.sendCommand).toHaveBeenCalledWith('MUOFF');
+    });
+  });
+
+  describe('POST /api/smartselect/:preset', () => {
+    it('should accept valid preset 1-4', async () => {
+      const res = await request(app)
+        .post('/api/smartselect/2');
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      expect(res.body.preset).toBe(2);
+      expect(mockMarantz.setSmartSelect).toHaveBeenCalledWith(2);
+    });
+
+    it('should reject preset 0', async () => {
+      const res = await request(app)
+        .post('/api/smartselect/0');
+      expect(res.status).toBe(400);
+    });
+
+    it('should reject preset 5', async () => {
+      const res = await request(app)
+        .post('/api/smartselect/5');
+      expect(res.status).toBe(400);
+    });
+
+    it('should reject non-numeric preset', async () => {
+      const res = await request(app)
+        .post('/api/smartselect/abc');
+      expect(res.status).toBe(400);
     });
   });
 });

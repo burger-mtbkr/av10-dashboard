@@ -1,7 +1,8 @@
 import http from 'http';
+import * as net from 'net';
 import { parseStringPromise } from 'xml2js';
-import { CHANNEL_MAP, SOURCE_MAP, parseVolume } from './constants.js';
-import type { SpeakerStatus, InputSource, SubwooferInfo } from './types.js';
+import { CHANNEL_MAP, SOURCE_MAP, SMART_SELECT_DEFAULTS, SMART_SELECT_SLOTS, parseVolume } from './constants.js';
+import type { SpeakerStatus, InputSource, SubwooferInfo, SmartSelectPreset } from './types.js';
 
 /** Make an HTTP request and return the response body */
 function httpGet(host: string, port: number, path: string): Promise<string> {
@@ -216,6 +217,48 @@ function parseSourceRenames(data: any): Record<string, string> {
   return renames;
 }
 
+/** Parse Smart Select (Quick Select) custom names from receiver.
+ *  Tries GetQuickSelect / GetRenameQuickselect AppCommand0300 responses.
+ *  Falls back to default labels if not available.
+ */
+function parseSmartSelectNames(data: any): SmartSelectPreset[] {
+  const presets: SmartSelectPreset[] = SMART_SELECT_SLOTS.map((n) => ({
+    number: n,
+    name: SMART_SELECT_DEFAULTS[n],
+    active: false,
+  }));
+
+  try {
+    const cmds = Array.isArray(data?.rx?.cmd) ? data.rx.cmd : [data?.rx?.cmd];
+    for (const cmd of cmds) {
+      if (!cmd) continue;
+      const name = typeof cmd.name === 'string' ? cmd.name : '';
+      if (!name.includes('QuickSelect') && !name.includes('Quickselect') && !name.includes('SmartSelect') && !name.includes('Smartselect')) continue;
+
+      const list = cmd?.list;
+      if (!list) continue;
+
+      const params = Array.isArray(list.param) ? list.param : [list.param];
+      for (const p of params) {
+        if (!p || !p.$) continue;
+        const pName = p.$.name || '';
+        // Expect names like "quick1", "quick2" etc.
+        const match = pName.match(/(\d)/);
+        if (!match) continue;
+        const num = parseInt(match[1], 10);
+        const preset = presets.find((pr) => pr.number === num);
+        if (preset && p._ && typeof p._ === 'string' && p._.trim()) {
+          preset.name = p._.trim();
+        }
+      }
+    }
+  } catch (e) {
+    console.error('[HTTP] Error parsing smart select names:', e);
+  }
+
+  return presets;
+}
+
 /** Parse video info from response */
 function parseVideoInfo(data: any): { inputResolution: string; outputResolution: string; hdrFormat: string; inputSignal: string } {
   const result = {
@@ -336,6 +379,8 @@ export async function fetchHttpStatus(host: string, httpPort: number): Promise<a
     const details = await fetchAppCommand0300(host, httpPort, [
       { name: 'GetActiveSpeaker', params: ['activespall'] },
       { name: 'GetSourceRename', params: [] },
+      { name: 'GetRenameQuickselect', params: ['quick1', 'quick2', 'quick3', 'quick4'] },
+      { name: 'GetRenameSmartselect', params: ['smart1', 'smart2', 'smart3', 'smart4'] },
       { name: 'GetVideoInfo', params: ['videooutput', 'hdmisigin', 'hdmisigout'] },
       { name: 'GetAudioInfo', params: ['inputmode', 'output', 'signal', 'sound', 'fs'] },
     ]);
@@ -345,6 +390,9 @@ export async function fetchHttpStatus(host: string, httpPort: number): Promise<a
 
     // Source renames
     const renames = parseSourceRenames(details);
+
+    // Smart Select names
+    result.smartSelect = parseSmartSelectNames(details);
 
     // Build available inputs list with custom names
     const defaultSources = Object.keys(SOURCE_MAP);
@@ -380,5 +428,87 @@ export async function fetchHttpStatus(host: string, httpPort: number): Promise<a
     console.error('[HTTP] AppCommand0300 fetch error:', e.message);
   }
 
+  // 3. Fetch smart select custom names via HEOS CLI (Marantz uses this)
+  try {
+    const heosNames = await fetchHeosQuickSelectNames(host);
+    if (heosNames.length > 0) {
+      // Merge HEOS names into smartSelect presets
+      if (!result.smartSelect) {
+        result.smartSelect = SMART_SELECT_SLOTS.map((n) => ({
+          number: n,
+          name: SMART_SELECT_DEFAULTS[n],
+          active: false,
+        }));
+      }
+      for (const hn of heosNames) {
+        const preset = result.smartSelect.find((p: SmartSelectPreset) => p.number === hn.id);
+        if (preset && hn.name) {
+          preset.name = hn.name;
+        }
+      }
+    }
+  } catch (e: any) {
+    console.error('[HTTP] HEOS smart select fetch error:', e.message);
+  }
+
   return result;
+}
+
+// --- HEOS CLI helpers ---
+
+const HEOS_PORT = 1255;
+
+/** Send a HEOS CLI command and return the JSON response */
+function heosCommand(host: string, command: string, timeout = 5000): Promise<any> {
+  return new Promise((resolve, reject) => {
+    const socket = net.createConnection(HEOS_PORT, host);
+    let buf = '';
+    const timer = setTimeout(() => {
+      socket.destroy();
+      reject(new Error('HEOS command timeout'));
+    }, timeout);
+
+    socket.setEncoding('utf-8');
+    socket.on('connect', () => {
+      socket.write(`${command}\r\n`);
+    });
+    socket.on('data', (data) => {
+      buf += data;
+      // HEOS responses are JSON terminated by \r\n
+      if (buf.includes('\r\n')) {
+        clearTimeout(timer);
+        try {
+          const json = JSON.parse(buf.trim());
+          resolve(json);
+        } catch {
+          resolve(null);
+        }
+        socket.destroy();
+      }
+    });
+    socket.on('error', (err) => {
+      clearTimeout(timer);
+      reject(err);
+    });
+  });
+}
+
+/** Get HEOS player ID for this receiver */
+async function getHeosPlayerId(host: string): Promise<number | null> {
+  const resp = await heosCommand(host, 'heos://player/get_players');
+  if (resp?.heos?.result !== 'success' || !Array.isArray(resp.payload)) return null;
+  // Find player matching our IP
+  const player = resp.payload.find((p: any) => p.ip === host) || resp.payload[0];
+  return player?.pid ?? null;
+}
+
+/** Fetch smart/quick select custom names via HEOS CLI */
+async function fetchHeosQuickSelectNames(host: string): Promise<{ id: number; name: string }[]> {
+  const pid = await getHeosPlayerId(host);
+  if (!pid) return [];
+  const resp = await heosCommand(host, `heos://player/get_quickselects?pid=${pid}`);
+  if (resp?.heos?.result !== 'success' || !Array.isArray(resp.payload)) return [];
+  return resp.payload
+    .filter((p: any) => typeof p.id === 'number' && typeof p.name === 'string')
+    .map((p: any) => ({ id: p.id as number, name: p.name as string }));
 }

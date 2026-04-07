@@ -11,6 +11,7 @@ import type {
   AudioInfo,
   SubwooferInfo,
   InputSource,
+  SmartSelectPreset,
 } from "../types";
 
 /** Render with all providers (Theme, i18n) */
@@ -47,6 +48,12 @@ export function createMockStatus(
       { id: "BD", name: "Blu-ray", selected: false },
       { id: "GAME", name: "Game", selected: false },
       { id: "TV", name: "TV Audio", selected: false },
+    ],
+    smartSelect: [
+      { number: 1, name: "Apple TV", active: true },
+      { number: 2, name: "Music", active: false },
+      { number: 3, name: "PS3", active: false },
+      { number: 4, name: "Xbox", active: false },
     ],
     speakers: createMockSpeakers(),
     video: {

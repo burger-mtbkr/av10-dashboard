@@ -29,6 +29,7 @@ export default function App() {
     volumeDown,
     setInput,
     toggleMute,
+    selectSmartPreset,
   } = useAVRStatus();
 
   return (
@@ -154,12 +155,15 @@ export default function App() {
               />
             </Grid>
 
-            {/* Input source */}
+            {/* Smart Select */}
             <Grid size={{ xs: 12, md: 6 }}>
               <InputCard
+                smartSelect={status.smartSelect}
                 currentInput={status.input}
-                availableInputs={status.availableInputs}
-                onInputChange={setInput}
+                audio={status.audio}
+                surroundMode={status.surroundMode}
+                video={status.video}
+                onSelectPreset={selectSmartPreset}
               />
             </Grid>
 

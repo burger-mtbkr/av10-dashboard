@@ -93,6 +93,17 @@ app.post('/api/mute', (req, res) => {
   res.json({ success: true, muted });
 });
 
+// Activate a Smart Select preset (1-4)
+app.post('/api/smartselect/:preset', (req, res) => {
+  const num = parseInt(req.params.preset, 10);
+  if (isNaN(num) || num < 1 || num > 4) {
+    res.status(400).json({ error: 'Preset must be 1-4' });
+    return;
+  }
+  marantz.setSmartSelect(num);
+  res.json({ success: true, preset: num });
+});
+
 // --- HTTP server + WebSocket ---
 const server = createServer(app);
 const wss = new WebSocketServer({ server, path: '/ws' });
