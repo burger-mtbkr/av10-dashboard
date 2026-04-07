@@ -78,73 +78,115 @@ async function fetchAppCommand0300(host: string, port: number, commands: { name:
   return parseStringPromise(xml, { explicitArray: false });
 }
 
-/** Parse active speakers from response */
+/**
+ * Parse speaker configuration from GetActiveSpeaker response.
+ *
+ * The Marantz AVR returns per-channel numeric values:
+ *   0 = not in the configured layout (omit)
+ *   1 = configured but not currently active (show grey)
+ *   2 = configured and actively receiving signal (show blue)
+ *
+ * This returns ALL configured speakers (value > 0), with `active`
+ * reflecting whether they are currently receiving signal (value >= 2).
+ */
 function parseActiveSpeakers(data: any): SpeakerStatus[] {
   const speakers: SpeakerStatus[] = [];
+  const seen = new Set<string>();
+
   try {
-    // The response contains active speaker info
     const cmds = Array.isArray(data?.rx?.cmd) ? data.rx.cmd : [data?.rx?.cmd];
+
     for (const cmd of cmds) {
       if (!cmd) continue;
-      const name = cmd?.name || '';
-      if (typeof name === 'string' && name.includes('GetActiveSpeaker')) {
-        const list = cmd?.list;
-        if (list) {
-          const activespall = list?.param;
-          if (activespall) {
-            // Parse the active speaker data
-            // The data contains speaker codes with their active status
-            const speakerData = typeof activespall === 'string' ? activespall : activespall?._ || '';
-            parseActiveSpeakerString(speakerData, speakers);
+      const cmdName = typeof cmd.name === 'string' ? cmd.name : '';
+      if (!cmdName.includes('GetActiveSpeaker')) continue;
+
+      const list = cmd.list;
+      if (!list) continue;
+
+      const params = Array.isArray(list.param) ? list.param : [list.param];
+
+      // --- Format 1: structured object with channel codes as properties ---
+      // <param name="activespall"><FL>2</FL><FR>2</FR>...</param>
+      // xml2js → { "$": { "name": "activespall" }, "FL": "2", "FR": "2", ... }
+      for (const param of params) {
+        if (!param || typeof param !== 'object') continue;
+        const pName = param?.$?.name || '';
+        if (pName !== 'activespall') continue;
+
+        for (const [key, value] of Object.entries(param)) {
+          if (key === '$' || key === '_') continue;
+          const code = key.toUpperCase();
+          if (!(code in CHANNEL_MAP) || seen.has(code)) continue;
+
+          const numVal = parseInt(String(value), 10);
+          if (isNaN(numVal) || numVal <= 0) continue; // 0 = not configured
+
+          seen.add(code);
+          speakers.push({
+            code,
+            name: CHANNEL_MAP[code].name,
+            active: numVal >= 2,
+            group: CHANNEL_MAP[code].group,
+          });
+        }
+      }
+
+      if (speakers.length > 0) break;
+
+      // --- Format 2: individual params per channel ---
+      // <param name="FL">2</param><param name="FR">2</param>...
+      // xml2js → [{ "$": { "name": "FL" }, "_": "2" }, ...]
+      for (const param of params) {
+        if (!param || typeof param !== 'object') continue;
+        const code = (param?.$?.name || '').toUpperCase();
+        if (!(code in CHANNEL_MAP) || seen.has(code)) continue;
+
+        const val = typeof param._ === 'string' ? param._ : typeof param === 'string' ? param : '';
+        const numVal = parseInt(val, 10);
+        if (isNaN(numVal) || numVal <= 0) continue;
+
+        seen.add(code);
+        speakers.push({
+          code,
+          name: CHANNEL_MAP[code].name,
+          active: numVal >= 2,
+          group: CHANNEL_MAP[code].group,
+        });
+      }
+
+      if (speakers.length > 0) break;
+
+      // --- Format 3: space/comma-separated text list of active channel codes ---
+      // <param name="activespall">FL FR C SW SL SR...</param>
+      // xml2js → { "$": { "name": "activespall" }, "_": "FL FR C..." }
+      for (const param of params) {
+        if (!param) continue;
+        const pName = (typeof param === 'object' ? param?.$?.name : '') || '';
+        const text = typeof param._ === 'string' ? param._ : typeof param === 'string' ? param : '';
+        if (!text || (!pName.toLowerCase().includes('active') && !pName.toLowerCase().includes('speaker'))) continue;
+
+        const tokens = text.toUpperCase().split(/[^A-Z0-9]+/).filter(Boolean);
+        for (const token of tokens) {
+          if (token in CHANNEL_MAP && !seen.has(token)) {
+            seen.add(token);
+            speakers.push({
+              code: token,
+              name: CHANNEL_MAP[token].name,
+              active: true, // text-only format cannot distinguish active vs configured
+              group: CHANNEL_MAP[token].group,
+            });
           }
         }
       }
+
+      if (speakers.length > 0) break;
     }
   } catch (e) {
     console.error('[HTTP] Error parsing active speakers:', e);
   }
 
-  // If we didn't get speaker data from the parsed response, return all known speakers as a fallback
-  if (speakers.length === 0) {
-    return buildFallbackSpeakers(data);
-  }
-
-  return speakers;
-}
-
-function parseActiveSpeakerString(data: string, speakers: SpeakerStatus[]): void {
-  // Active speaker data is a bitmask or comma-separated list of active channels
-  // The format varies — try to parse what we can
-  if (!data) return;
-
-  // Try parsing as a structured response where each channel is listed
-  const channels = data.split(/[,\s]+/).filter(Boolean);
-  for (const ch of channels) {
-    const info = CHANNEL_MAP[ch.toUpperCase()];
-    if (info) {
-      speakers.push({
-        code: ch.toUpperCase(),
-        name: info.name,
-        active: true,
-        group: info.group,
-      });
-    }
-  }
-}
-
-function buildFallbackSpeakers(data: any): SpeakerStatus[] {
-  // Build a reasonable speaker set from known channels
-  const speakers: SpeakerStatus[] = [];
-  const allChannels = Object.entries(CHANNEL_MAP);
-  for (const [code, info] of allChannels) {
-    speakers.push({
-      code,
-      name: info.name,
-      active: false, // Will be updated by telnet events or next poll
-      group: info.group,
-    });
-  }
-  return speakers;
+  return speakers.sort((a, b) => a.code.localeCompare(b.code));
 }
 
 /** Parse source rename data */

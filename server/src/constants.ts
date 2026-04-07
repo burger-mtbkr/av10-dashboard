@@ -36,6 +36,19 @@ export const CHANNEL_MAP: Record<string, { name: string; group: 'ear' | 'height'
   CH:  { name: 'Center Height',        group: 'height' },
 };
 
+/**
+ * OPINFASP telnet channel order — maps character positions to speaker codes.
+ * The Marantz AV10/Cinema series sends a digit string via telnet `OPINFASP`
+ * where each position represents a speaker: 0=not configured, 1=configured, 2=active.
+ */
+export const OPINFASP_CHANNEL_ORDER: string[] = [
+  'FL', 'FR', 'C', 'SW', 'SL', 'SR', 'SBL', 'SBR',
+  'SB', 'SDL', 'SDR', 'FWL', 'FWR', 'TFL', 'TFR',
+  'TML', 'TMR', 'TRL', 'TRR', 'SHL', 'SHR', 'FDL',
+  'FDR', 'FHL', 'FHR', 'BDL', 'BDR', 'RHL', 'RHR',
+  'TS', 'CH', 'SW2',
+];
+
 /** Source ID to default name mapping */
 export const SOURCE_MAP: Record<string, string> = {
   'SAT/CBL': 'CBL/SAT',
@@ -70,6 +83,7 @@ export const TELNET_EVENT_MAP: Record<string, string> = {
   SV: 'videoInput',
   DC: 'digitalInput',
   EC: 'ecoMode',
+  OP: 'operation',
 };
 
 /** Volume value mapping: Marantz sends 2-3 digit absolute values (0-98 scale).

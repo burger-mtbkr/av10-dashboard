@@ -252,6 +252,46 @@ describe('MarantzService', () => {
     });
   });
 
+  describe('operation events (OP)', () => {
+    it('should parse OPINFASP with all speakers active', () => {
+      // 7.1.4 layout: FL FR C SW SL SR SBL SBR + 4 height
+      (service as any).handleOperationEvent('INFASP 22222222000000000000000220022000');
+      const status = service.getStatus();
+      expect(status.speakers).toHaveLength(12);
+      expect(status.speakers.every((s: any) => s.active)).toBe(true);
+    });
+
+    it('should distinguish configured (1) from active (2) speakers', () => {
+      // FL=2(active), FR=1(configured), C=0(not in layout)
+      (service as any).handleOperationEvent('INFASP 21000000000000000000000000000000');
+      const status = service.getStatus();
+      expect(status.speakers).toHaveLength(2);
+      expect(status.speakers.find((s: any) => s.code === 'FL').active).toBe(true);
+      expect(status.speakers.find((s: any) => s.code === 'FR').active).toBe(false);
+    });
+
+    it('should ignore positions with value 0', () => {
+      (service as any).handleOperationEvent('INFASP 00000000000000000000000000000000');
+      const status = service.getStatus();
+      expect(status.speakers).toEqual([]);
+    });
+
+    it('should parse a 7.2.4 layout with SW2 at position 31', () => {
+      // Positions 0-7: FL FR C SW SL SR SBL SBR, position 31: SW2
+      // Positions 13-14: TFL TFR, positions 17-18: TRL TRR
+      (service as any).handleOperationEvent('INFASP 22222222000002200220000000000002');
+      const status = service.getStatus();
+      const codes = status.speakers.map((s: any) => s.code);
+      expect(codes).toContain('SW');
+      expect(codes).toContain('SW2');
+      expect(codes).toContain('TFL');
+      expect(codes).toContain('TFR');
+      expect(codes).toContain('TRL');
+      expect(codes).toContain('TRR');
+      expect(status.speakers).toHaveLength(13);
+    });
+  });
+
   describe('processBuffer (telnet line splitting)', () => {
     it('should process CR-terminated lines', () => {
       const listener = vi.fn();

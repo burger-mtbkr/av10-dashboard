@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { parseVolume, volumeToCommand, CHANNEL_MAP, SOURCE_MAP, TELNET_EVENT_MAP } from '../constants.js';
+import { parseVolume, volumeToCommand, CHANNEL_MAP, SOURCE_MAP, TELNET_EVENT_MAP, OPINFASP_CHANNEL_ORDER } from '../constants.js';
 
 describe('parseVolume', () => {
   it('should parse 2-digit integer volume values', () => {
@@ -115,5 +115,26 @@ describe('TELNET_EVENT_MAP', () => {
     expect(TELNET_EVENT_MAP.EC).toBe('ecoMode');
     expect(TELNET_EVENT_MAP.PS).toBe('parameterSetting');
     expect(TELNET_EVENT_MAP.VS).toBe('videoSelect');
+    expect(TELNET_EVENT_MAP.OP).toBe('operation');
+  });
+});
+
+describe('OPINFASP_CHANNEL_ORDER', () => {
+  it('should have 32 entries', () => {
+    expect(OPINFASP_CHANNEL_ORDER).toHaveLength(32);
+  });
+
+  it('should start with FL, FR, C, SW', () => {
+    expect(OPINFASP_CHANNEL_ORDER.slice(0, 4)).toEqual(['FL', 'FR', 'C', 'SW']);
+  });
+
+  it('should contain only valid CHANNEL_MAP codes', () => {
+    for (const code of OPINFASP_CHANNEL_ORDER) {
+      expect(CHANNEL_MAP[code]).toBeDefined();
+    }
+  });
+
+  it('should end with SW2 as the last entry', () => {
+    expect(OPINFASP_CHANNEL_ORDER[31]).toBe('SW2');
   });
 });

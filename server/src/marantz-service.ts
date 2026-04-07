@@ -1,6 +1,6 @@
 import * as net from 'net';
 import { EventEmitter } from 'events';
-import { CHANNEL_MAP, SOURCE_MAP, TELNET_EVENT_MAP, parseVolume, volumeToCommand } from './constants.js';
+import { CHANNEL_MAP, OPINFASP_CHANNEL_ORDER, SOURCE_MAP, TELNET_EVENT_MAP, parseVolume, volumeToCommand } from './constants.js';
 import { AVRStatus, SpeakerStatus, InputSource, SubwooferInfo, TelnetEvent } from './types.js';
 import { fetchHttpStatus } from './http-client.js';
 
@@ -101,6 +101,7 @@ export class MarantzService extends EventEmitter {
       this.sendCommand('PSSWL ?');
       this.sendCommand('PSSWR ?');
       this.sendCommand('ECO?');
+      this.sendCommand('OPINF?');
     });
 
     this.socket.on('data', (data: string) => {
@@ -240,6 +241,11 @@ export class MarantzService extends EventEmitter {
         changed = true;
         break;
 
+      case 'OP':
+        this.handleOperationEvent(parameter);
+        changed = true;
+        break;
+
       case 'EC':
         if (parameter === 'ON' || parameter === 'OFF' || parameter === 'AUTO') {
           this.status.ecoMode = parameter;
@@ -302,6 +308,32 @@ export class MarantzService extends EventEmitter {
       if (output === 'AUTO') this.status.video.hdmiOutput = 'Auto';
       else if (output === '1') this.status.video.hdmiOutput = 'HDMI 1';
       else if (output === '2') this.status.video.hdmiOutput = 'HDMI 2';
+    }
+  }
+
+  private handleOperationEvent(param: string): void {
+    if (param.startsWith('INFASP ')) {
+      // Active Speaker Profile: digit string with per-channel status
+      // 0=not configured, 1=configured/inactive, 2=active
+      const digits = param.substring('INFASP '.length).trim();
+      const speakers: SpeakerStatus[] = [];
+      for (let i = 0; i < digits.length && i < OPINFASP_CHANNEL_ORDER.length; i++) {
+        const val = parseInt(digits[i], 10);
+        if (isNaN(val) || val <= 0) continue; // 0 = not in layout
+        const code = OPINFASP_CHANNEL_ORDER[i];
+        const info = CHANNEL_MAP[code];
+        if (!info) continue;
+        speakers.push({
+          code,
+          name: info.name,
+          active: val >= 2,
+          group: info.group,
+        });
+      }
+      if (speakers.length > 0) {
+        console.log(`[Marantz] OPINFASP: ${speakers.length} speakers parsed`);
+        this.status.speakers = speakers;
+      }
     }
   }
 
