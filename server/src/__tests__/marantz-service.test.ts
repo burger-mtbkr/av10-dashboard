@@ -63,6 +63,20 @@ describe('MarantzService', () => {
     it('should not throw when not connected', () => {
       expect(() => service.sendCommand('MV50')).not.toThrow();
     });
+
+    it('should write to the socket when connected', () => {
+      const write = vi.fn();
+      (service as any).socket = {
+        write,
+        removeAllListeners: vi.fn(),
+        destroy: vi.fn(),
+      };
+      (service as any).connected = true;
+
+      service.sendCommand('MV50');
+
+      expect(write).toHaveBeenCalledWith('MV50\r');
+    });
   });
 
   describe('setVolume', () => {
@@ -88,6 +102,42 @@ describe('MarantzService', () => {
       service.disconnect();
       service.disconnect();
       expect(service.getStatus().connected).toBe(false);
+    });
+
+    it('should clean up socket listeners and destroy the socket', () => {
+      const removeAllListeners = vi.fn();
+      const destroy = vi.fn();
+      (service as any).socket = { removeAllListeners, destroy };
+
+      service.disconnect();
+
+      expect(removeAllListeners).toHaveBeenCalledTimes(1);
+      expect(destroy).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('connect and reconnect helpers', () => {
+    it('should create the socket, poll HTTP state, and start polling on connect', async () => {
+      const createSocket = vi.spyOn(service as any, 'createSocket').mockImplementation(() => {});
+      const pollHttpStatus = vi.spyOn(service as any, 'pollHttpStatus').mockResolvedValue(undefined);
+      const startHttpPolling = vi.spyOn(service as any, 'startHttpPolling').mockImplementation(() => {});
+
+      await service.connect();
+
+      expect(createSocket).toHaveBeenCalledTimes(1);
+      expect(pollHttpStatus).toHaveBeenCalledTimes(1);
+      expect(startHttpPolling).toHaveBeenCalledTimes(1);
+    });
+
+    it('should schedule a reconnect attempt', () => {
+      vi.useFakeTimers();
+      const createSocket = vi.spyOn(service as any, 'createSocket').mockImplementation(() => {});
+
+      (service as any).scheduleReconnect();
+      vi.advanceTimersByTime(10000);
+
+      expect(createSocket).toHaveBeenCalledTimes(1);
+      vi.useRealTimers();
     });
   });
 
@@ -233,6 +283,12 @@ describe('MarantzService', () => {
       (service as any).handleParameterSetting('MULTEQ:AUDYSSEY');
       expect(service.getStatus().audio.multEq).toBe('AUDYSSEY');
     });
+
+    it('should leave unhandled SWR settings unchanged', () => {
+      const before = service.getStatus();
+      (service as any).handleParameterSetting('SWR ON');
+      expect(service.getStatus()).toMatchObject(before);
+    });
   });
 
   describe('video settings (VS)', () => {
@@ -324,6 +380,71 @@ describe('MarantzService', () => {
 
     it('should not throw when not connected', () => {
       expect(() => (service as any).setSmartSelect(1)).not.toThrow();
+    });
+
+    it('should ignore invalid Smart Select values when sending commands', () => {
+      const sendCommand = vi.spyOn(service, 'sendCommand');
+      (service as any).setSmartSelect(0);
+      (service as any).setSmartSelect(5);
+      expect(sendCommand).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('HTTP status merging', () => {
+    it('should merge HTTP status and preserve the active smart select preset', () => {
+      (service as any).updateStatusFromEvent('MSQUICK', '2');
+
+      (service as any).mergeHttpStatus({
+        power: 'ON',
+        volume: -25.5,
+        muted: true,
+        input: { id: 'GAME', name: 'Console', selected: true },
+        availableInputs: [
+          { id: 'GAME', name: 'Console', selected: true },
+          { id: 'BD', name: 'Blu-ray', selected: false },
+        ],
+        surroundMode: 'AURO-3D',
+        smartSelect: [
+          { number: 1, name: 'Movie', active: false },
+          { number: 2, name: 'Gaming', active: false },
+          { number: 3, name: 'Music', active: false },
+          { number: 4, name: 'Night', active: false },
+        ],
+        speakers: [{ code: 'FL', name: 'Front Left', active: true, group: 'ear' }],
+        video: { inputResolution: '2160p', outputResolution: '2160p', hdrFormat: 'HDR10', inputSignal: 'HDMI' },
+        audio: { inputFormat: 'PCM', soundMode: 'AURO-3D', samplingRate: '96kHz' },
+        subwoofers: [{ number: 1, level: '+2.0 dB', active: true }],
+        lfeLevel: '-4 dB',
+        ecoMode: 'AUTO',
+      });
+
+      const status = service.getStatus();
+      expect(status.power).toBe('ON');
+      expect(status.volume).toBe(54.5);
+      expect(status.volumeDisplay).toBe('54.5');
+      expect(status.muted).toBe(true);
+      expect(status.input).toEqual({ id: 'GAME', name: 'Console', selected: true });
+      expect(status.availableInputs[0]).toMatchObject({ id: 'GAME', selected: true });
+      expect(status.surroundMode).toBe('AURO-3D');
+      expect(status.audio.soundMode).toBe('AURO-3D');
+      expect(status.smartSelect.find((preset: any) => preset.number === 2).active).toBe(true);
+      expect(status.smartSelect.find((preset: any) => preset.number === 2).name).toBe('Gaming');
+      expect(status.video).toMatchObject({ hdrFormat: 'HDR10', inputResolution: '2160p' });
+      expect(status.audio).toMatchObject({ inputFormat: 'PCM', samplingRate: '96kHz' });
+      expect(status.subwoofers[0]).toMatchObject({ level: '+2.0 dB' });
+      expect(status.lfeLevel).toBe('-4 dB');
+      expect(status.ecoMode).toBe('AUTO');
+    });
+
+    it('should resolve custom input names before falling back to source ids', () => {
+      (service as any).status.availableInputs = [{ id: 'GAME', name: 'Console', selected: false }];
+
+      expect((service as any).resolveInputName('GAME')).toBe('Console');
+      expect((service as any).resolveInputName('UNKNOWN')).toBe('UNKNOWN');
+    });
+
+    it('should return the raw subwoofer level when parsing fails', () => {
+      expect((service as any).parseSubLevel('not-a-number')).toBe('not-a-number');
     });
   });
 

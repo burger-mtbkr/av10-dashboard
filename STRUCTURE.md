@@ -1,11 +1,11 @@
 # Project Structure & File Reference
 
-This document provides a detailed breakdown of every folder and file in the **Home Theater Status Dashboard** project, explaining the purpose and responsibility of each.
+This document provides a detailed breakdown of the primary source, config, and test files in the **Home Theater Status Dashboard** project, explaining the purpose and responsibility of each.
 
 ## Folder Structure
 
 ```
-ht_status/
+av10-dashboard/
 │
 ├── .gitignore
 ├── .npmrc
@@ -56,6 +56,7 @@ ht_status/
         ├── theme.ts
         ├── types.ts
         ├── __tests__/
+        │   ├── App.test.tsx
         │   ├── setup.ts
         │   ├── test-utils.tsx
         │   └── components/
@@ -91,11 +92,11 @@ These files live at the top level of the monorepo and control the overall projec
 |------|---------|
 | `.gitignore` | Excludes `node_modules/`, `dist/`, `.env`, `server/.env`, and `*.log` files from version control. |
 | `.npmrc` | Pins the npm registry to `https://registry.npmjs.org` so installs work regardless of any corporate/private registry configured globally on the machine. |
-| `package.json` | Root monorepo package. Defines the `dev`, `build`, `start`, and `install:all` scripts that orchestrate both the server and client using `concurrently`. |
+| `package.json` | Root monorepo package. Defines the `dev`, `build`, `start`, `test`, and `test:coverage` scripts that orchestrate both the server and client using `concurrently`. |
 | `package-lock.json` | Lock file for the root `concurrently` dependency. Ensures deterministic installs. |
 | `README.md` | Main project documentation — architecture, features, quick start guide, configuration reference, protocol details, and tech stack. |
-| `STRUCTURE.md` | This file. Detailed breakdown of every folder and file in the project with purpose descriptions. |
-| `settings.json` | Non-sensitive application configuration: dashboard title, default language, input label overrides. Read by the backend at startup and shared with the frontend via API. This is the single config file for both local and future AWS Amplify deployments. |
+| `STRUCTURE.md` | This file. Detailed breakdown of the primary source, config, and test files in the project with purpose descriptions. |
+| `settings.json` | Non-sensitive application configuration. The backend currently reads `app.title` and `app.defaultLanguage` and exposes them via `/api/settings`. The `inputLabels.overrides` section exists in config but is not yet consumed at runtime. |
 | `sample-data.json` | Sample AVR status JSON payload used for development and testing without a live receiver. |
 | `playwright.config.ts` | Configuration for Playwright E2E tests (browser automation). |
 
@@ -121,11 +122,11 @@ The backend is a **Node.js + Express + WebSocket** server that acts as a bridge 
 
 | File | Purpose |
 |------|---------|
-| `index.ts` | **Main entry point.** Loads environment variables via `dotenv`, reads `settings.json`, creates the Express app with CORS, defines REST API routes (`/api/status`, `/api/volume`, `/api/input`, `/api/mute`, `/api/health`, `/api/settings`), starts the HTTP server, attaches the WebSocket server, initialises the `MarantzService`, and wires up event listeners to broadcast real-time status to all connected browser clients. |
-| `marantz-service.ts` | **Core Marantz communication service.** Extends `EventEmitter`. Opens a persistent TCP/telnet connection (port 23) to the receiver for real-time event streaming. Parses incoming telnet events (e.g. `MV50` → volume change, `SIBD` → input change) and updates an internal `AVRStatus` object. Also triggers periodic HTTP polling as a backup. Emits `statusChanged`, `connected`, and `disconnected` events consumed by `index.ts`. Provides `setVolume()` and `setInput()` methods for control. |
-| `http-client.ts` | **HTTP/XML API client.** Makes HTTP GET and POST requests to the receiver's XML endpoints (`/goform/formMainZone_MainZoneXmlStatus.xml`, `/goform/AppCommand.xml`, `/goform/AppCommand0300.xml`). Parses XML responses with `xml2js` to extract: main zone status (power, volume, mute, input, surround mode), active speakers (`GetActiveSpeaker`), custom source names (`GetSourceRename`), video info (`GetVideoInfo`), and audio info (`GetAudioInfo`). |
+| `index.ts` | **Main entry point.** Loads environment variables via `dotenv`, reads `settings.json`, creates the Express app with CORS, defines REST API routes (`/api/status`, `/api/volume`, `/api/volume/:direction`, `/api/input`, `/api/mute`, `/api/smartselect/:preset`, `/api/health`, `/api/settings`), starts the HTTP server, attaches the WebSocket server, initialises the `MarantzService`, and wires up event listeners to broadcast real-time status to all connected browser clients. |
+| `marantz-service.ts` | **Core Marantz communication service.** Extends `EventEmitter`. Opens a persistent TCP/telnet connection (port 23) to the receiver for real-time event streaming. Parses incoming telnet events (e.g. `MV50` → volume change, `SIBD` → input change, `MSSMART2` → Smart Select 2) and updates an internal `AVRStatus` object including `smartSelect`, `volumeDisplay`, audio/video state, and subwoofer data. Also triggers periodic HTTP polling as a backup. Emits `statusChanged`, `connected`, and `disconnected` events consumed by `index.ts`. Provides `setVolume()`, `setInput()`, and `setSmartSelect()` methods for control. |
+| `http-client.ts` | **HTTP/XML API client.** Makes HTTP GET and POST requests to the receiver's XML endpoints (`/goform/formMainZone_MainZoneXmlStatus.xml`, `/goform/AppCommand.xml`, `/goform/AppCommand0300.xml`) and uses the HEOS CLI on port 1255 for Quick Select names when needed. Parses XML responses with `xml2js` to extract: main zone status (power, volume, mute, input, surround mode), active speakers (`GetActiveSpeaker`), custom source names (`GetSourceRename`), Smart Select names, video info (`GetVideoInfo`), and audio info (`GetAudioInfo`). |
 | `constants.ts` | **Protocol constants and lookup tables.** Maps speaker channel codes to human-readable names and groups (e.g. `FL` → "Front Left" / ear level). Maps source IDs to default names (e.g. `SAT/CBL` → "CBL/SAT"). Maps telnet event prefixes to status fields. Contains `parseVolume()` and `volumeToCommand()` functions for converting between Marantz's raw volume format and absolute 0-98 values. |
-| `types.ts` | **Shared TypeScript type definitions.** Defines all interfaces used across the backend: `AVRStatus`, `SpeakerStatus`, `VideoInfo`, `AudioInfo`, `SubwooferInfo`, `InputSource`, `WSMessage`, and `TelnetEvent`. These same shapes are mirrored on the client side. |
+| `types.ts` | **Shared TypeScript type definitions.** Defines all interfaces used across the backend: `AVRStatus`, `SpeakerStatus`, `VideoInfo`, `AudioInfo`, `SubwooferInfo`, `InputSource`, `SmartSelectPreset`, `WSMessage`, and `TelnetEvent`. These same shapes are mirrored on the client side. |
 
 ---
 
@@ -156,16 +157,16 @@ The frontend is a **React 19 + Vite + MUI 6** single-page application that conne
 
 | File | Purpose |
 |------|---------|
-| `App.tsx` | **Root React component.** Wraps the app in MUI's `ThemeProvider` (dark theme) and `CssBaseline`. Renders the dashboard header with connection status indicators (AVR + WebSocket) and a responsive `Grid2` layout containing all seven dashboard cards. Consumes the `useAVRStatus` hook and passes data/callbacks to each card. |
+| `App.tsx` | **Root React component.** Wraps the app in MUI's `ThemeProvider` (dark theme) and `CssBaseline`. Renders the dashboard header with connection status indicators (AVR + WebSocket) and a responsive `Grid2` layout containing the dashboard cards in this order: Volume, Subwoofer Settings, Smart Select, Audio Signal, Video Signal, Speaker Configuration, System Info. Consumes the `useAVRStatus` hook and passes data/callbacks to each card. |
 | `main.tsx` | **React entry point.** Imports `i18n` to initialise translations, then mounts `<App />` inside `<StrictMode>` into the `#root` DOM element. |
 | `theme.ts` | **MUI dark theme definition.** Configures palette (primary: `#4fc3f7` cyan, secondary: `#66bb6a` green, background: `#0a0a0f` / `#141420`), typography (Inter/Roboto font stack, weighted headings), border radius (16px), and component style overrides for `Card`, `CardContent`, `Chip`, and `Slider`. |
-| `types.ts` | **Client-side TypeScript interfaces.** Mirrors the server's `types.ts` — defines `AVRStatus`, `SpeakerStatus`, `VideoInfo`, `AudioInfo`, `SubwooferInfo`, `InputSource`, and `WSMessage` so the frontend has full type safety on all data from the backend. |
+| `types.ts` | **Client-side TypeScript interfaces.** Mirrors the server's `types.ts` — defines `AVRStatus`, `SpeakerStatus`, `VideoInfo`, `AudioInfo`, `SubwooferInfo`, `InputSource`, `SmartSelectPreset`, and `WSMessage` so the frontend has full type safety on all data from the backend. |
 
 ### Hooks (`client/src/hooks/`)
 
 | File | Purpose |
 |------|---------|
-| `useAVRStatus.ts` | **Real-time data hook.** Manages the WebSocket connection to the backend, handles automatic reconnection (3-second retry), parses incoming `WSMessage` events, and maintains the full `AVRStatus` state. Exposes API helper functions (`setVolume`, `volumeUp`, `volumeDown`, `setInput`, `toggleMute`) that call the REST endpoints. Returns `{ status, wsConnected, setVolume, volumeUp, volumeDown, setInput, toggleMute }`. |
+| `useAVRStatus.ts` | **Real-time data hook.** Manages the WebSocket connection to the backend, handles automatic reconnection (3-second retry), parses incoming `WSMessage` events, and maintains the full `AVRStatus` state. Exposes API helper functions (`setVolume`, `volumeUp`, `volumeDown`, `setInput`, `toggleMute`, `selectSmartPreset`) that call the REST endpoints. Returns `{ status, wsConnected, setVolume, volumeUp, volumeDown, setInput, toggleMute, selectSmartPreset }`. |
 
 ### Components (`client/src/components/`)
 
@@ -175,7 +176,7 @@ Each component is a self-contained MUI `Card` responsible for one section of the
 |------|---------|
 | `SpeakerCard.tsx` | **Speaker configuration display.** Renders a block layout of speaker icons grouped by type (ear level, height/Atmos, subwoofer). Active speakers are highlighted in green, inactive ones are dimmed. Auto-detects any speaker configuration (7.2.4, 9.2.4, 5.1.2, etc.) and displays the layout label as a chip. Supports all Dolby Atmos and DTS:X channel codes. |
 | `VolumeCard.tsx` | **Volume control.** Shows the current volume in a large colour-coded display using the absolute 0-98 scale (green < 55, orange < 70, red ≥ 70). Provides a slider for precise adjustment, +/- buttons for step changes, and a mute toggle. The slider uses local state during drag to avoid jitter, committing the value on release. |
-| `InputCard.tsx` | **Input source selector.** Displays the currently selected input as a prominent chip and provides a dropdown `Select` to switch inputs. Shows both the custom label and the raw source ID for each option. Calls the backend API on change. |
+| `InputCard.tsx` | **Smart Select card.** Renders four preset buttons, highlights the active Smart Select, and shows metadata for the active preset including current source, sound mode, audio format, sample rate, video input resolution, and HDR format. Calls the backend Smart Select API when a preset is pressed. |
 | `VideoCard.tsx` | **Video signal information.** Displays a visual signal flow: input resolution → output resolution (e.g. "1080p → 4K"). Shows HDR format as a badge (HDR10, Dolby Vision, HLG) when active, plus HDMI output target and input signal type. |
 | `AudioCard.tsx` | **Audio signal information.** Highlights the current surround mode (e.g. "Dolby Atmos", "DTS:X") as a prominent chip. Lists input audio format, sampling rate, Dynamic EQ, Dynamic Volume, MultEQ mode, and Dialog Enhancer in an info-row layout. |
 | `SubwooferCard.tsx` | **Subwoofer settings.** Displays 1–4 subwoofers with their output level shown as a chip and a gradient progress bar. Shows the LFE (Low Frequency Effect) level as a badge. Supports any number of subwoofers — adapts automatically based on what the receiver reports. |
@@ -204,7 +205,7 @@ Each component is a self-contained MUI `Card` responsible for one section of the
 
 | File | Purpose |
 |------|---------|
-| `api.test.ts` | Tests the Express REST API routes (`/api/status`, `/api/volume`, `/api/input`, `/api/mute`, `/api/health`) including input validation and error handling. |
+| `api.test.ts` | Tests the Express REST API routes (`/api/status`, `/api/volume`, `/api/volume/:direction`, `/api/input`, `/api/mute`, `/api/smartselect/:preset`, `/api/health`, `/api/settings`) including input validation and error handling. |
 | `constants.test.ts` | Tests `parseVolume()` / `volumeToCommand()` round-trip correctness on the absolute 0-98 scale, plus `CHANNEL_MAP`, `SOURCE_MAP`, and `TELNET_EVENT_MAP` coverage. |
 | `marantz-service.test.ts` | Tests `MarantzService` event parsing (MV, MU, SI, MS, etc.), telnet buffer processing, deep-copy isolation, and connection state management. |
 
@@ -212,10 +213,11 @@ Each component is a self-contained MUI `Card` responsible for one section of the
 
 | File | Purpose |
 |------|---------|
+| `App.test.tsx` | Verifies the top-level dashboard renders the cards in the intended visual order. |
 | `setup.ts` | Test environment setup — configures jsdom globals and testing-library matchers. |
 | `test-utils.tsx` | Shared test helpers — `renderWithProviders()` wraps components in MUI theme + i18n context, provides default mock `AVRStatus`. |
 | `components/AudioCard.test.tsx` | Tests AudioCard rendering of codec, surround mode, and Audyssey fields. |
-| `components/InputCard.test.tsx` | Tests InputCard chip display, select dropdown, and empty-state fallback. |
+| `components/InputCard.test.tsx` | Tests Smart Select button rendering, active preset metadata, and fallback preset names. |
 | `components/SpeakerCard.test.tsx` | Tests SpeakerCard block layout, active/inactive highlighting, and config label. |
 | `components/SubwooferCard.test.tsx` | Tests SubwooferCard level display, progress bars, and LFE badge. |
 | `components/SystemCard.test.tsx` | Tests SystemCard power/ECO/connection chips and timestamp formatting. |

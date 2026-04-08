@@ -26,7 +26,7 @@ A modern, real-time dashboard for the **Marantz AV10** processor built with Reac
 - **Real-time status** via Telnet/TCP connection to the receiver
 - **Speaker configuration** block layout — auto-detects active speakers, displays layout (e.g. 7.2.4)
 - **Volume control** with slider, +/-, and mute toggle (absolute 0-98 scale)
-- **Input selection** with custom labels from the receiver
+- **Smart Select recall** with receiver/HEOS custom labels plus live source, audio, and video metadata
 - **Video signal info** — input → output resolution, HDR format
 - **Audio signal info** — codec, surround mode, sampling rate, Audyssey settings
 - **Subwoofer levels** — supports up to 4 subs with LFE crossover display
@@ -46,7 +46,7 @@ A modern, real-time dashboard for the **Marantz AV10** processor built with Reac
 
 ```bash
 git clone <repo-url>
-cd ht_status
+cd av10-dashboard
 npm run install:all
 ```
 
@@ -63,7 +63,7 @@ cp server/.env.example server/.env
 Then edit `server/.env`:
 
 ```env
-AVR_HOST=192.168.1.100   # ← Your Marantz AV10's IP address
+AVR_HOST=192.168.1.170   # ← Your Marantz AV10's IP address
 AVR_PORT=23               # Telnet port (default)
 AVR_HTTP_PORT=8080        # HTTP API port (default for 2016+ models)
 SERVER_PORT=3001          # Backend server port
@@ -91,11 +91,12 @@ Open **http://localhost:5173** in your browser.
 | `npm start` | Start the backend in production mode |
 | `npm run install:all` | Install dependencies for root, server, and client |
 | `npm test` | Run server + client unit tests via Vitest |
+| `npm run test:coverage` | Run server + client tests with V8 coverage reports |
 
 ## Project Structure
 
 ```
-ht_status/
+av10-dashboard/
 ├── .gitignore             # Root gitignore (node_modules, dist, .env, logs)
 ├── .npmrc                 # Forces public npm registry (avoids corporate proxy issues)
 ├── settings.json          # App configuration (title, language, input overrides)
@@ -141,6 +142,7 @@ ht_status/
 │       ├── theme.ts        # MUI dark theme configuration
 │       ├── types.ts        # Frontend type definitions (mirrors server types)
 │       ├── __tests__/      # Client unit tests
+│       │   ├── App.test.tsx
 │       │   ├── setup.ts
 │       │   ├── test-utils.tsx
 │       │   └── components/
@@ -156,7 +158,7 @@ ht_status/
 │       ├── components/
 │       │   ├── SpeakerCard.tsx    # Speaker block layout (auto-detects config)
 │       │   ├── VolumeCard.tsx     # Volume slider + mute + absolute 0-98 display
-│       │   ├── InputCard.tsx      # Input source selector with custom labels
+│       │   ├── InputCard.tsx      # Smart Select buttons + active preset metadata
 │       │   ├── VideoCard.tsx      # Video signal flow (input → output + HDR)
 │       │   ├── AudioCard.tsx      # Audio codec, surround mode, Audyssey
 │       │   ├── SubwooferCard.tsx  # Subwoofer levels (1-4) + LFE
@@ -172,9 +174,9 @@ ht_status/
 
 Non-sensitive configuration lives in `settings.json` at the project root:
 
-- **app.title** — Dashboard title (also configurable via i18n)
-- **app.defaultLanguage** — Default language code
-- **inputLabels.overrides** — Override input source names (takes priority over receiver custom names)
+- **app.title** — Title returned by `/api/settings`
+- **app.defaultLanguage** — Default language returned by `/api/settings`
+- **inputLabels.overrides** — Reserved override map in config; the current runtime still uses receiver renames/default source names
 
 ### Environment Variables
 
@@ -182,7 +184,7 @@ Sensitive/environment-specific config uses `.env` files in `server/`:
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `AVR_HOST` | `192.168.1.100` | Marantz receiver IP address |
+| `AVR_HOST` | `192.168.1.170` | Marantz receiver IP address |
 | `AVR_PORT` | `23` | Telnet port |
 | `AVR_HTTP_PORT` | `8080` | HTTP API port |
 | `SERVER_PORT` | `3001` | Backend server port |
@@ -209,7 +211,8 @@ The Marantz AV10 uses the **Denon/Marantz IP Control Protocol**:
 - **HTTP/XML API (port 8080)** — RESTful XML endpoints for detailed queries:
   - `/goform/formMainZone_MainZoneXmlStatus.xml` — Main zone status
   - `/goform/AppCommand.xml` — Simple commands
-  - `/goform/AppCommand0300.xml` — Advanced queries (speakers, video, audio, source rename)
+  - `/goform/AppCommand0300.xml` — Advanced queries (speakers, video, audio, source rename, Smart Select names)
+- **HEOS CLI (TCP port 1255)** — Used to fetch Quick Select names when the AVR exposes them through HEOS rather than AppCommand0300
 
 ## Future: AWS Amplify Deployment
 
@@ -224,7 +227,7 @@ After cloning the repo on a new machine:
 
 ```bash
 git clone <repo-url>
-cd ht_status
+cd av10-dashboard
 npm run install:all
 cp server/.env.example server/.env
 # Edit server/.env with your Marantz IP
