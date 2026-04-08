@@ -12,13 +12,9 @@ import type { SubwooferInfo } from "../types";
 
 interface SubwooferCardProps {
   subwoofers: SubwooferInfo[];
-  lfeLevel: string;
 }
 
-export default function SubwooferCard({
-  subwoofers,
-  lfeLevel,
-}: SubwooferCardProps) {
+export default function SubwooferCard({ subwoofers }: SubwooferCardProps) {
   const { t } = useTranslation();
 
   /** Parse dB level string to number for the progress bar */
@@ -47,13 +43,6 @@ export default function SubwooferCard({
             />
             {t("cards.subwoofer.title")}
           </Typography>
-          <Chip
-            label={`LFE: ${lfeLevel}`}
-            size="small"
-            variant="outlined"
-            color="warning"
-            sx={{ fontWeight: 600 }}
-          />
         </Box>
 
         {subwoofers.length === 0 ? (

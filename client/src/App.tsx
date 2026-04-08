@@ -149,10 +149,7 @@ export default function App() {
 
             {/* Subwoofer settings */}
             <Grid size={{ xs: 12, md: 6 }}>
-              <SubwooferCard
-                subwoofers={status.subwoofers}
-                lfeLevel={status.lfeLevel}
-              />
+              <SubwooferCard subwoofers={status.subwoofers} />
             </Grid>
 
             {/* Smart Select */}
