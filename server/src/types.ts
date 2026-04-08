@@ -58,14 +58,23 @@ export interface InputSource {
   selected: boolean;
 }
 
+export interface SmartSelectPreset {
+  /** Preset number (1-4) */
+  number: number;
+  /** Friendly name assigned on the receiver, or fallback like "Smart Select 1" */
+  name: string;
+  /** Whether this is the currently active preset */
+  active: boolean;
+}
+
 export interface AVRStatus {
   /** Power state */
   power: 'ON' | 'OFF' | 'STANDBY';
-  /** Main volume in dB e.g. -35.5 */
+  /** Main volume on absolute scale (0-98) */
   volume: number;
-  /** Volume display string e.g. "-35.5 dB" */
+  /** Volume display string e.g. "50" */
   volumeDisplay: string;
-  /** Max volume */
+  /** Max volume limit on absolute scale (0-98) */
   maxVolume: number;
   /** Mute state */
   muted: boolean;
@@ -73,6 +82,8 @@ export interface AVRStatus {
   input: InputSource;
   /** All available input sources with custom names */
   availableInputs: InputSource[];
+  /** Smart Select presets 1-4 with friendly names from the receiver */
+  smartSelect: SmartSelectPreset[];
   /** Active speakers */
   speakers: SpeakerStatus[];
   /** Video signal information */

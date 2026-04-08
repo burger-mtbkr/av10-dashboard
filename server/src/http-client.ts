@@ -1,7 +1,8 @@
 import http from 'http';
+import * as net from 'net';
 import { parseStringPromise } from 'xml2js';
-import { CHANNEL_MAP, SOURCE_MAP, parseVolume } from './constants.js';
-import type { SpeakerStatus, InputSource, SubwooferInfo } from './types.js';
+import { CHANNEL_MAP, SOURCE_MAP, SMART_SELECT_DEFAULTS, SMART_SELECT_SLOTS, parseVolume } from './constants.js';
+import type { SpeakerStatus, InputSource, SubwooferInfo, SmartSelectPreset } from './types.js';
 
 /** Make an HTTP request and return the response body */
 function httpGet(host: string, port: number, path: string): Promise<string> {
@@ -78,73 +79,115 @@ async function fetchAppCommand0300(host: string, port: number, commands: { name:
   return parseStringPromise(xml, { explicitArray: false });
 }
 
-/** Parse active speakers from response */
+/**
+ * Parse speaker configuration from GetActiveSpeaker response.
+ *
+ * The Marantz AVR returns per-channel numeric values:
+ *   0 = not in the configured layout (omit)
+ *   1 = configured but not currently active (show grey)
+ *   2 = configured and actively receiving signal (show blue)
+ *
+ * This returns ALL configured speakers (value > 0), with `active`
+ * reflecting whether they are currently receiving signal (value >= 2).
+ */
 function parseActiveSpeakers(data: any): SpeakerStatus[] {
   const speakers: SpeakerStatus[] = [];
+  const seen = new Set<string>();
+
   try {
-    // The response contains active speaker info
     const cmds = Array.isArray(data?.rx?.cmd) ? data.rx.cmd : [data?.rx?.cmd];
+
     for (const cmd of cmds) {
       if (!cmd) continue;
-      const name = cmd?.name || '';
-      if (typeof name === 'string' && name.includes('GetActiveSpeaker')) {
-        const list = cmd?.list;
-        if (list) {
-          const activespall = list?.param;
-          if (activespall) {
-            // Parse the active speaker data
-            // The data contains speaker codes with their active status
-            const speakerData = typeof activespall === 'string' ? activespall : activespall?._ || '';
-            parseActiveSpeakerString(speakerData, speakers);
+      const cmdName = typeof cmd.name === 'string' ? cmd.name : '';
+      if (!cmdName.includes('GetActiveSpeaker')) continue;
+
+      const list = cmd.list;
+      if (!list) continue;
+
+      const params = Array.isArray(list.param) ? list.param : [list.param];
+
+      // --- Format 1: structured object with channel codes as properties ---
+      // <param name="activespall"><FL>2</FL><FR>2</FR>...</param>
+      // xml2js → { "$": { "name": "activespall" }, "FL": "2", "FR": "2", ... }
+      for (const param of params) {
+        if (!param || typeof param !== 'object') continue;
+        const pName = param?.$?.name || '';
+        if (pName !== 'activespall') continue;
+
+        for (const [key, value] of Object.entries(param)) {
+          if (key === '$' || key === '_') continue;
+          const code = key.toUpperCase();
+          if (!(code in CHANNEL_MAP) || seen.has(code)) continue;
+
+          const numVal = parseInt(String(value), 10);
+          if (isNaN(numVal) || numVal <= 0) continue; // 0 = not configured
+
+          seen.add(code);
+          speakers.push({
+            code,
+            name: CHANNEL_MAP[code].name,
+            active: numVal >= 2,
+            group: CHANNEL_MAP[code].group,
+          });
+        }
+      }
+
+      if (speakers.length > 0) break;
+
+      // --- Format 2: individual params per channel ---
+      // <param name="FL">2</param><param name="FR">2</param>...
+      // xml2js → [{ "$": { "name": "FL" }, "_": "2" }, ...]
+      for (const param of params) {
+        if (!param || typeof param !== 'object') continue;
+        const code = (param?.$?.name || '').toUpperCase();
+        if (!(code in CHANNEL_MAP) || seen.has(code)) continue;
+
+        const val = typeof param._ === 'string' ? param._ : typeof param === 'string' ? param : '';
+        const numVal = parseInt(val, 10);
+        if (isNaN(numVal) || numVal <= 0) continue;
+
+        seen.add(code);
+        speakers.push({
+          code,
+          name: CHANNEL_MAP[code].name,
+          active: numVal >= 2,
+          group: CHANNEL_MAP[code].group,
+        });
+      }
+
+      if (speakers.length > 0) break;
+
+      // --- Format 3: space/comma-separated text list of active channel codes ---
+      // <param name="activespall">FL FR C SW SL SR...</param>
+      // xml2js → { "$": { "name": "activespall" }, "_": "FL FR C..." }
+      for (const param of params) {
+        if (!param) continue;
+        const pName = (typeof param === 'object' ? param?.$?.name : '') || '';
+        const text = typeof param._ === 'string' ? param._ : typeof param === 'string' ? param : '';
+        if (!text || (!pName.toLowerCase().includes('active') && !pName.toLowerCase().includes('speaker'))) continue;
+
+        const tokens = text.toUpperCase().split(/[^A-Z0-9]+/).filter(Boolean);
+        for (const token of tokens) {
+          if (token in CHANNEL_MAP && !seen.has(token)) {
+            seen.add(token);
+            speakers.push({
+              code: token,
+              name: CHANNEL_MAP[token].name,
+              active: true, // text-only format cannot distinguish active vs configured
+              group: CHANNEL_MAP[token].group,
+            });
           }
         }
       }
+
+      if (speakers.length > 0) break;
     }
   } catch (e) {
     console.error('[HTTP] Error parsing active speakers:', e);
   }
 
-  // If we didn't get speaker data from the parsed response, return all known speakers as a fallback
-  if (speakers.length === 0) {
-    return buildFallbackSpeakers(data);
-  }
-
-  return speakers;
-}
-
-function parseActiveSpeakerString(data: string, speakers: SpeakerStatus[]): void {
-  // Active speaker data is a bitmask or comma-separated list of active channels
-  // The format varies — try to parse what we can
-  if (!data) return;
-
-  // Try parsing as a structured response where each channel is listed
-  const channels = data.split(/[,\s]+/).filter(Boolean);
-  for (const ch of channels) {
-    const info = CHANNEL_MAP[ch.toUpperCase()];
-    if (info) {
-      speakers.push({
-        code: ch.toUpperCase(),
-        name: info.name,
-        active: true,
-        group: info.group,
-      });
-    }
-  }
-}
-
-function buildFallbackSpeakers(data: any): SpeakerStatus[] {
-  // Build a reasonable speaker set from known channels
-  const speakers: SpeakerStatus[] = [];
-  const allChannels = Object.entries(CHANNEL_MAP);
-  for (const [code, info] of allChannels) {
-    speakers.push({
-      code,
-      name: info.name,
-      active: false, // Will be updated by telnet events or next poll
-      group: info.group,
-    });
-  }
-  return speakers;
+  return speakers.sort((a, b) => a.code.localeCompare(b.code));
 }
 
 /** Parse source rename data */
@@ -172,6 +215,48 @@ function parseSourceRenames(data: any): Record<string, string> {
     console.error('[HTTP] Error parsing source renames:', e);
   }
   return renames;
+}
+
+/** Parse Smart Select (Quick Select) custom names from receiver.
+ *  Tries GetQuickSelect / GetRenameQuickselect AppCommand0300 responses.
+ *  Falls back to default labels if not available.
+ */
+function parseSmartSelectNames(data: any): SmartSelectPreset[] {
+  const presets: SmartSelectPreset[] = SMART_SELECT_SLOTS.map((n) => ({
+    number: n,
+    name: SMART_SELECT_DEFAULTS[n],
+    active: false,
+  }));
+
+  try {
+    const cmds = Array.isArray(data?.rx?.cmd) ? data.rx.cmd : [data?.rx?.cmd];
+    for (const cmd of cmds) {
+      if (!cmd) continue;
+      const name = typeof cmd.name === 'string' ? cmd.name : '';
+      if (!name.includes('QuickSelect') && !name.includes('Quickselect') && !name.includes('SmartSelect') && !name.includes('Smartselect')) continue;
+
+      const list = cmd?.list;
+      if (!list) continue;
+
+      const params = Array.isArray(list.param) ? list.param : [list.param];
+      for (const p of params) {
+        if (!p || !p.$) continue;
+        const pName = p.$.name || '';
+        // Expect names like "quick1", "quick2" etc.
+        const match = pName.match(/(\d)/);
+        if (!match) continue;
+        const num = parseInt(match[1], 10);
+        const preset = presets.find((pr) => pr.number === num);
+        if (preset && p._ && typeof p._ === 'string' && p._.trim()) {
+          preset.name = p._.trim();
+        }
+      }
+    }
+  } catch (e) {
+    console.error('[HTTP] Error parsing smart select names:', e);
+  }
+
+  return presets;
 }
 
 /** Parse video info from response */
@@ -294,6 +379,8 @@ export async function fetchHttpStatus(host: string, httpPort: number): Promise<a
     const details = await fetchAppCommand0300(host, httpPort, [
       { name: 'GetActiveSpeaker', params: ['activespall'] },
       { name: 'GetSourceRename', params: [] },
+      { name: 'GetRenameQuickselect', params: ['quick1', 'quick2', 'quick3', 'quick4'] },
+      { name: 'GetRenameSmartselect', params: ['smart1', 'smart2', 'smart3', 'smart4'] },
       { name: 'GetVideoInfo', params: ['videooutput', 'hdmisigin', 'hdmisigout'] },
       { name: 'GetAudioInfo', params: ['inputmode', 'output', 'signal', 'sound', 'fs'] },
     ]);
@@ -303,6 +390,9 @@ export async function fetchHttpStatus(host: string, httpPort: number): Promise<a
 
     // Source renames
     const renames = parseSourceRenames(details);
+
+    // Smart Select names
+    result.smartSelect = parseSmartSelectNames(details);
 
     // Build available inputs list with custom names
     const defaultSources = Object.keys(SOURCE_MAP);
@@ -338,5 +428,87 @@ export async function fetchHttpStatus(host: string, httpPort: number): Promise<a
     console.error('[HTTP] AppCommand0300 fetch error:', e.message);
   }
 
+  // 3. Fetch smart select custom names via HEOS CLI (Marantz uses this)
+  try {
+    const heosNames = await fetchHeosQuickSelectNames(host);
+    if (heosNames.length > 0) {
+      // Merge HEOS names into smartSelect presets
+      if (!result.smartSelect) {
+        result.smartSelect = SMART_SELECT_SLOTS.map((n) => ({
+          number: n,
+          name: SMART_SELECT_DEFAULTS[n],
+          active: false,
+        }));
+      }
+      for (const hn of heosNames) {
+        const preset = result.smartSelect.find((p: SmartSelectPreset) => p.number === hn.id);
+        if (preset && hn.name) {
+          preset.name = hn.name;
+        }
+      }
+    }
+  } catch (e: any) {
+    console.error('[HTTP] HEOS smart select fetch error:', e.message);
+  }
+
   return result;
+}
+
+// --- HEOS CLI helpers ---
+
+const HEOS_PORT = 1255;
+
+/** Send a HEOS CLI command and return the JSON response */
+function heosCommand(host: string, command: string, timeout = 5000): Promise<any> {
+  return new Promise((resolve, reject) => {
+    const socket = net.createConnection(HEOS_PORT, host);
+    let buf = '';
+    const timer = setTimeout(() => {
+      socket.destroy();
+      reject(new Error('HEOS command timeout'));
+    }, timeout);
+
+    socket.setEncoding('utf-8');
+    socket.on('connect', () => {
+      socket.write(`${command}\r\n`);
+    });
+    socket.on('data', (data) => {
+      buf += data;
+      // HEOS responses are JSON terminated by \r\n
+      if (buf.includes('\r\n')) {
+        clearTimeout(timer);
+        try {
+          const json = JSON.parse(buf.trim());
+          resolve(json);
+        } catch {
+          resolve(null);
+        }
+        socket.destroy();
+      }
+    });
+    socket.on('error', (err) => {
+      clearTimeout(timer);
+      reject(err);
+    });
+  });
+}
+
+/** Get HEOS player ID for this receiver */
+async function getHeosPlayerId(host: string): Promise<number | null> {
+  const resp = await heosCommand(host, 'heos://player/get_players');
+  if (resp?.heos?.result !== 'success' || !Array.isArray(resp.payload)) return null;
+  // Find player matching our IP
+  const player = resp.payload.find((p: any) => p.ip === host) || resp.payload[0];
+  return player?.pid ?? null;
+}
+
+/** Fetch smart/quick select custom names via HEOS CLI */
+async function fetchHeosQuickSelectNames(host: string): Promise<{ id: number; name: string }[]> {
+  const pid = await getHeosPlayerId(host);
+  if (!pid) return [];
+  const resp = await heosCommand(host, `heos://player/get_quickselects?pid=${pid}`);
+  if (resp?.heos?.result !== 'success' || !Array.isArray(resp.payload)) return [];
+  return resp.payload
+    .filter((p: any) => typeof p.id === 'number' && typeof p.name === 'string')
+    .map((p: any) => ({ id: p.id as number, name: p.name as string }));
 }

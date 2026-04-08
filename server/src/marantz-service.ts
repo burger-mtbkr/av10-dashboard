@@ -1,7 +1,7 @@
 import * as net from 'net';
 import { EventEmitter } from 'events';
-import { CHANNEL_MAP, SOURCE_MAP, TELNET_EVENT_MAP, parseVolume, volumeToCommand } from './constants.js';
-import { AVRStatus, SpeakerStatus, InputSource, SubwooferInfo, TelnetEvent } from './types.js';
+import { CHANNEL_MAP, OPINFASP_CHANNEL_ORDER, SOURCE_MAP, SMART_SELECT_DEFAULTS, SMART_SELECT_SLOTS, TELNET_EVENT_MAP, parseVolume, volumeToCommand } from './constants.js';
+import { AVRStatus, SpeakerStatus, InputSource, SmartSelectPreset, SubwooferInfo, TelnetEvent } from './types.js';
 import { fetchHttpStatus } from './http-client.js';
 
 export class MarantzService extends EventEmitter {
@@ -30,12 +30,17 @@ export class MarantzService extends EventEmitter {
   private getDefaultStatus(): AVRStatus {
     return {
       power: 'OFF',
-      volume: -80,
-      volumeDisplay: '--.- dB',
-      maxVolume: 18,
+      volume: 0,
+      volumeDisplay: '--',
+      maxVolume: 98,
       muted: false,
       input: { id: '', name: '', selected: true },
       availableInputs: [],
+      smartSelect: SMART_SELECT_SLOTS.map((n) => ({
+        number: n,
+        name: SMART_SELECT_DEFAULTS[n],
+        active: false,
+      })),
       speakers: [],
       video: {
         inputResolution: '---',
@@ -101,6 +106,8 @@ export class MarantzService extends EventEmitter {
       this.sendCommand('PSSWL ?');
       this.sendCommand('PSSWR ?');
       this.sendCommand('ECO?');
+      this.sendCommand('OPINF?');
+      this.sendCommand('MSSMART ?');
     });
 
     this.socket.on('data', (data: string) => {
@@ -193,7 +200,8 @@ export class MarantzService extends EventEmitter {
           this.status.maxVolume = parseVolume(maxVal);
         } else {
           this.status.volume = parseVolume(parameter);
-          this.status.volumeDisplay = `${this.status.volume.toFixed(1)} dB`;
+          const v = this.status.volume;
+          this.status.volumeDisplay = Number.isInteger(v) ? String(v) : v.toFixed(1);
         }
         changed = true;
         break;
@@ -217,6 +225,12 @@ export class MarantzService extends EventEmitter {
         changed = true;
         break;
 
+      case 'MSSMART':
+      case 'MSQUICK':
+        this.handleSmartSelect(parameter);
+        changed = true;
+        break;
+
       case 'MS':
         this.status.surroundMode = parameter;
         this.status.audio.soundMode = parameter;
@@ -231,6 +245,15 @@ export class MarantzService extends EventEmitter {
       case 'VS':
         this.handleVideoSetting(parameter);
         changed = true;
+        break;
+
+      case 'SS':
+        // System settings — logged for debugging
+        console.log('[Marantz] System setting (SS):', parameter);
+        break;
+
+      case 'OP':
+        changed = this.handleOperationEvent(parameter);
         break;
 
       case 'EC':
@@ -250,6 +273,20 @@ export class MarantzService extends EventEmitter {
       this.status.lastUpdate = new Date().toISOString();
       this.emit('statusChanged', this.status);
     }
+  }
+
+  private handleSmartSelect(param: string): void {
+    // MSQUICK events: "MSQUICK1", "MSQUICK2", etc. or query responses like "1", "2"
+    // After prefix stripping, param should be "1".."4" or contain a digit
+    const match = param.match(/(\d)/);
+    if (!match) return;
+    const num = parseInt(match[1], 10);
+    if (num < 1 || num > 4) return;
+
+    this.status.smartSelect = this.status.smartSelect.map((p) => ({
+      ...p,
+      active: p.number === num,
+    }));
   }
 
   private handleParameterSetting(param: string): void {
@@ -298,6 +335,34 @@ export class MarantzService extends EventEmitter {
     }
   }
 
+  private handleOperationEvent(param: string): boolean {
+    if (param.startsWith('INFASP ')) {
+      // Active Speaker Profile: digit string with per-channel status
+      // 0=not configured, 1=configured/inactive, 2=active
+      const digits = param.substring('INFASP '.length).trim();
+      const speakers: SpeakerStatus[] = [];
+      for (let i = 0; i < digits.length && i < OPINFASP_CHANNEL_ORDER.length; i++) {
+        const val = parseInt(digits[i], 10);
+        if (isNaN(val) || val <= 0) continue; // 0 = not in layout
+        const code = OPINFASP_CHANNEL_ORDER[i];
+        const info = CHANNEL_MAP[code];
+        if (!info) continue;
+        speakers.push({
+          code,
+          name: info.name,
+          active: val >= 2,
+          group: info.group,
+        });
+      }
+      if (speakers.length > 0) {
+        console.log(`[Marantz] OPINFASP: ${speakers.length} speakers parsed`);
+        this.status.speakers = speakers;
+        return true;
+      }
+    }
+    return false;
+  }
+
   private parseSubLevel(raw: string): string {
     // Subwoofer levels: 50 = 0dB, 38 = -12dB, 62 = +12dB
     const num = parseInt(raw, 10);
@@ -332,10 +397,12 @@ export class MarantzService extends EventEmitter {
     // Merge power
     if (http.power) this.status.power = http.power;
 
-    // Merge volume
+    // Merge volume (HTTP returns dB like -30.0, convert to absolute)
     if (http.volume !== undefined) {
-      this.status.volume = http.volume;
-      this.status.volumeDisplay = `${http.volume.toFixed(1)} dB`;
+      const abs = http.volume + 80;
+      this.status.volume = Math.round(abs * 10) / 10;
+      const v = this.status.volume;
+      this.status.volumeDisplay = Number.isInteger(v) ? String(v) : v.toFixed(1);
     }
 
     // Merge mute
@@ -349,6 +416,16 @@ export class MarantzService extends EventEmitter {
     if (http.surroundMode) {
       this.status.surroundMode = http.surroundMode;
       this.status.audio.soundMode = http.surroundMode;
+    }
+
+    // Merge Smart Select
+    if (http.smartSelect?.length) {
+      // Preserve active state from telnet, update names from HTTP
+      const activeNum = this.status.smartSelect.find((p) => p.active)?.number;
+      this.status.smartSelect = http.smartSelect.map((p: SmartSelectPreset) => ({
+        ...p,
+        active: p.number === activeNum,
+      }));
     }
 
     // Merge speakers from active speaker query
@@ -396,13 +473,18 @@ export class MarantzService extends EventEmitter {
     }
   }
 
-  setVolume(db: number): void {
-    const cmd = volumeToCommand(db);
+  setVolume(vol: number): void {
+    const cmd = volumeToCommand(vol);
     this.sendCommand(`MV${cmd}`);
   }
 
   setInput(sourceId: string): void {
     this.sendCommand(`SI${sourceId}`);
+  }
+
+  setSmartSelect(preset: number): void {
+    if (preset < 1 || preset > 4) return;
+    this.sendCommand(`MSSMART${preset}`);
   }
 
   disconnect(): void {

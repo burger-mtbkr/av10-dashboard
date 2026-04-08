@@ -1,14 +1,31 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import type { AVRStatus, WSMessage } from '../types';
 
+type OptimisticStatus = Partial<
+  Pick<
+    AVRStatus,
+    'volume' | 'volumeDisplay' | 'muted' | 'input' | 'availableInputs' | 'smartSelect'
+  >
+>;
+
+type OptimisticKey = keyof OptimisticStatus;
+
+const OPTIMISTIC_STATUS_TIMEOUT_MS = 5000;
+
 const DEFAULT_STATUS: AVRStatus = {
   power: 'OFF',
-  volume: -80,
-  volumeDisplay: '--.- dB',
-  maxVolume: 18,
+  volume: 0,
+  volumeDisplay: '--',
+  maxVolume: 98,
   muted: false,
   input: { id: '', name: '---', selected: true },
   availableInputs: [],
+  smartSelect: [
+    { number: 1, name: 'Smart Select 1', active: false },
+    { number: 2, name: 'Smart Select 2', active: false },
+    { number: 3, name: 'Smart Select 3', active: false },
+    { number: 4, name: 'Smart Select 4', active: false },
+  ],
   speakers: [],
   video: {
     inputResolution: '---',
@@ -35,10 +52,167 @@ const DEFAULT_STATUS: AVRStatus = {
 };
 
 export function useAVRStatus() {
-  const [status, setStatus] = useState<AVRStatus>(DEFAULT_STATUS);
+  const [baseStatus, setBaseStatus] = useState<AVRStatus>(DEFAULT_STATUS);
+  const [optimisticStatus, setOptimisticStatus] = useState<OptimisticStatus>({});
   const [wsConnected, setWsConnected] = useState(false);
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const optimisticTimers = useRef<Map<OptimisticKey, ReturnType<typeof setTimeout>>>(new Map());
+  const baseStatusRef = useRef(DEFAULT_STATUS);
+  const optimisticStatusRef = useRef<OptimisticStatus>({});
+
+  const syncBaseStatus = useCallback(
+    (nextStatus: AVRStatus | ((prev: AVRStatus) => AVRStatus)) => {
+      setBaseStatus((prev) => {
+        const resolvedStatus =
+          typeof nextStatus === 'function'
+            ? (nextStatus as (prev: AVRStatus) => AVRStatus)(prev)
+            : nextStatus;
+
+        baseStatusRef.current = resolvedStatus;
+        return resolvedStatus;
+      });
+    },
+    [],
+  );
+
+  const syncOptimisticStatus = useCallback((nextStatus: OptimisticStatus) => {
+    optimisticStatusRef.current = nextStatus;
+    setOptimisticStatus(nextStatus);
+  }, []);
+
+  const clearOptimisticKeys = useCallback(
+    (keys: OptimisticKey[]) => {
+      const uniqueKeys = [...new Set(keys)];
+      if (uniqueKeys.length === 0) {
+        return;
+      }
+
+      const nextStatus = { ...optimisticStatusRef.current };
+      let changed = false;
+
+      for (const key of uniqueKeys) {
+        const timer = optimisticTimers.current.get(key);
+        if (timer) {
+          clearTimeout(timer);
+          optimisticTimers.current.delete(key);
+        }
+
+        if (key in nextStatus) {
+          delete nextStatus[key];
+          changed = true;
+        }
+      }
+
+      if (changed) {
+        syncOptimisticStatus(nextStatus);
+      }
+    },
+    [syncOptimisticStatus],
+  );
+
+  const queueOptimisticUpdate = useCallback(
+    (patch: OptimisticStatus) => {
+      const keys = Object.keys(patch) as OptimisticKey[];
+      if (keys.length === 0) {
+        return;
+      }
+
+      syncOptimisticStatus({
+        ...optimisticStatusRef.current,
+        ...patch,
+      });
+
+      for (const key of keys) {
+        const existingTimer = optimisticTimers.current.get(key);
+        if (existingTimer) {
+          clearTimeout(existingTimer);
+        }
+
+        optimisticTimers.current.set(
+          key,
+          setTimeout(() => {
+            clearOptimisticKeys([key]);
+          }, OPTIMISTIC_STATUS_TIMEOUT_MS),
+        );
+      }
+    },
+    [clearOptimisticKeys, syncOptimisticStatus],
+  );
+
+  const reconcileOptimisticStatus = useCallback(
+    (nextStatus: AVRStatus) => {
+      const currentOptimisticStatus = optimisticStatusRef.current;
+      const keysToClear: OptimisticKey[] = [];
+
+      if (
+        currentOptimisticStatus.volume !== undefined &&
+        nextStatus.volume === currentOptimisticStatus.volume
+      ) {
+        keysToClear.push('volume', 'volumeDisplay');
+      }
+
+      if (
+        currentOptimisticStatus.muted !== undefined &&
+        nextStatus.muted === currentOptimisticStatus.muted
+      ) {
+        keysToClear.push('muted');
+      }
+
+      if (
+        currentOptimisticStatus.input &&
+        nextStatus.input.id === currentOptimisticStatus.input.id
+      ) {
+        keysToClear.push('input', 'availableInputs');
+      }
+
+      if (currentOptimisticStatus.smartSelect) {
+        const optimisticPreset = currentOptimisticStatus.smartSelect.find(
+          (preset) => preset.active,
+        )?.number;
+        const activePreset = nextStatus.smartSelect.find((preset) => preset.active)?.number;
+
+        if (optimisticPreset !== undefined && optimisticPreset === activePreset) {
+          keysToClear.push('smartSelect');
+        }
+      }
+
+      clearOptimisticKeys(keysToClear);
+    },
+    [clearOptimisticKeys],
+  );
+
+  const getRenderedStatus = useCallback(
+    (): AVRStatus => ({
+      ...baseStatusRef.current,
+      ...optimisticStatusRef.current,
+    }),
+    [],
+  );
+
+  const runOptimisticRequest = useCallback(
+    async (patch: OptimisticStatus, request: () => Promise<Response>) => {
+      const keys = Object.keys(patch) as OptimisticKey[];
+      queueOptimisticUpdate(patch);
+
+      try {
+        const response = await request();
+
+        if (!response.ok) {
+          throw new Error(`Request failed with status ${response.status}`);
+        }
+      } catch (error) {
+        clearOptimisticKeys(keys);
+        throw error;
+      }
+    },
+    [clearOptimisticKeys, queueOptimisticUpdate],
+  );
+
+  const status = {
+    ...baseStatus,
+    ...optimisticStatus,
+  };
 
   const connect = useCallback(() => {
     // Determine WebSocket URL based on current page location
@@ -58,13 +232,14 @@ export function useAVRStatus() {
         const msg: WSMessage = JSON.parse(event.data);
         switch (msg.type) {
           case 'status':
-            setStatus(msg.data as AVRStatus);
+            syncBaseStatus(msg.data as AVRStatus);
+            reconcileOptimisticStatus(msg.data as AVRStatus);
             break;
           case 'connected':
-            setStatus((prev) => ({ ...prev, connected: true }));
+            syncBaseStatus((prev) => ({ ...prev, connected: true }));
             break;
           case 'disconnected':
-            setStatus((prev) => ({ ...prev, connected: false }));
+            syncBaseStatus((prev) => ({ ...prev, connected: false }));
             break;
           case 'error':
             console.error('[WS] Server error:', msg.data);
@@ -91,42 +266,111 @@ export function useAVRStatus() {
     connect();
     return () => {
       if (reconnectTimer.current) clearTimeout(reconnectTimer.current);
+      optimisticTimers.current.forEach((timer) => clearTimeout(timer));
+      optimisticTimers.current.clear();
       if (wsRef.current) wsRef.current.close();
     };
   }, [connect]);
 
   // API helper functions
   const setVolume = useCallback(async (volume: number) => {
-    await fetch('/api/volume', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ volume }),
-    });
-  }, []);
+    await runOptimisticRequest(
+      {
+        volume,
+        volumeDisplay: Number.isInteger(volume) ? String(volume) : volume.toFixed(1),
+      },
+      () =>
+        fetch('/api/volume', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ volume }),
+        }),
+    );
+  }, [runOptimisticRequest]);
 
   const volumeUp = useCallback(async () => {
-    await fetch('/api/volume/up', { method: 'POST' });
-  }, []);
+    const currentStatus = getRenderedStatus();
+    const nextVolume = Math.min(currentStatus.volume + 1, currentStatus.maxVolume);
+
+    await runOptimisticRequest(
+      {
+        volume: nextVolume,
+        volumeDisplay: Number.isInteger(nextVolume)
+          ? String(nextVolume)
+          : nextVolume.toFixed(1),
+      },
+      () => fetch('/api/volume/up', { method: 'POST' }),
+    );
+  }, [getRenderedStatus, runOptimisticRequest]);
 
   const volumeDown = useCallback(async () => {
-    await fetch('/api/volume/down', { method: 'POST' });
-  }, []);
+    const currentStatus = getRenderedStatus();
+    const nextVolume = Math.max(currentStatus.volume - 1, 0);
+
+    await runOptimisticRequest(
+      {
+        volume: nextVolume,
+        volumeDisplay: Number.isInteger(nextVolume)
+          ? String(nextVolume)
+          : nextVolume.toFixed(1),
+      },
+      () => fetch('/api/volume/down', { method: 'POST' }),
+    );
+  }, [getRenderedStatus, runOptimisticRequest]);
 
   const setInput = useCallback(async (inputId: string) => {
-    await fetch('/api/input', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ input: inputId }),
-    });
-  }, []);
+    const currentStatus = getRenderedStatus();
+    const nextInput = currentStatus.availableInputs.find((input) => input.id === inputId) ?? {
+      id: inputId,
+      name: inputId,
+      selected: true,
+    };
+
+    await runOptimisticRequest(
+      {
+        input: { ...nextInput, selected: true },
+        availableInputs: currentStatus.availableInputs.map((input) => ({
+          ...input,
+          selected: input.id === inputId,
+        })),
+      },
+      () =>
+        fetch('/api/input', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ input: inputId }),
+        }),
+    );
+  }, [getRenderedStatus, runOptimisticRequest]);
 
   const toggleMute = useCallback(async () => {
-    await fetch('/api/mute', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ muted: !status.muted }),
-    });
-  }, [status.muted]);
+    const currentStatus = getRenderedStatus();
+    const muted = !currentStatus.muted;
+
+    await runOptimisticRequest(
+      { muted },
+      () =>
+        fetch('/api/mute', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ muted }),
+        }),
+    );
+  }, [getRenderedStatus, runOptimisticRequest]);
+
+  const selectSmartPreset = useCallback(async (preset: number) => {
+    const currentStatus = getRenderedStatus();
+
+    await runOptimisticRequest(
+      {
+        smartSelect: currentStatus.smartSelect.map((option) => ({
+          ...option,
+          active: option.number === preset,
+        })),
+      },
+      () => fetch(`/api/smartselect/${preset}`, { method: 'POST' }),
+    );
+  }, [getRenderedStatus, runOptimisticRequest]);
 
   return {
     status,
@@ -136,5 +380,6 @@ export function useAVRStatus() {
     volumeDown,
     setInput,
     toggleMute,
+    selectSmartPreset,
   };
 }

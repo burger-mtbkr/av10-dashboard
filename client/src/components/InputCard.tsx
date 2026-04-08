@@ -1,74 +1,213 @@
-import {
-  Card, CardContent, Typography, Box, FormControl, Select, MenuItem, Chip,
-} from '@mui/material';
-import type { SelectChangeEvent } from '@mui/material';
-import { useTranslation } from 'react-i18next';
-import InputIcon from '@mui/icons-material/Input';
-import type { InputSource } from '../types';
+import { Card, CardContent, Typography, Box, ButtonBase } from "@mui/material";
+import { useTranslation } from "react-i18next";
+import TouchAppIcon from "@mui/icons-material/TouchApp";
+import type {
+  SmartSelectPreset,
+  InputSource,
+  AudioInfo,
+  VideoInfo,
+} from "../types";
 
 interface InputCardProps {
+  smartSelect: SmartSelectPreset[];
   currentInput: InputSource;
-  availableInputs: InputSource[];
-  onInputChange: (inputId: string) => void;
+  audio: AudioInfo;
+  surroundMode: string;
+  video: VideoInfo;
+  onSelectPreset: (preset: number) => void;
 }
 
-export default function InputCard({ currentInput, availableInputs, onInputChange }: InputCardProps) {
+export default function InputCard({
+  smartSelect,
+  currentInput,
+  audio,
+  surroundMode,
+  video,
+  onSelectPreset,
+}: InputCardProps) {
   const { t } = useTranslation();
 
-  const handleChange = (event: SelectChangeEvent<string>) => {
-    onInputChange(event.target.value);
-  };
+  const activePreset = smartSelect.find((p) => p.active);
 
   return (
-    <Card>
-      <CardContent>
-        <Typography variant="h6" sx={{ color: 'primary.main', mb: 2 }}>
-          <InputIcon sx={{ mr: 1, verticalAlign: 'middle', fontSize: 22 }} />
-          {t('cards.input.title')}
+    <Card sx={{ height: "100%" }}>
+      <CardContent sx={{ height: "100%" }}>
+        <Typography variant="h6" sx={{ color: "primary.main", mb: 2 }}>
+          <TouchAppIcon sx={{ mr: 1, verticalAlign: "middle", fontSize: 22 }} />
+          {t("cards.input.title")}
         </Typography>
 
-        {/* Current input display */}
-        <Box sx={{ textAlign: 'center', mb: 2 }}>
-          <Chip
-            label={currentInput.name || currentInput.id || '---'}
-            color="primary"
-            sx={{
-              fontSize: '1.1rem',
-              fontWeight: 700,
-              px: 3,
-              py: 2.5,
-              height: 'auto',
-              '& .MuiChip-label': { px: 2 },
-            }}
-          />
-        </Box>
-
-        {/* Input selector */}
-        {availableInputs.length > 0 && (
-          <FormControl fullWidth size="small">
-            <Select
-              value={currentInput.id}
-              onChange={handleChange}
+        {/* Smart Select preset buttons */}
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "center",
+            gap: { xs: 1.5, sm: 2.5 },
+            mb: 2,
+          }}
+        >
+          {smartSelect.map((preset) => (
+            <Box
+              key={preset.number}
               sx={{
-                '& .MuiSelect-select': {
-                  py: 1,
-                },
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                gap: 0.5,
               }}
             >
-              {availableInputs.map((input) => (
-                <MenuItem key={input.id} value={input.id}>
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center' }}>
-                    <Typography>{input.name}</Typography>
-                    <Typography variant="caption" color="text.secondary" sx={{ ml: 2 }}>
-                      {input.id}
-                    </Typography>
-                  </Box>
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
+              <ButtonBase
+                onClick={() => onSelectPreset(preset.number)}
+                sx={{
+                  width: { xs: 52, sm: 62 },
+                  height: { xs: 52, sm: 62 },
+                  borderRadius: "50%",
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  backgroundColor: preset.active
+                    ? "rgba(79, 195, 247, 0.2)"
+                    : "rgba(255, 255, 255, 0.04)",
+                  border: "1.5px solid",
+                  borderColor: preset.active
+                    ? "#4fc3f7"
+                    : "rgba(255, 255, 255, 0.1)",
+                  transition: "all 0.3s ease",
+                  boxShadow: preset.active
+                    ? "0 0 14px rgba(79, 195, 247, 0.45)"
+                    : "none",
+                  "&:hover": {
+                    backgroundColor: preset.active
+                      ? "rgba(79, 195, 247, 0.3)"
+                      : "rgba(255, 255, 255, 0.08)",
+                    borderColor: preset.active
+                      ? "#4fc3f7"
+                      : "rgba(255, 255, 255, 0.2)",
+                  },
+                }}
+              >
+                <Typography
+                  sx={{
+                    fontSize: { xs: "0.65rem", sm: "0.72rem" },
+                    fontWeight: preset.active ? 700 : 500,
+                    color: preset.active ? "#4fc3f7" : "rgba(255,255,255,0.5)",
+                    lineHeight: 1.2,
+                    textAlign: "center",
+                    px: 0.3,
+                  }}
+                >
+                  {preset.name}
+                </Typography>
+              </ButtonBase>
+              <Typography
+                variant="caption"
+                sx={{
+                  fontSize: "0.58rem",
+                  color: preset.active ? "#4fc3f7" : "text.secondary",
+                  fontWeight: preset.active ? 600 : 400,
+                  textAlign: "center",
+                  lineHeight: 1.2,
+                }}
+              >
+                {preset.number}
+              </Typography>
+            </Box>
+          ))}
+        </Box>
+
+        {/* Selected preset metadata */}
+        {activePreset && (
+          <Box
+            sx={{
+              mt: 1,
+              p: 1.5,
+              borderRadius: 1,
+              backgroundColor: "rgba(79, 195, 247, 0.06)",
+              border: "1px solid rgba(79, 195, 247, 0.15)",
+            }}
+          >
+            <Typography
+              variant="caption"
+              sx={{ color: "text.secondary", display: "block", mb: 0.5 }}
+            >
+              {t("cards.input.activePreset")}
+            </Typography>
+            <Typography
+              sx={{
+                color: "#4fc3f7",
+                fontWeight: 700,
+                fontSize: "0.95rem",
+                mb: 1,
+              }}
+            >
+              {activePreset.name}
+            </Typography>
+
+            {/* Metadata grid */}
+            <Box
+              sx={{
+                display: "grid",
+                gridTemplateColumns: "1fr 1fr",
+                gap: 0.8,
+              }}
+            >
+              <MetadataItem
+                label={t("cards.input.currentSource")}
+                value={currentInput.name || currentInput.id || "---"}
+              />
+              <MetadataItem
+                label={t("cards.input.soundMode")}
+                value={surroundMode || audio.soundMode || "---"}
+              />
+              <MetadataItem
+                label={t("cards.input.inputFormat")}
+                value={audio.inputFormat || "---"}
+              />
+              <MetadataItem
+                label={t("cards.input.samplingRate")}
+                value={audio.samplingRate || "---"}
+              />
+              <MetadataItem
+                label={t("cards.input.inputResolution")}
+                value={video.inputResolution || "---"}
+              />
+              <MetadataItem
+                label={t("cards.input.hdrFormat")}
+                value={video.hdrFormat || "---"}
+              />
+            </Box>
+          </Box>
         )}
       </CardContent>
     </Card>
+  );
+}
+
+function MetadataItem({ label, value }: { label: string; value: string }) {
+  return (
+    <Box>
+      <Typography
+        variant="caption"
+        sx={{
+          color: "text.secondary",
+          fontSize: "0.6rem",
+          display: "block",
+          lineHeight: 1.2,
+        }}
+      >
+        {label}
+      </Typography>
+      <Typography
+        sx={{
+          color: "rgba(255,255,255,0.85)",
+          fontSize: "0.78rem",
+          fontWeight: 500,
+          lineHeight: 1.3,
+        }}
+      >
+        {value}
+      </Typography>
+    </Box>
   );
 }

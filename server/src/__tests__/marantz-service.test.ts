@@ -39,7 +39,7 @@ describe('MarantzService', () => {
     it('should return a deep copy of the default status', () => {
       const status = service.getStatus();
       expect(status.power).toBe('OFF');
-      expect(status.volume).toBe(-80);
+      expect(status.volume).toBe(0);
       expect(status.muted).toBe(false);
       expect(status.connected).toBe(false);
       expect(status.speakers).toEqual([]);
@@ -53,7 +53,7 @@ describe('MarantzService', () => {
       status1.speakers.push({ code: 'FL', name: 'Front Left', active: true, group: 'ear' });
 
       const status2 = service.getStatus();
-      expect(status2.volume).toBe(-80);
+      expect(status2.volume).toBe(0);
       expect(status2.video.inputResolution).toBe('---');
       expect(status2.speakers).toEqual([]);
     });
@@ -62,6 +62,20 @@ describe('MarantzService', () => {
   describe('sendCommand', () => {
     it('should not throw when not connected', () => {
       expect(() => service.sendCommand('MV50')).not.toThrow();
+    });
+
+    it('should write to the socket when connected', () => {
+      const write = vi.fn();
+      (service as any).socket = {
+        write,
+        removeAllListeners: vi.fn(),
+        destroy: vi.fn(),
+      };
+      (service as any).connected = true;
+
+      service.sendCommand('MV50');
+
+      expect(write).toHaveBeenCalledWith('MV50\r');
     });
   });
 
@@ -88,6 +102,42 @@ describe('MarantzService', () => {
       service.disconnect();
       service.disconnect();
       expect(service.getStatus().connected).toBe(false);
+    });
+
+    it('should clean up socket listeners and destroy the socket', () => {
+      const removeAllListeners = vi.fn();
+      const destroy = vi.fn();
+      (service as any).socket = { removeAllListeners, destroy };
+
+      service.disconnect();
+
+      expect(removeAllListeners).toHaveBeenCalledTimes(1);
+      expect(destroy).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('connect and reconnect helpers', () => {
+    it('should create the socket, poll HTTP state, and start polling on connect', async () => {
+      const createSocket = vi.spyOn(service as any, 'createSocket').mockImplementation(() => {});
+      const pollHttpStatus = vi.spyOn(service as any, 'pollHttpStatus').mockResolvedValue(undefined);
+      const startHttpPolling = vi.spyOn(service as any, 'startHttpPolling').mockImplementation(() => {});
+
+      await service.connect();
+
+      expect(createSocket).toHaveBeenCalledTimes(1);
+      expect(pollHttpStatus).toHaveBeenCalledTimes(1);
+      expect(startHttpPolling).toHaveBeenCalledTimes(1);
+    });
+
+    it('should schedule a reconnect attempt', () => {
+      vi.useFakeTimers();
+      const createSocket = vi.spyOn(service as any, 'createSocket').mockImplementation(() => {});
+
+      (service as any).scheduleReconnect();
+      vi.advanceTimersByTime(10000);
+
+      expect(createSocket).toHaveBeenCalledTimes(1);
+      vi.useRealTimers();
     });
   });
 
@@ -129,18 +179,18 @@ describe('MarantzService', () => {
     it('should handle volume events', () => {
       (service as any).updateStatusFromEvent('MV', '50');
       const status = service.getStatus();
-      expect(status.volume).toBe(-30);
-      expect(status.volumeDisplay).toBe('-30.0 dB');
+      expect(status.volume).toBe(50);
+      expect(status.volumeDisplay).toBe('50');
     });
 
     it('should handle volume with half-step', () => {
       (service as any).updateStatusFromEvent('MV', '505');
-      expect(service.getStatus().volume).toBe(-29.5);
+      expect(service.getStatus().volume).toBe(50.5);
     });
 
     it('should handle volume max events', () => {
       (service as any).updateStatusFromEvent('MV', 'MAX 80');
-      expect(service.getStatus().maxVolume).toBe(0);
+      expect(service.getStatus().maxVolume).toBe(80);
     });
 
     it('should handle mute ON', () => {
@@ -233,6 +283,12 @@ describe('MarantzService', () => {
       (service as any).handleParameterSetting('MULTEQ:AUDYSSEY');
       expect(service.getStatus().audio.multEq).toBe('AUDYSSEY');
     });
+
+    it('should leave unhandled SWR settings unchanged', () => {
+      const before = service.getStatus();
+      (service as any).handleParameterSetting('SWR ON');
+      expect(service.getStatus()).toMatchObject(before);
+    });
   });
 
   describe('video settings (VS)', () => {
@@ -252,6 +308,146 @@ describe('MarantzService', () => {
     });
   });
 
+  describe('operation events (OP)', () => {
+    it('should parse OPINFASP with all speakers active', () => {
+      // 7.1.4 layout: FL FR C SW SL SR SBL SBR + 4 height
+      (service as any).handleOperationEvent('INFASP 22222222000000000000000220022000');
+      const status = service.getStatus();
+      expect(status.speakers).toHaveLength(12);
+      expect(status.speakers.every((s: any) => s.active)).toBe(true);
+    });
+
+    it('should distinguish configured (1) from active (2) speakers', () => {
+      // FL=2(active), FR=1(configured), C=0(not in layout)
+      (service as any).handleOperationEvent('INFASP 21000000000000000000000000000000');
+      const status = service.getStatus();
+      expect(status.speakers).toHaveLength(2);
+      expect(status.speakers.find((s: any) => s.code === 'FL').active).toBe(true);
+      expect(status.speakers.find((s: any) => s.code === 'FR').active).toBe(false);
+    });
+
+    it('should ignore positions with value 0', () => {
+      (service as any).handleOperationEvent('INFASP 00000000000000000000000000000000');
+      const status = service.getStatus();
+      expect(status.speakers).toEqual([]);
+    });
+
+    it('should parse a 7.2.4 layout with SW2 at position 31', () => {
+      // Positions 0-7: FL FR C SW SL SR SBL SBR, position 31: SW2
+      // Positions 13-14: TFL TFR, positions 17-18: TRL TRR
+      (service as any).handleOperationEvent('INFASP 22222222000002200220000000000002');
+      const status = service.getStatus();
+      const codes = status.speakers.map((s: any) => s.code);
+      expect(codes).toContain('SW');
+      expect(codes).toContain('SW2');
+      expect(codes).toContain('TFL');
+      expect(codes).toContain('TFR');
+      expect(codes).toContain('TRL');
+      expect(codes).toContain('TRR');
+      expect(status.speakers).toHaveLength(13);
+    });
+  });
+
+  describe('smart select (MSQUICK)', () => {
+    it('should default to 4 presets, none active', () => {
+      const status = service.getStatus();
+      expect(status.smartSelect).toHaveLength(4);
+      expect(status.smartSelect.every((p: any) => !p.active)).toBe(true);
+      expect(status.smartSelect[0].number).toBe(1);
+      expect(status.smartSelect[3].number).toBe(4);
+    });
+
+    it('should activate a preset on MSQUICK event', () => {
+      (service as any).updateStatusFromEvent('MSQUICK', '2');
+      const status = service.getStatus();
+      expect(status.smartSelect.find((p: any) => p.number === 2).active).toBe(true);
+      expect(status.smartSelect.filter((p: any) => p.active)).toHaveLength(1);
+    });
+
+    it('should switch active preset when a different one is selected', () => {
+      (service as any).updateStatusFromEvent('MSQUICK', '1');
+      (service as any).updateStatusFromEvent('MSQUICK', '3');
+      const status = service.getStatus();
+      expect(status.smartSelect.find((p: any) => p.number === 1).active).toBe(false);
+      expect(status.smartSelect.find((p: any) => p.number === 3).active).toBe(true);
+    });
+
+    it('should ignore invalid preset numbers', () => {
+      (service as any).updateStatusFromEvent('MSQUICK', '5');
+      const status = service.getStatus();
+      expect(status.smartSelect.every((p: any) => !p.active)).toBe(true);
+    });
+
+    it('should not throw when not connected', () => {
+      expect(() => (service as any).setSmartSelect(1)).not.toThrow();
+    });
+
+    it('should ignore invalid Smart Select values when sending commands', () => {
+      const sendCommand = vi.spyOn(service, 'sendCommand');
+      (service as any).setSmartSelect(0);
+      (service as any).setSmartSelect(5);
+      expect(sendCommand).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('HTTP status merging', () => {
+    it('should merge HTTP status and preserve the active smart select preset', () => {
+      (service as any).updateStatusFromEvent('MSQUICK', '2');
+
+      (service as any).mergeHttpStatus({
+        power: 'ON',
+        volume: -25.5,
+        muted: true,
+        input: { id: 'GAME', name: 'Console', selected: true },
+        availableInputs: [
+          { id: 'GAME', name: 'Console', selected: true },
+          { id: 'BD', name: 'Blu-ray', selected: false },
+        ],
+        surroundMode: 'AURO-3D',
+        smartSelect: [
+          { number: 1, name: 'Movie', active: false },
+          { number: 2, name: 'Gaming', active: false },
+          { number: 3, name: 'Music', active: false },
+          { number: 4, name: 'Night', active: false },
+        ],
+        speakers: [{ code: 'FL', name: 'Front Left', active: true, group: 'ear' }],
+        video: { inputResolution: '2160p', outputResolution: '2160p', hdrFormat: 'HDR10', inputSignal: 'HDMI' },
+        audio: { inputFormat: 'PCM', soundMode: 'AURO-3D', samplingRate: '96kHz' },
+        subwoofers: [{ number: 1, level: '+2.0 dB', active: true }],
+        lfeLevel: '-4 dB',
+        ecoMode: 'AUTO',
+      });
+
+      const status = service.getStatus();
+      expect(status.power).toBe('ON');
+      expect(status.volume).toBe(54.5);
+      expect(status.volumeDisplay).toBe('54.5');
+      expect(status.muted).toBe(true);
+      expect(status.input).toEqual({ id: 'GAME', name: 'Console', selected: true });
+      expect(status.availableInputs[0]).toMatchObject({ id: 'GAME', selected: true });
+      expect(status.surroundMode).toBe('AURO-3D');
+      expect(status.audio.soundMode).toBe('AURO-3D');
+      expect(status.smartSelect.find((preset: any) => preset.number === 2).active).toBe(true);
+      expect(status.smartSelect.find((preset: any) => preset.number === 2).name).toBe('Gaming');
+      expect(status.video).toMatchObject({ hdrFormat: 'HDR10', inputResolution: '2160p' });
+      expect(status.audio).toMatchObject({ inputFormat: 'PCM', samplingRate: '96kHz' });
+      expect(status.subwoofers[0]).toMatchObject({ level: '+2.0 dB' });
+      expect(status.lfeLevel).toBe('-4 dB');
+      expect(status.ecoMode).toBe('AUTO');
+    });
+
+    it('should resolve custom input names before falling back to source ids', () => {
+      (service as any).status.availableInputs = [{ id: 'GAME', name: 'Console', selected: false }];
+
+      expect((service as any).resolveInputName('GAME')).toBe('Console');
+      expect((service as any).resolveInputName('UNKNOWN')).toBe('UNKNOWN');
+    });
+
+    it('should return the raw subwoofer level when parsing fails', () => {
+      expect((service as any).parseSubLevel('not-a-number')).toBe('not-a-number');
+    });
+  });
+
   describe('processBuffer (telnet line splitting)', () => {
     it('should process CR-terminated lines', () => {
       const listener = vi.fn();
@@ -263,7 +459,7 @@ describe('MarantzService', () => {
 
       expect(listener).toHaveBeenCalled();
       const status = service.getStatus();
-      expect(status.volume).toBe(-30);
+      expect(status.volume).toBe(50);
       expect(status.muted).toBe(true);
     });
 
@@ -288,7 +484,7 @@ describe('MarantzService', () => {
 
       const status = service.getStatus();
       expect(status.power).toBe('ON');
-      expect(status.volume).toBe(-30);
+      expect(status.volume).toBe(50);
       expect(status.input.id).toBe('SAT/CBL');
     });
   });

@@ -1,13 +1,13 @@
 import { describe, it, expect, vi, beforeAll } from 'vitest';
-import express from 'express';
 import request from 'supertest';
+import { createApp } from '../index.js';
 
 // Create a mock status object
 const mockStatus = {
   power: 'ON',
-  volume: -35,
-  volumeDisplay: '-35.0 dB',
-  maxVolume: 18,
+  volume: 45,
+  volumeDisplay: '45',
+  maxVolume: 75,
   muted: false,
   input: { id: 'SAT/CBL', name: 'CBL/SAT', selected: true },
   availableInputs: [
@@ -32,6 +32,12 @@ const mockStatus = {
     multEq: 'AUDYSSEY',
   },
   subwoofers: [{ number: 1, level: '0.0 dB', active: true }],
+  smartSelect: [
+    { number: 1, name: 'Apple TV', active: true },
+    { number: 2, name: 'Music', active: false },
+    { number: 3, name: 'PS3', active: false },
+    { number: 4, name: 'Xbox', active: false },
+  ],
   lfeLevel: '0 dB',
   ecoMode: 'OFF',
   surroundMode: 'Dolby Atmos',
@@ -44,76 +50,20 @@ const mockMarantz = {
   getStatus: () => JSON.parse(JSON.stringify(mockStatus)),
   setVolume: vi.fn(),
   setInput: vi.fn(),
+  setSmartSelect: vi.fn(),
   sendCommand: vi.fn(),
 };
 
-// Build a test Express app matching the real route structure
-function buildTestApp() {
-  const app = express();
-  app.use(express.json());
-
-  app.get('/api/health', (_req, res) => {
-    res.json({ status: 'ok', timestamp: new Date().toISOString() });
-  });
-
-  app.get('/api/settings', (_req, res) => {
-    res.json({
-      title: 'Home Theater Status',
-      defaultLanguage: 'en',
-    });
-  });
-
-  app.get('/api/status', (_req, res) => {
-    res.json(mockMarantz.getStatus());
-  });
-
-  app.post('/api/volume', (req, res) => {
-    const { volume } = req.body as { volume: number };
-    if (typeof volume !== 'number' || volume < -80 || volume > 18) {
-      res.status(400).json({ error: 'Volume must be a number between -80 and 18' });
-      return;
-    }
-    mockMarantz.setVolume(volume);
-    res.json({ success: true, volume });
-  });
-
-  app.post('/api/volume/:direction', (req, res) => {
-    const { direction } = req.params;
-    if (direction === 'up') {
-      mockMarantz.sendCommand('MVUP');
-    } else if (direction === 'down') {
-      mockMarantz.sendCommand('MVDOWN');
-    } else {
-      res.status(400).json({ error: 'Direction must be "up" or "down"' });
-      return;
-    }
-    res.json({ success: true, direction });
-  });
-
-  app.post('/api/input', (req, res) => {
-    const { input } = req.body as { input: string };
-    if (!input) {
-      res.status(400).json({ error: 'Input source ID required' });
-      return;
-    }
-    mockMarantz.setInput(input);
-    res.json({ success: true, input });
-  });
-
-  app.post('/api/mute', (req, res) => {
-    const { muted } = req.body as { muted: boolean };
-    mockMarantz.sendCommand(muted ? 'MUON' : 'MUOFF');
-    res.json({ success: true, muted });
-  });
-
-  return app;
-}
-
 describe('API Routes', () => {
-  let app: express.Express;
+  let app: ReturnType<typeof createApp>;
 
   beforeAll(() => {
-    app = buildTestApp();
+    app = createApp(mockMarantz as any, {
+      app: {
+        title: 'Home Theater Status',
+        defaultLanguage: 'en',
+      },
+    });
   });
 
   describe('GET /api/health', () => {
@@ -139,7 +89,7 @@ describe('API Routes', () => {
       const res = await request(app).get('/api/status');
       expect(res.status).toBe(200);
       expect(res.body.power).toBe('ON');
-      expect(res.body.volume).toBe(-35);
+      expect(res.body.volume).toBe(45);
       expect(res.body.muted).toBe(false);
       expect(res.body.input.id).toBe('SAT/CBL');
       expect(res.body.connected).toBe(true);
@@ -162,24 +112,24 @@ describe('API Routes', () => {
     it('should accept valid volume', async () => {
       const res = await request(app)
         .post('/api/volume')
-        .send({ volume: -30 });
+        .send({ volume: 50 });
       expect(res.status).toBe(200);
       expect(res.body.success).toBe(true);
-      expect(mockMarantz.setVolume).toHaveBeenCalledWith(-30);
+      expect(mockMarantz.setVolume).toHaveBeenCalledWith(50);
     });
 
-    it('should reject volume below -80', async () => {
+    it('should reject volume below 0', async () => {
       const res = await request(app)
         .post('/api/volume')
-        .send({ volume: -90 });
+        .send({ volume: -1 });
       expect(res.status).toBe(400);
       expect(res.body.error).toBeDefined();
     });
 
-    it('should reject volume above 18', async () => {
+    it('should reject volume above 98', async () => {
       const res = await request(app)
         .post('/api/volume')
-        .send({ volume: 25 });
+        .send({ volume: 99 });
       expect(res.status).toBe(400);
     });
 
@@ -262,6 +212,35 @@ describe('API Routes', () => {
         .send({ muted: false });
       expect(res.status).toBe(200);
       expect(mockMarantz.sendCommand).toHaveBeenCalledWith('MUOFF');
+    });
+  });
+
+  describe('POST /api/smartselect/:preset', () => {
+    it('should accept valid preset 1-4', async () => {
+      const res = await request(app)
+        .post('/api/smartselect/2');
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      expect(res.body.preset).toBe(2);
+      expect(mockMarantz.setSmartSelect).toHaveBeenCalledWith(2);
+    });
+
+    it('should reject preset 0', async () => {
+      const res = await request(app)
+        .post('/api/smartselect/0');
+      expect(res.status).toBe(400);
+    });
+
+    it('should reject preset 5', async () => {
+      const res = await request(app)
+        .post('/api/smartselect/5');
+      expect(res.status).toBe(400);
+    });
+
+    it('should reject non-numeric preset', async () => {
+      const res = await request(app)
+        .post('/api/smartselect/abc');
+      expect(res.status).toBe(400);
     });
   });
 });

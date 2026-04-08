@@ -36,6 +36,12 @@ export interface InputSource {
   selected: boolean;
 }
 
+export interface SmartSelectPreset {
+  number: number;
+  name: string;
+  active: boolean;
+}
+
 export interface AVRStatus {
   power: 'ON' | 'OFF' | 'STANDBY';
   volume: number;
@@ -44,6 +50,7 @@ export interface AVRStatus {
   muted: boolean;
   input: InputSource;
   availableInputs: InputSource[];
+  smartSelect: SmartSelectPreset[];
   speakers: SpeakerStatus[];
   video: VideoInfo;
   audio: AudioInfo;

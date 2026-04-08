@@ -18,7 +18,7 @@ export default defineConfig({
       provider: 'v8',
       reporter: ['text', 'lcov'],
       include: ['src/**/*.tsx', 'src/**/*.ts'],
-      exclude: ['src/**/*.test.*', 'src/**/__tests__/**', 'src/main.tsx', 'src/vite-env.d.ts'],
+      exclude: ['src/**/*.test.*', 'src/**/__tests__/**', 'src/main.tsx', 'src/vite-env.d.ts', 'src/types.ts'],
     },
     include: ['src/**/*.test.{ts,tsx}'],
     testTimeout: 10000,
