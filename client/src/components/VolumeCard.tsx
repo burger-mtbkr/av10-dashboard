@@ -135,7 +135,7 @@ export default function VolumeCard({
               value={displayVol}
               min={0}
               max={maxVolume}
-              step={1}
+              step={0.5}
               valueLabelDisplay="auto"
               getAriaValueText={formatVolumeValue}
               valueLabelFormat={formatVolumeValue}
