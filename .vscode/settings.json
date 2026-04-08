@@ -1,16 +1,2 @@
 {
-    "chat.tools.terminal.autoApprove": {
-        "/^node -e \"const http = require\\('http'\\); http\\.get\\('http://192\\.168\\.1\\.170:8080/goform/formMainZone_MainZoneXmlStatus\\.xml', r => \\{ let d=''; r\\.on\\('data', c => d\\+=c\\); r\\.on\\('end', \\(\\) => console\\.log\\(d\\)\\); \\}\\)\\.on\\('error', e => console\\.error\\(e\\.message\\)\\)\"$/": {
-            "approve": true,
-            "matchCommandLine": true
-        },
-        "/^node -e \"const http = require\\('http'\\); http\\.get\\('http://192\\.168\\.1\\.170:80/goform/formMainZone_MainZoneXmlStatus\\.xml', r => \\{ let d=''; r\\.on\\('data', c => d\\+=c\\); r\\.on\\('end', \\(\\) => console\\.log\\(d\\)\\); \\}\\)\\.on\\('error', e => console\\.error\\(e\\.message\\)\\)\"$/": {
-            "approve": true,
-            "matchCommandLine": true
-        },
-        "/^node -e \"const https = require\\('https'\\); const opts = \\{hostname:'192\\.168\\.1\\.170', port:443, path:'/goform/formMainZone_MainZoneXmlStatus\\.xml', rejectUnauthorized:false\\}; https\\.get\\(opts, r => \\{ let d=''; r\\.on\\('data', c => d\\+=c\\); r\\.on\\('end', \\(\\) => console\\.log\\(d\\)\\); \\}\\)\\.on\\('error', e => console\\.error\\(e\\.message\\)\\)\"$/": {
-            "approve": true,
-            "matchCommandLine": true
-        }
-    }
 }
