@@ -107,16 +107,21 @@ export const fetchHttpStatus = async (host: string, httpPort: number): Promise<I
     console.error('[HTTP] HEOS smart select fetch error:', (error as Error).message);
   }
 
-  try {
-    const [generalInfo, networkInfo] = await Promise.all([
-      fetchWebControlConfig(host, '/ajax/general/get_config', 12),
-      fetchWebControlConfig(host, '/ajax/network/get_config', 2),
-    ]);
+  const [generalInfoResult, networkInfoResult] = await Promise.allSettled([
+    fetchWebControlConfig(host, '/ajax/general/get_config', 12),
+    fetchWebControlConfig(host, '/ajax/network/get_config', 2),
+  ]);
 
-    result.softwareVersion = parseSoftwareVersion(generalInfo);
-    result = { ...result, ...parseNetworkInfo(networkInfo) };
-  } catch (error) {
-    console.error('[HTTP] Web control system info fetch error:', (error as Error).message);
+  if (generalInfoResult.status === 'fulfilled') {
+    result.softwareVersion = parseSoftwareVersion(generalInfoResult.value);
+  } else {
+    console.error('[HTTP] Web control general config fetch error:', (generalInfoResult.reason as Error).message);
+  }
+
+  if (networkInfoResult.status === 'fulfilled') {
+    result = { ...result, ...parseNetworkInfo(networkInfoResult.value) };
+  } else {
+    console.error('[HTTP] Web control network config fetch error:', (networkInfoResult.reason as Error).message);
   }
 
   return result;
