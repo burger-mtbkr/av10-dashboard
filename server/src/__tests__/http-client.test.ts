@@ -1,57 +1,57 @@
 import { EventEmitter } from 'events';
+import type { AxiosResponse } from 'axios';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { receiverHttpClient } from '../api/http-client.js';
 
-const httpRequestMock = vi.fn();
-const createConnectionMock = vi.fn();
-
-vi.mock('http', () => ({
-  default: {
-    request: httpRequestMock,
+vi.mock('../api/http-client.js', () => ({
+  receiverHttpClient: {
+    get: vi.fn(),
+    post: vi.fn(),
   },
+  toHttpRequestError: (error: unknown) => (error instanceof Error ? error : new Error('HTTP request failed')),
 }));
+
+const createConnectionMock = vi.fn();
 
 vi.mock('net', () => ({
   createConnection: createConnectionMock,
 }));
 
 const mockHttpResponses = (responses: Record<string, { body?: string; error?: Error }>) => {
-  httpRequestMock.mockImplementation((options: { path: string }, callback?: (response: EventEmitter) => void) => {
-    const request = new EventEmitter() as EventEmitter & {
-      write: ReturnType<typeof vi.fn>;
-      end: ReturnType<typeof vi.fn>;
-      destroy: ReturnType<typeof vi.fn>;
-    };
+  vi.mocked(receiverHttpClient.get).mockImplementation(async (url: string) => {
+    const key = new URL(url).pathname + new URL(url).search;
+    const response = responses[key];
+    if (!response) {
+      throw new Error(`Unexpected HTTP path: ${key}`);
+    }
+    if (response.error) {
+      throw response.error;
+    }
+    return {
+      data: response.body ?? '',
+      status: 200,
+      statusText: 'OK',
+      headers: {},
+      config: {} as any,
+    } as AxiosResponse<string>;
+  });
 
-    request.write = vi.fn();
-    request.destroy = vi.fn();
-    request.end = vi.fn(() => {
-      const response = responses[options.path];
-      if (!response) {
-        throw new Error(`Unexpected HTTP path: ${options.path}`);
-      }
-
-      if (response.error) {
-        request.emit('error', response.error);
-        return;
-      }
-
-      const stream = new EventEmitter() as EventEmitter & {
-        setEncoding: ReturnType<typeof vi.fn>;
-      };
-      stream.setEncoding = vi.fn();
-      process.nextTick(() => {
-        callback?.(stream);
-        request.emit('response', stream);
-        process.nextTick(() => {
-          if (response.body) {
-            stream.emit('data', response.body);
-          }
-          stream.emit('end');
-        });
-      });
-    });
-
-    return request;
+  vi.mocked(receiverHttpClient.post).mockImplementation(async (url: string) => {
+    const key = new URL(url).pathname + new URL(url).search;
+    const response = responses[key];
+    if (!response) {
+      throw new Error(`Unexpected HTTP path: ${key}`);
+    }
+    if (response.error) {
+      throw response.error;
+    }
+    return {
+      data: response.body ?? '',
+      status: 200,
+      statusText: 'OK',
+      headers: {},
+      config: {} as any,
+    } as AxiosResponse<string>;
   });
 };
 
@@ -98,8 +98,9 @@ const mockHeosResponses = (options?: {
 describe('fetchHttpStatus', () => {
   beforeEach(() => {
     vi.resetModules();
-    httpRequestMock.mockReset();
     createConnectionMock.mockReset();
+    vi.mocked(receiverHttpClient.get).mockReset();
+    vi.mocked(receiverHttpClient.post).mockReset();
   });
 
   afterEach(() => {
@@ -158,7 +159,7 @@ describe('fetchHttpStatus', () => {
     expect(status.surroundMode).toBe('Dolby Atmos');
     expect(status.networkConnection).toBe('Ethernet');
     expect(status.ipAddress).toBe('192.168.1.170');
-    expect(status.availableInputs.find((input: { id: string }) => input.id === 'BD')).toMatchObject({
+    expect(status.availableInputs?.find((input: { id: string }) => input.id === 'BD')).toMatchObject({
       name: 'Disc Player',
       selected: false,
     });
@@ -227,7 +228,7 @@ describe('fetchHttpStatus', () => {
       { code: 'FR', name: 'Front Right', active: false, group: 'ear' },
       { code: 'SW2', name: 'Subwoofer 2', active: true, group: 'sub' },
     ]);
-    expect(status.smartSelect[2]).toEqual({ number: 3, name: 'Late Night', active: false });
+    expect(status.smartSelect?.[2]).toEqual({ number: 3, name: 'Late Night', active: false });
   });
 
   it('returns partial data when downstream requests fail', async () => {

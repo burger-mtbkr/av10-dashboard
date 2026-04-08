@@ -205,16 +205,12 @@ export const useAVRStatus = () => {
   );
 
   const runOptimisticRequest = useCallback(
-    async (patch: OptimisticStatus, request: () => Promise<Response>) => {
+    async (patch: OptimisticStatus, request: () => Promise<unknown>) => {
       const keys = Object.keys(patch) as OptimisticKey[];
       queueOptimisticUpdate(patch);
 
       try {
-        const response = await request();
-
-        if (!response.ok) {
-          throw new Error(`Request failed with status ${response.status}`);
-        }
+        await request();
       } catch (error) {
         clearOptimisticKeys(keys);
         throw error;

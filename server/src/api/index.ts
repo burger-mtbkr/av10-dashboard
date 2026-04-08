@@ -6,4 +6,5 @@ export { fetchWebControlConfig } from './fetch-web-control-config.js';
 export { getHeosPlayerId } from './get-heos-player-id.js';
 export { heosCommand } from './heos-command.js';
 export { httpGet } from './http-get.js';
+export { receiverHttpClient, toHttpRequestError } from './http-client.js';
 export { httpPostXml } from './http-post-xml.js';

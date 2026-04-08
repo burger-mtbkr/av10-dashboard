@@ -1,4 +1,12 @@
 import '@testing-library/jest-dom/vitest';
+import { vi } from 'vitest';
+import { apiClient } from '../api/client';
+
+vi.mock('../api/client', () => ({
+  apiClient: {
+    post: vi.fn(),
+  },
+}));
 
 // Mock WebSocket
 class MockWebSocket {
@@ -36,9 +44,10 @@ Object.defineProperty(globalThis, 'WebSocket', {
   writable: true,
 });
 
-// Mock fetch
-globalThis.fetch = async (_url: string, _options?: RequestInit) => {
-  return new Response(JSON.stringify({ success: true }), {
-    headers: { 'Content-Type': 'application/json' },
-  });
-};
+vi.mocked(apiClient.post).mockResolvedValue({
+  status: 200,
+  data: { success: true },
+  statusText: 'OK',
+  headers: {},
+  config: {} as any,
+} as any);

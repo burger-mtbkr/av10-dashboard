@@ -1,3 +1,4 @@
+export { apiClient } from "./client";
 export { selectSmartPresetRequest } from "./select-smart-preset";
 export { setInputRequest } from "./set-input";
 export { setMuteRequest } from "./set-mute";

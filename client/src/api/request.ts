@@ -1,8 +1,5 @@
-export const post = (path: string) => fetch(path, { method: "POST" });
+import { apiClient } from "./client";
 
-export const postJson = (path: string, body: unknown) =>
-  fetch(path, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
-  });
+export const post = (path: string) => apiClient.post(path);
+
+export const postJson = (path: string, body: unknown) => apiClient.post(path, body);
