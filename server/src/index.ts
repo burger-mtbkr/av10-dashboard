@@ -7,19 +7,19 @@ import { readFileSync } from 'fs';
 import { resolve } from 'path';
 import { pathToFileURL } from 'url';
 import { MarantzService } from './marantz-service.js';
-import type { AVRStatus, WSMessage } from './types.js';
+import type { IAVRStatus, IWSMessage } from './types.js';
 
 type MarantzApi = Pick<MarantzService, 'getStatus' | 'setVolume' | 'setInput' | 'setSmartSelect' | 'sendCommand'>;
 type MarantzRealtimeApi = Pick<MarantzService, 'getStatus' | 'on'>;
 
-export interface Settings {
+export interface ISettings {
   app?: {
     title?: string;
     defaultLanguage?: string;
   };
 }
 
-export interface RuntimeConfig {
+export interface IRuntimeConfig {
   avrHost: string;
   avrPort: number;
   avrHttpPort: number;
@@ -28,16 +28,19 @@ export interface RuntimeConfig {
   reconnectInterval: number;
 }
 
-export function loadSettings(settingsPath = resolve(process.cwd(), '..', 'settings.json')): Settings {
+export type Settings = ISettings;
+export type RuntimeConfig = IRuntimeConfig;
+
+export const loadSettings = (settingsPath = resolve(process.cwd(), '..', 'settings.json')): ISettings => {
   try {
     return JSON.parse(readFileSync(settingsPath, 'utf-8'));
   } catch {
     console.warn('[Server] Could not load settings.json, using defaults');
     return {};
   }
-}
+};
 
-export function getRuntimeConfig(env = process.env): RuntimeConfig {
+export const getRuntimeConfig = (env = process.env): IRuntimeConfig => {
   return {
     avrHost: env.AVR_HOST || '192.168.1.170',
     avrPort: parseInt(env.AVR_PORT || '23', 10),
@@ -46,9 +49,9 @@ export function getRuntimeConfig(env = process.env): RuntimeConfig {
     pollInterval: parseInt(env.POLL_INTERVAL || '30000', 10),
     reconnectInterval: 10000,
   };
-}
+};
 
-export function createApp(marantz: MarantzApi, settings: Settings = {}): express.Express {
+export const createApp = (marantz: MarantzApi, settings: ISettings = {}): express.Express => {
   const app = express();
   app.use(cors());
   app.use(express.json());
@@ -118,9 +121,9 @@ export function createApp(marantz: MarantzApi, settings: Settings = {}): express
   });
 
   return app;
-}
+};
 
-export function createRealtimeServer(server: HttpServer, marantz: MarantzRealtimeApi): WebSocketServer {
+export const createRealtimeServer = (server: HttpServer, marantz: MarantzRealtimeApi): WebSocketServer => {
   const wss = new WebSocketServer({ server, path: '/ws' });
   const clients = new Set<WebSocket>();
 
@@ -128,7 +131,7 @@ export function createRealtimeServer(server: HttpServer, marantz: MarantzRealtim
     console.log('[WS] Client connected');
     clients.add(ws);
 
-    const msg: WSMessage = { type: 'status', data: marantz.getStatus() };
+    const msg: IWSMessage = { type: 'status', data: marantz.getStatus() };
     ws.send(JSON.stringify(msg));
 
     ws.on('close', () => {
@@ -142,16 +145,16 @@ export function createRealtimeServer(server: HttpServer, marantz: MarantzRealtim
     });
   });
 
-  function broadcast(message: WSMessage): void {
+  const broadcast = (message: IWSMessage): void => {
     const json = JSON.stringify(message);
     for (const client of clients) {
       if (client.readyState === WebSocket.OPEN) {
         client.send(json);
       }
     }
-  }
+  };
 
-  marantz.on('statusChanged', (status: AVRStatus) => {
+  marantz.on('statusChanged', (status: IAVRStatus) => {
     broadcast({ type: 'status', data: status });
   });
 
@@ -168,9 +171,9 @@ export function createRealtimeServer(server: HttpServer, marantz: MarantzRealtim
   });
 
   return wss;
-}
+};
 
-export function registerShutdown(server: HttpServer, wss: WebSocketServer, marantz: MarantzService): void {
+export const registerShutdown = (server: HttpServer, wss: WebSocketServer, marantz: MarantzService): void => {
   process.on('SIGINT', () => {
     console.log('[Server] Shutting down...');
     marantz.disconnect();
@@ -178,9 +181,9 @@ export function registerShutdown(server: HttpServer, wss: WebSocketServer, maran
     server.close();
     process.exit(0);
   });
-}
+};
 
-export function startServer(settings = loadSettings(), config = getRuntimeConfig()) {
+export const startServer = (settings = loadSettings(), config = getRuntimeConfig()) => {
   const marantz = new MarantzService(
     config.avrHost,
     config.avrPort,
@@ -192,21 +195,23 @@ export function startServer(settings = loadSettings(), config = getRuntimeConfig
   const server = createServer(app);
   const wss = createRealtimeServer(server, marantz);
 
-  server.listen(config.serverPort, () => {
+  server.listen(config.serverPort, async () => {
     console.log(`[Server] HTTP + WebSocket server running on port ${config.serverPort}`);
     console.log(`[Server] Connecting to Marantz AV10 at ${config.avrHost}:${config.avrPort}...`);
-    marantz.connect().catch((err) => {
+    try {
+      await marantz.connect();
+    } catch (err) {
       console.error('[Server] Initial connection failed:', err.message);
-    });
+    }
   });
 
   registerShutdown(server, wss, marantz);
   return { app, server, wss, marantz };
-}
+};
 
-function isDirectExecution(): boolean {
+const isDirectExecution = (): boolean => {
   return Boolean(process.argv[1]) && import.meta.url === pathToFileURL(process.argv[1]).href;
-}
+};
 
 if (isDirectExecution()) {
   startServer();

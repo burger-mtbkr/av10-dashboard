@@ -103,7 +103,7 @@ export const TELNET_EVENT_MAP: Record<string, string> = {
  *  2-digit: integer steps, e.g. "50" → 50, "75" → 75
  *  3-digit: half-step precision, e.g. "505" → 50.5, "755" → 75.5
  */
-export function parseVolume(raw: string): number {
+export const parseVolume = (raw: string): number => {
   const num = parseInt(raw, 10);
   if (raw.length === 3) {
     // e.g. "505" → 50.5
@@ -111,14 +111,14 @@ export function parseVolume(raw: string): number {
   }
   // e.g. "50" → 50
   return num;
-}
+};
 
 /** Convert an absolute volume (0-98) back to a Marantz command string */
-export function volumeToCommand(vol: number): string {
+export const volumeToCommand = (vol: number): string => {
   if (vol % 1 !== 0) {
     // Half step: e.g. 50.5 → "505"
     return String(Math.round(vol * 10)).padStart(3, '0');
   }
   // Integer step: e.g. 50 → "50", 5 → "05"
   return String(Math.round(vol)).padStart(2, '0');
-}
+};

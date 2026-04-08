@@ -14,8 +14,8 @@ vi.mock('net', () => ({
   createConnection: createConnectionMock,
 }));
 
-function mockHttpResponses(responses: Record<string, { body?: string; error?: Error }>) {
-  httpRequestMock.mockImplementation((options: { path: string }, callback: (response: EventEmitter) => void) => {
+const mockHttpResponses = (responses: Record<string, { body?: string; error?: Error }>) => {
+  httpRequestMock.mockImplementation((options: { path: string }, callback?: (response: EventEmitter) => void) => {
     const request = new EventEmitter() as EventEmitter & {
       write: ReturnType<typeof vi.fn>;
       end: ReturnType<typeof vi.fn>;
@@ -35,35 +35,47 @@ function mockHttpResponses(responses: Record<string, { body?: string; error?: Er
         return;
       }
 
-      const stream = new EventEmitter();
-      callback(stream);
-      if (response.body) {
-        stream.emit('data', response.body);
-      }
-      stream.emit('end');
+      const stream = new EventEmitter() as EventEmitter & {
+        setEncoding: ReturnType<typeof vi.fn>;
+      };
+      stream.setEncoding = vi.fn();
+      process.nextTick(() => {
+        callback?.(stream);
+        request.emit('response', stream);
+        process.nextTick(() => {
+          if (response.body) {
+            stream.emit('data', response.body);
+          }
+          stream.emit('end');
+        });
+      });
     });
 
     return request;
   });
-}
+};
 
-function mockHeosResponses(options?: {
+const mockHeosResponses = (options?: {
   playersResponse?: string;
   quickselectsResponse?: string;
   connectionError?: Error;
-}) {
+}) => {
   createConnectionMock.mockImplementation(() => {
     const socket = new EventEmitter() as EventEmitter & {
       setEncoding: ReturnType<typeof vi.fn>;
+      setTimeout: ReturnType<typeof vi.fn>;
       write: (command: string) => void;
       destroy: ReturnType<typeof vi.fn>;
     };
 
     socket.setEncoding = vi.fn();
+    socket.setTimeout = vi.fn();
     socket.destroy = vi.fn();
     socket.write = (command: string) => {
       if (options?.connectionError) {
-        socket.emit('error', options.connectionError);
+        process.nextTick(() => {
+          socket.emit('error', options.connectionError);
+        });
         return;
       }
 
@@ -72,14 +84,16 @@ function mockHeosResponses(options?: {
         : options?.quickselectsResponse;
 
       if (payload) {
-        socket.emit('data', payload);
+        process.nextTick(() => {
+          socket.emit('data', payload);
+        });
       }
     };
 
     process.nextTick(() => socket.emit('connect'));
     return socket;
   });
-}
+};
 
 describe('fetchHttpStatus', () => {
   beforeEach(() => {
@@ -129,7 +143,7 @@ describe('fetchHttpStatus', () => {
       quickselectsResponse: '{"heos":{"result":"success"},"payload":[{"id":1,"name":"HEOS Movie"},{"id":4,"name":"HEOS Games"}]}\r\n',
     });
 
-    const { fetchHttpStatus } = await import('../http-client.js');
+    const { fetchHttpStatus } = await import('../api/fetch-http-status.js');
     const status = await fetchHttpStatus('192.168.1.170', 8080);
 
     expect(status.power).toBe('ON');
@@ -200,7 +214,7 @@ describe('fetchHttpStatus', () => {
       quickselectsResponse: '{"heos":{"result":"success"},"payload":[]}\r\n',
     });
 
-    const { fetchHttpStatus } = await import('../http-client.js');
+    const { fetchHttpStatus } = await import('../api/fetch-http-status.js');
     const status = await fetchHttpStatus('192.168.1.170', 8080);
 
     expect(status.power).toBe('ON');
@@ -238,7 +252,7 @@ describe('fetchHttpStatus', () => {
       connectionError: new Error('HEOS unavailable'),
     });
 
-    const { fetchHttpStatus } = await import('../http-client.js');
+    const { fetchHttpStatus } = await import('../api/fetch-http-status.js');
     const status = await fetchHttpStatus('192.168.1.170', 8080);
 
     expect(status).toEqual({

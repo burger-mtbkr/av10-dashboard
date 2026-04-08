@@ -8,7 +8,7 @@ import WifiIcon from "@mui/icons-material/Wifi";
 import SettingsEthernetIcon from "@mui/icons-material/SettingsEthernet";
 import DnsIcon from "@mui/icons-material/Dns";
 
-interface SystemCardProps {
+interface ISystemCardProps {
   power: "ON" | "OFF" | "STANDBY";
   softwareVersion?: string;
   networkConnection?: string;
@@ -17,14 +17,14 @@ interface SystemCardProps {
   connected: boolean;
 }
 
-export default function SystemCard({
+const SystemCard = ({
   power,
   softwareVersion,
   networkConnection,
   ipAddress,
   lastUpdate,
   connected,
-}: SystemCardProps) {
+}: ISystemCardProps) => {
   const { t } = useTranslation();
 
   const formatTime = (iso: string): string => {
@@ -194,4 +194,6 @@ export default function SystemCard({
       </CardContent>
     </Card>
   );
-}
+};
+
+export default SystemCard;

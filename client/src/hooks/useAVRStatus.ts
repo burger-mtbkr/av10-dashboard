@@ -1,9 +1,15 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import type { AVRStatus, WSMessage } from '../types';
+import { selectSmartPresetRequest } from '../api/select-smart-preset';
+import { setInputRequest } from '../api/set-input';
+import { setMuteRequest } from '../api/set-mute';
+import { setVolumeRequest } from '../api/set-volume';
+import { volumeDownRequest } from '../api/volume-down';
+import { volumeUpRequest } from '../api/volume-up';
+import type { IAVRStatus, IWSMessage } from '../types';
 
 type OptimisticStatus = Partial<
   Pick<
-    AVRStatus,
+    IAVRStatus,
     'volume' | 'volumeDisplay' | 'muted' | 'input' | 'availableInputs' | 'smartSelect'
   >
 >;
@@ -12,7 +18,7 @@ type OptimisticKey = keyof OptimisticStatus;
 
 const OPTIMISTIC_STATUS_TIMEOUT_MS = 5000;
 
-const DEFAULT_STATUS: AVRStatus = {
+const DEFAULT_STATUS: IAVRStatus = {
   power: 'OFF',
   softwareVersion: '---',
   volume: 0,
@@ -54,8 +60,8 @@ const DEFAULT_STATUS: AVRStatus = {
   lastUpdate: '',
 };
 
-export function useAVRStatus() {
-  const [baseStatus, setBaseStatus] = useState<AVRStatus>(DEFAULT_STATUS);
+export const useAVRStatus = () => {
+  const [baseStatus, setBaseStatus] = useState<IAVRStatus>(DEFAULT_STATUS);
   const [optimisticStatus, setOptimisticStatus] = useState<OptimisticStatus>({});
   const [wsConnected, setWsConnected] = useState(false);
   const wsRef = useRef<WebSocket | null>(null);
@@ -65,11 +71,11 @@ export function useAVRStatus() {
   const optimisticStatusRef = useRef<OptimisticStatus>({});
 
   const syncBaseStatus = useCallback(
-    (nextStatus: AVRStatus | ((prev: AVRStatus) => AVRStatus)) => {
+    (nextStatus: IAVRStatus | ((prev: IAVRStatus) => IAVRStatus)) => {
       setBaseStatus((prev) => {
         const resolvedStatus =
           typeof nextStatus === 'function'
-            ? (nextStatus as (prev: AVRStatus) => AVRStatus)(prev)
+            ? (nextStatus as (prev: IAVRStatus) => IAVRStatus)(prev)
             : nextStatus;
 
         baseStatusRef.current = resolvedStatus;
@@ -144,7 +150,7 @@ export function useAVRStatus() {
   );
 
   const reconcileOptimisticStatus = useCallback(
-    (nextStatus: AVRStatus) => {
+    (nextStatus: IAVRStatus) => {
       const currentOptimisticStatus = optimisticStatusRef.current;
       const keysToClear: OptimisticKey[] = [];
 
@@ -171,9 +177,11 @@ export function useAVRStatus() {
 
       if (currentOptimisticStatus.smartSelect) {
         const optimisticPreset = currentOptimisticStatus.smartSelect.find(
-          (preset) => preset.active,
+          (preset: IAVRStatus['smartSelect'][number]) => preset.active,
         )?.number;
-        const activePreset = nextStatus.smartSelect.find((preset) => preset.active)?.number;
+        const activePreset = nextStatus.smartSelect.find(
+          (preset: IAVRStatus['smartSelect'][number]) => preset.active,
+        )?.number;
 
         if (optimisticPreset !== undefined && optimisticPreset === activePreset) {
           keysToClear.push('smartSelect');
@@ -186,7 +194,7 @@ export function useAVRStatus() {
   );
 
   const getRenderedStatus = useCallback(
-    (): AVRStatus => ({
+    (): IAVRStatus => ({
       ...baseStatusRef.current,
       ...optimisticStatusRef.current,
     }),
@@ -232,11 +240,11 @@ export function useAVRStatus() {
 
     ws.onmessage = (event) => {
       try {
-        const msg: WSMessage = JSON.parse(event.data);
+        const msg: IWSMessage = JSON.parse(event.data);
         switch (msg.type) {
           case 'status':
-            syncBaseStatus(msg.data as AVRStatus);
-            reconcileOptimisticStatus(msg.data as AVRStatus);
+            syncBaseStatus(msg.data as IAVRStatus);
+            reconcileOptimisticStatus(msg.data as IAVRStatus);
             break;
           case 'connected':
             syncBaseStatus((prev) => ({ ...prev, connected: true }));
@@ -282,12 +290,7 @@ export function useAVRStatus() {
         volume,
         volumeDisplay: Number.isInteger(volume) ? String(volume) : volume.toFixed(1),
       },
-      () =>
-        fetch('/api/volume', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ volume }),
-        }),
+      () => setVolumeRequest(volume),
     );
   }, [runOptimisticRequest]);
 
@@ -302,7 +305,7 @@ export function useAVRStatus() {
           ? String(nextVolume)
           : nextVolume.toFixed(1),
       },
-      () => fetch('/api/volume/up', { method: 'POST' }),
+      volumeUpRequest,
     );
   }, [getRenderedStatus, runOptimisticRequest]);
 
@@ -317,7 +320,7 @@ export function useAVRStatus() {
           ? String(nextVolume)
           : nextVolume.toFixed(1),
       },
-      () => fetch('/api/volume/down', { method: 'POST' }),
+      volumeDownRequest,
     );
   }, [getRenderedStatus, runOptimisticRequest]);
 
@@ -337,12 +340,7 @@ export function useAVRStatus() {
           selected: input.id === inputId,
         })),
       },
-      () =>
-        fetch('/api/input', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ input: inputId }),
-        }),
+      () => setInputRequest(inputId),
     );
   }, [getRenderedStatus, runOptimisticRequest]);
 
@@ -352,12 +350,7 @@ export function useAVRStatus() {
 
     await runOptimisticRequest(
       { muted },
-      () =>
-        fetch('/api/mute', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ muted }),
-        }),
+      () => setMuteRequest(muted),
     );
   }, [getRenderedStatus, runOptimisticRequest]);
 
@@ -371,7 +364,7 @@ export function useAVRStatus() {
           active: option.number === preset,
         })),
       },
-      () => fetch(`/api/smartselect/${preset}`, { method: 'POST' }),
+      () => selectSmartPresetRequest(preset),
     );
   }, [getRenderedStatus, runOptimisticRequest]);
 
@@ -385,4 +378,4 @@ export function useAVRStatus() {
     toggleMute,
     selectSmartPreset,
   };
-}
+};

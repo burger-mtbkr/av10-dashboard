@@ -8,13 +8,13 @@ import {
 } from "@mui/material";
 import { useTranslation } from "react-i18next";
 import GraphicEqIcon from "@mui/icons-material/GraphicEq";
-import type { SubwooferInfo } from "../types";
+import type { ISubwooferInfo } from "../types";
 
-interface SubwooferCardProps {
-  subwoofers: SubwooferInfo[];
+interface ISubwooferCardProps {
+  subwoofers: ISubwooferInfo[];
 }
 
-export default function SubwooferCard({ subwoofers }: SubwooferCardProps) {
+const SubwooferCard = ({ subwoofers }: ISubwooferCardProps) => {
   const { t } = useTranslation();
 
   /** Parse dB level string to number for the progress bar */
@@ -98,4 +98,6 @@ export default function SubwooferCard({ subwoofers }: SubwooferCardProps) {
       </CardContent>
     </Card>
   );
-}
+};
+
+export default SubwooferCard;

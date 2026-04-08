@@ -2,10 +2,10 @@ import { Card, CardContent, Typography, Box, Chip } from "@mui/material";
 import { useTranslation } from "react-i18next";
 import SpeakerIcon from "@mui/icons-material/Speaker";
 import PersonPinCircleIcon from "@mui/icons-material/PersonPinCircle";
-import type { SpeakerStatus } from "../types";
+import type { ISpeakerStatus } from "../types";
 
-interface SpeakerCardProps {
-  speakers: SpeakerStatus[];
+interface ISpeakerCardProps {
+  speakers: ISpeakerStatus[];
 }
 
 /**
@@ -67,15 +67,15 @@ const SPEAKER_POSITIONS: Record<string, { x: number; y: number }> = {
   SB: { x: 50, y: 92 },
 };
 
-function SpeakerBlock({
+const SpeakerBlock = ({
   speaker,
   x,
   y,
 }: {
-  speaker: SpeakerStatus;
+  speaker: ISpeakerStatus;
   x: number;
   y: number;
-}) {
+}) => {
   return (
     <Box
       sx={{
@@ -129,9 +129,9 @@ function SpeakerBlock({
       </Typography>
     </Box>
   );
-}
+};
 
-export default function SpeakerCard({ speakers }: SpeakerCardProps) {
+const SpeakerCard = ({ speakers }: ISpeakerCardProps) => {
   const { t } = useTranslation();
 
   if (!speakers.length) {
@@ -281,4 +281,6 @@ export default function SpeakerCard({ speakers }: SpeakerCardProps) {
       </CardContent>
     </Card>
   );
-}
+};
+
+export default SpeakerCard;

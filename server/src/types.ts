@@ -1,5 +1,5 @@
 // Shared types between server and client
-export interface SpeakerStatus {
+export interface ISpeakerStatus {
   /** Speaker channel code e.g. "FL", "FR", "C", "SW" */
   code: string;
   /** Human-readable name e.g. "Front Left" */
@@ -10,7 +10,7 @@ export interface SpeakerStatus {
   group: 'ear' | 'height' | 'sub' | 'wide' | 'back';
 }
 
-export interface VideoInfo {
+export interface IVideoInfo {
   /** Input signal resolution e.g. "1080p" "4K" */
   inputResolution: string;
   /** Output signal resolution */
@@ -23,7 +23,7 @@ export interface VideoInfo {
   hdmiOutput: string;
 }
 
-export interface AudioInfo {
+export interface IAudioInfo {
   /** Input audio format e.g. "Dolby TrueHD", "DTS-HD MA" */
   inputFormat: string;
   /** Current sound mode e.g. "Dolby Atmos", "DTS:X" */
@@ -40,7 +40,7 @@ export interface AudioInfo {
   multEq: string;
 }
 
-export interface SubwooferInfo {
+export interface ISubwooferInfo {
   /** Subwoofer number (1-4) */
   number: number;
   /** Level in dB e.g. "0.0", "+3.5", "-6.0" */
@@ -49,7 +49,7 @@ export interface SubwooferInfo {
   active: boolean;
 }
 
-export interface InputSource {
+export interface IInputSource {
   /** Source ID e.g. "SAT/CBL", "BD", "GAME" */
   id: string;
   /** Display name — custom label from receiver or config override */
@@ -58,7 +58,7 @@ export interface InputSource {
   selected: boolean;
 }
 
-export interface SmartSelectPreset {
+export interface ISmartSelectPreset {
   /** Preset number (1-4) */
   number: number;
   /** Friendly name assigned on the receiver, or fallback like "Smart Select 1" */
@@ -67,7 +67,7 @@ export interface SmartSelectPreset {
   active: boolean;
 }
 
-export interface AVRStatus {
+export interface IAVRStatus {
   /** Power state */
   power: 'ON' | 'OFF' | 'STANDBY';
   /** Installed firmware / software version */
@@ -81,19 +81,19 @@ export interface AVRStatus {
   /** Mute state */
   muted: boolean;
   /** Currently selected input source */
-  input: InputSource;
+  input: IInputSource;
   /** All available input sources with custom names */
-  availableInputs: InputSource[];
+  availableInputs: IInputSource[];
   /** Smart Select presets 1-4 with friendly names from the receiver */
-  smartSelect: SmartSelectPreset[];
+  smartSelect: ISmartSelectPreset[];
   /** Active speakers */
-  speakers: SpeakerStatus[];
+  speakers: ISpeakerStatus[];
   /** Video signal information */
-  video: VideoInfo;
+  video: IVideoInfo;
   /** Audio signal information */
-  audio: AudioInfo;
+  audio: IAudioInfo;
   /** Subwoofer info for each active sub */
-  subwoofers: SubwooferInfo[];
+  subwoofers: ISubwooferInfo[];
   /** LFE (Low Frequency Effect) level e.g. "0 dB", "-5 dB" */
   lfeLevel: string;
   /** ECO mode */
@@ -110,13 +110,23 @@ export interface AVRStatus {
   lastUpdate: string;
 }
 
-export interface WSMessage {
+export interface IWSMessage {
   type: 'status' | 'event' | 'error' | 'connected' | 'disconnected';
-  data: AVRStatus | TelnetEvent | string;
+  data: IAVRStatus | ITelnetEvent | string;
 }
 
-export interface TelnetEvent {
+export interface ITelnetEvent {
   zone: string;
   event: string;
   parameter: string;
 }
+
+export type SpeakerStatus = ISpeakerStatus;
+export type VideoInfo = IVideoInfo;
+export type AudioInfo = IAudioInfo;
+export type SubwooferInfo = ISubwooferInfo;
+export type InputSource = IInputSource;
+export type SmartSelectPreset = ISmartSelectPreset;
+export type AVRStatus = IAVRStatus;
+export type WSMessage = IWSMessage;
+export type TelnetEvent = ITelnetEvent;

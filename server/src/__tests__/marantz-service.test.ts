@@ -18,8 +18,8 @@ vi.mock('net', () => {
   };
 });
 
-// Mock the http-client module
-vi.mock('../http-client.js', () => ({
+// Mock the HTTP status API module
+vi.mock('../api/fetch-http-status.js', () => ({
   fetchHttpStatus: vi.fn().mockResolvedValue({}),
 }));
 

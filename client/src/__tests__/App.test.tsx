@@ -16,11 +16,11 @@ vi.mock("../hooks/useAVRStatus", () => ({
   }),
 }));
 
-function expectBefore(first: HTMLElement, second: HTMLElement) {
+const expectBefore = (first: HTMLElement, second: HTMLElement) => {
   expect(first.compareDocumentPosition(second)).toBe(
     Node.DOCUMENT_POSITION_FOLLOWING,
   );
-}
+};
 
 describe("App", () => {
   it("renders dashboard cards in the requested order", () => {
