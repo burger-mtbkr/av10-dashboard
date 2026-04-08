@@ -115,13 +115,15 @@ export const fetchHttpStatus = async (host: string, httpPort: number): Promise<I
   if (generalInfoResult.status === 'fulfilled') {
     result.softwareVersion = parseSoftwareVersion(generalInfoResult.value);
   } else {
-    console.error('[HTTP] Web control general config fetch error:', (generalInfoResult.reason as Error).message);
+    const reason = generalInfoResult.reason;
+    console.error('[HTTP] Web control general config fetch error:', reason instanceof Error ? reason.message : reason);
   }
 
   if (networkInfoResult.status === 'fulfilled') {
     result = { ...result, ...parseNetworkInfo(networkInfoResult.value) };
   } else {
-    console.error('[HTTP] Web control network config fetch error:', (networkInfoResult.reason as Error).message);
+    const reason = networkInfoResult.reason;
+    console.error('[HTTP] Web control network config fetch error:', reason instanceof Error ? reason.message : reason);
   }
 
   return result;
