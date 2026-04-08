@@ -3,19 +3,18 @@ import { test, expect } from '@playwright/test';
 test.describe('Dashboard', () => {
   test('should load the dashboard page', async ({ page }) => {
     await page.goto('/');
-    await expect(page).toHaveTitle(/Home Theater Status/);
+    await expect(page).toHaveTitle(/Home Theater Status|Marantz AV10 Status/);
   });
 
   test('should show the app title in the header', async ({ page }) => {
     await page.goto('/');
-    await expect(page.locator('h4')).toContainText('Home Theater Status');
+    await expect(page.locator('h4')).toContainText('Marantz AV10 Status');
   });
 
   test('should display connection status chips', async ({ page }) => {
     await page.goto('/');
-    // Should have WebSocket connection status
-    const wsChip = page.getByText(/WS:/);
-    await expect(wsChip).toBeVisible();
+    await expect(page.getByText(/AVR Connected|AVR Disconnected/)).toBeVisible();
+    await expect(page.getByText(/Live|Offline/)).toBeVisible();
   });
 
   test('should render all dashboard cards', async ({ page }) => {
@@ -26,8 +25,8 @@ test.describe('Dashboard', () => {
 
     // Check all card titles are visible
     await expect(page.getByText('Speaker Configuration')).toBeVisible();
-    await expect(page.getByText('Volume')).toBeVisible();
-    await expect(page.getByText('Input Source')).toBeVisible();
+    await expect(page.getByText('Volume', { exact: true })).toBeVisible();
+    await expect(page.getByText('Smart Select')).toBeVisible();
     await expect(page.getByText('Video Signal')).toBeVisible();
     await expect(page.getByText('Audio Signal')).toBeVisible();
     await expect(page.getByText('Subwoofer Settings')).toBeVisible();
@@ -54,7 +53,7 @@ test.describe('Responsive Design', () => {
 
     // Cards should stack vertically on mobile
     await expect(page.getByText('Speaker Configuration')).toBeVisible();
-    await expect(page.getByText('Volume')).toBeVisible();
+    await expect(page.getByText('Volume', { exact: true })).toBeVisible();
   });
 });
 

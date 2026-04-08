@@ -184,6 +184,123 @@ describe("useAVRStatus", () => {
     });
   });
 
+  it("keeps the optimistic volume until websocket status catches up", async () => {
+    const { result } = renderHook(() => useAVRStatus());
+    const socket = TestWebSocket.instances[0];
+
+    act(() => {
+      socket.emitMessage({
+        type: "status",
+        data: createMockStatus({ volume: 50, volumeDisplay: "50" }),
+      });
+    });
+
+    await act(async () => {
+      await result.current.setVolume(30);
+    });
+
+    expect(result.current.status.volume).toBe(30);
+    expect(result.current.status.volumeDisplay).toBe("30");
+
+    act(() => {
+      socket.emitMessage({
+        type: "status",
+        data: createMockStatus({ volume: 50, volumeDisplay: "50" }),
+      });
+    });
+
+    expect(result.current.status.volume).toBe(30);
+    expect(result.current.status.volumeDisplay).toBe("30");
+
+    act(() => {
+      socket.emitMessage({
+        type: "status",
+        data: createMockStatus({ volume: 30, volumeDisplay: "30" }),
+      });
+    });
+
+    expect(result.current.status.volume).toBe(30);
+    expect(result.current.status.volumeDisplay).toBe("30");
+  });
+
+  it("expires optimistic state if the backend never confirms it", async () => {
+    const { result } = renderHook(() => useAVRStatus());
+    const socket = TestWebSocket.instances[0];
+
+    act(() => {
+      socket.emitMessage({
+        type: "status",
+        data: createMockStatus({ volume: 50, volumeDisplay: "50" }),
+      });
+    });
+
+    await act(async () => {
+      await result.current.setVolume(30);
+    });
+
+    expect(result.current.status.volume).toBe(30);
+
+    act(() => {
+      vi.advanceTimersByTime(5000);
+    });
+
+    expect(result.current.status.volume).toBe(50);
+    expect(result.current.status.volumeDisplay).toBe("50");
+  });
+
+  it("keeps the optimistic smart select state until websocket status catches up", async () => {
+    const { result } = renderHook(() => useAVRStatus());
+    const socket = TestWebSocket.instances[0];
+
+    const smartSelectOne = [
+      { number: 1, name: "Apple TV", active: true },
+      { number: 2, name: "Music", active: false },
+      { number: 3, name: "PS3", active: false },
+      { number: 4, name: "Xbox", active: false },
+    ];
+    const smartSelectThree = smartSelectOne.map((preset) => ({
+      ...preset,
+      active: preset.number === 3,
+    }));
+
+    act(() => {
+      socket.emitMessage({
+        type: "status",
+        data: createMockStatus({ smartSelect: smartSelectOne }),
+      });
+    });
+
+    await act(async () => {
+      await result.current.selectSmartPreset(3);
+    });
+
+    expect(
+      result.current.status.smartSelect.find((preset) => preset.active)?.number,
+    ).toBe(3);
+
+    act(() => {
+      socket.emitMessage({
+        type: "status",
+        data: createMockStatus({ smartSelect: smartSelectOne }),
+      });
+    });
+
+    expect(
+      result.current.status.smartSelect.find((preset) => preset.active)?.number,
+    ).toBe(3);
+
+    act(() => {
+      socket.emitMessage({
+        type: "status",
+        data: createMockStatus({ smartSelect: smartSelectThree }),
+      });
+    });
+
+    expect(
+      result.current.status.smartSelect.find((preset) => preset.active)?.number,
+    ).toBe(3);
+  });
+
   it("reconnects after close and closes the active socket on cleanup", () => {
     const { result, unmount } = renderHook(() => useAVRStatus());
     const firstSocket = TestWebSocket.instances[0];

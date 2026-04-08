@@ -22,7 +22,7 @@ describe("VolumeCard", () => {
 
   it("should display the current volume", () => {
     renderWithProviders(<VolumeCard {...defaultProps} />);
-    expect(screen.getByText("45")).toBeInTheDocument();
+    expect(screen.getAllByText("45").length).toBeGreaterThanOrEqual(1);
   });
 
   it("should display percentage label", () => {
@@ -78,10 +78,21 @@ describe("VolumeCard", () => {
     expect(screen.getByRole("slider")).toBeInTheDocument();
   });
 
+  it("should show min and max labels for the slider", () => {
+    renderWithProviders(<VolumeCard {...defaultProps} />);
+    expect(screen.getByText("0")).toBeInTheDocument();
+    expect(screen.getByText("75")).toBeInTheDocument();
+  });
+
+  it("should expose the current value through the slider tooltip label", () => {
+    renderWithProviders(<VolumeCard {...defaultProps} />);
+    expect(screen.getByRole("slider")).toHaveAttribute("aria-valuetext", "45");
+  });
+
   it("should display different volumes correctly", () => {
     const { rerender } = renderWithProviders(
       <VolumeCard {...defaultProps} volume={0} />,
     );
-    expect(screen.getByText("0")).toBeInTheDocument();
+    expect(screen.getAllByText("0").length).toBeGreaterThanOrEqual(1);
   });
 });

@@ -40,6 +40,10 @@ export default function VolumeCard({
 
   const displayVol = localVolume !== null ? localVolume : volume;
 
+  const formatVolumeValue = useCallback((value: number) => {
+    return Number.isInteger(value) ? String(value) : value.toFixed(1);
+  }, []);
+
   const handleSliderChange = useCallback(
     (_: Event, value: number | number[]) => {
       const v = Array.isArray(value) ? value[0] : value;
@@ -66,9 +70,7 @@ export default function VolumeCard({
 
   const volumePercent = Math.round((displayVol / maxVolume) * 100);
 
-  const displayText = Number.isInteger(displayVol)
-    ? String(displayVol)
-    : displayVol.toFixed(1);
+  const displayText = formatVolumeValue(displayVol);
 
   return (
     <Card>
@@ -119,7 +121,7 @@ export default function VolumeCard({
         </Box>
 
         {/* Slider with controls */}
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1, px: 1 }}>
+        <Box sx={{ display: "flex", alignItems: "flex-start", gap: 1, px: 1 }}>
           <IconButton
             onClick={onVolumeDown}
             size="small"
@@ -128,20 +130,40 @@ export default function VolumeCard({
             <VolumeDownIcon />
           </IconButton>
 
-          <Slider
-            value={displayVol}
-            min={0}
-            max={maxVolume}
-            step={1}
-            onChange={handleSliderChange}
-            onChangeCommitted={handleSliderCommit}
-            sx={{
-              color: getVolumeColor(displayVol),
-              "& .MuiSlider-track": {
-                background: `linear-gradient(90deg, #66bb6a 0%, #ffa726 60%, #ef5350 100%)`,
-              },
-            }}
-          />
+          <Box sx={{ flex: 1, pt: 0.5 }}>
+            <Slider
+              value={displayVol}
+              min={0}
+              max={maxVolume}
+              step={1}
+              valueLabelDisplay="auto"
+              getAriaValueText={formatVolumeValue}
+              valueLabelFormat={formatVolumeValue}
+              onChange={handleSliderChange}
+              onChangeCommitted={handleSliderCommit}
+              sx={{
+                color: getVolumeColor(displayVol),
+                "& .MuiSlider-track": {
+                  background: `linear-gradient(90deg, #66bb6a 0%, #ffa726 60%, #ef5350 100%)`,
+                },
+              }}
+            />
+            <Box
+              sx={{
+                display: "flex",
+                justifyContent: "space-between",
+                mt: -0.5,
+                px: 0.5,
+              }}
+            >
+              <Typography variant="caption" sx={{ color: "text.secondary" }}>
+                {formatVolumeValue(0)}
+              </Typography>
+              <Typography variant="caption" sx={{ color: "text.secondary" }}>
+                {formatVolumeValue(maxVolume)}
+              </Typography>
+            </Box>
+          </Box>
 
           <IconButton
             onClick={onVolumeUp}
