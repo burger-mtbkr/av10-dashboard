@@ -4,6 +4,12 @@ import { parseStringPromise } from 'xml2js';
 import { CHANNEL_MAP, SOURCE_MAP, SMART_SELECT_DEFAULTS, SMART_SELECT_SLOTS, parseVolume } from './constants.js';
 import type { SpeakerStatus, InputSource, SubwooferInfo, SmartSelectPreset } from './types.js';
 
+const WEB_CONTROL_PORT = 11080;
+const NETWORK_CONNECTION_MAP: Record<string, string> = {
+  '3': 'Ethernet',
+  '4': 'Wi-Fi',
+};
+
 /** Make an HTTP request and return the response body */
 function httpGet(host: string, port: number, path: string): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -76,6 +82,11 @@ async function fetchAppCommand0300(host: string, port: number, commands: { name:
     .join('');
   const body = `<?xml version="1.0" encoding="utf-8"?><tx>${cmdXml}</tx>`;
   const xml = await httpPostXml(host, port, '/goform/AppCommand0300.xml', body);
+  return parseStringPromise(xml, { explicitArray: false });
+}
+
+async function fetchWebControlConfig(host: string, path: string, type: number): Promise<any> {
+  const xml = await httpGet(host, WEB_CONTROL_PORT, `${path}?type=${type}`);
   return parseStringPromise(xml, { explicitArray: false });
 }
 
@@ -330,6 +341,28 @@ function parseAudioInfo(data: any): { inputFormat: string; soundMode: string; sa
   return result;
 }
 
+function parseSoftwareVersion(data: any): string {
+  const version = data?.Information?.Firmware?.Version;
+  return typeof version === 'string' && version.trim() ? version.trim() : '---';
+}
+
+function parseNetworkInfo(data: any): { networkConnection: string; ipAddress: string } {
+  const info = data?.Information;
+  const connectionCode = typeof info?.Connection === 'string'
+    ? info.Connection.trim()
+    : typeof info?.Connection?._ === 'string'
+      ? info.Connection._.trim()
+      : '';
+  const ipAddress = typeof info?.IPAddress === 'string' && info.IPAddress.trim()
+    ? info.IPAddress.trim()
+    : '---';
+
+  return {
+    networkConnection: NETWORK_CONNECTION_MAP[connectionCode] || '---',
+    ipAddress,
+  };
+}
+
 /**
  * Fetch full status from the Marantz receiver via HTTP/XML APIs.
  * Combines MainZone status + AppCommand queries.
@@ -449,6 +482,19 @@ export async function fetchHttpStatus(host: string, httpPort: number): Promise<a
     }
   } catch (e: any) {
     console.error('[HTTP] HEOS smart select fetch error:', e.message);
+  }
+
+  // 4. Fetch system info from the newer web control interface
+  try {
+    const [generalInfo, networkInfo] = await Promise.all([
+      fetchWebControlConfig(host, '/ajax/general/get_config', 12),
+      fetchWebControlConfig(host, '/ajax/network/get_config', 2),
+    ]);
+
+    result.softwareVersion = parseSoftwareVersion(generalInfo);
+    Object.assign(result, parseNetworkInfo(networkInfo));
+  } catch (e: any) {
+    console.error('[HTTP] Web control system info fetch error:', e.message);
   }
 
   return result;

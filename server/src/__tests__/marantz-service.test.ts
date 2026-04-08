@@ -396,6 +396,7 @@ describe('MarantzService', () => {
 
       (service as any).mergeHttpStatus({
         power: 'ON',
+        softwareVersion: '8000-2122-F016-8380',
         volume: -25.5,
         muted: true,
         input: { id: 'GAME', name: 'Console', selected: true },
@@ -416,10 +417,13 @@ describe('MarantzService', () => {
         subwoofers: [{ number: 1, level: '+2.0 dB', active: true }],
         lfeLevel: '-4 dB',
         ecoMode: 'AUTO',
+        networkConnection: 'Ethernet',
+        ipAddress: '192.168.1.170',
       });
 
       const status = service.getStatus();
       expect(status.power).toBe('ON');
+      expect(status.softwareVersion).toBe('8000-2122-F016-8380');
       expect(status.volume).toBe(54.5);
       expect(status.volumeDisplay).toBe('54.5');
       expect(status.muted).toBe(true);
@@ -434,6 +438,8 @@ describe('MarantzService', () => {
       expect(status.subwoofers[0]).toMatchObject({ level: '+2.0 dB' });
       expect(status.lfeLevel).toBe('-4 dB');
       expect(status.ecoMode).toBe('AUTO');
+      expect(status.networkConnection).toBe('Ethernet');
+      expect(status.ipAddress).toBe('192.168.1.170');
     });
 
     it('should resolve custom input names before falling back to source ids', () => {

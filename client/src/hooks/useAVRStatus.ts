@@ -14,6 +14,7 @@ const OPTIMISTIC_STATUS_TIMEOUT_MS = 5000;
 
 const DEFAULT_STATUS: AVRStatus = {
   power: 'OFF',
+  softwareVersion: '---',
   volume: 0,
   volumeDisplay: '--',
   maxVolume: 98,
@@ -46,6 +47,8 @@ const DEFAULT_STATUS: AVRStatus = {
   subwoofers: [],
   lfeLevel: '0 dB',
   ecoMode: '---',
+  networkConnection: '---',
+  ipAddress: '---',
   surroundMode: '---',
   connected: false,
   lastUpdate: '',

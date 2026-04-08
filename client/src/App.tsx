@@ -193,7 +193,9 @@ export default function App() {
             <Grid size={{ xs: 12 }}>
               <SystemCard
                 power={status.power}
-                ecoMode={status.ecoMode}
+                softwareVersion={status.softwareVersion}
+                networkConnection={status.networkConnection}
+                ipAddress={status.ipAddress}
                 lastUpdate={status.lastUpdate}
                 connected={status.connected}
               />

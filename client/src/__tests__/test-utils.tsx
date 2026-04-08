@@ -38,6 +38,7 @@ export function createMockStatus(
 ): AVRStatus {
   return {
     power: "ON",
+    softwareVersion: "8000-2122-F016-8380",
     volume: 45,
     volumeDisplay: "45",
     maxVolume: 75,
@@ -78,6 +79,8 @@ export function createMockStatus(
     ],
     lfeLevel: "0 dB",
     ecoMode: "OFF",
+    networkConnection: "Ethernet",
+    ipAddress: "192.168.1.170",
     surroundMode: "Dolby Atmos",
     connected: true,
     lastUpdate: "2025-01-01T12:00:00.000Z",

@@ -116,6 +116,12 @@ describe('fetchHttpStatus', () => {
           </rx>
         `,
       },
+      '/ajax/general/get_config?type=12': {
+        body: '<Information><Firmware><Version>8000-2122-F016-8380</Version></Firmware></Information>',
+      },
+      '/ajax/network/get_config?type=2': {
+        body: '<Information><Connection>3</Connection><IPAddress>192.168.1.170</IPAddress></Information>',
+      },
     });
 
     mockHeosResponses({
@@ -127,6 +133,7 @@ describe('fetchHttpStatus', () => {
     const status = await fetchHttpStatus('192.168.1.170', 8080);
 
     expect(status.power).toBe('ON');
+    expect(status.softwareVersion).toBe('8000-2122-F016-8380');
     expect(status.volume).toBe(-35.5);
     expect(status.muted).toBe(true);
     expect(status.input).toEqual({
@@ -135,6 +142,8 @@ describe('fetchHttpStatus', () => {
       selected: true,
     });
     expect(status.surroundMode).toBe('Dolby Atmos');
+    expect(status.networkConnection).toBe('Ethernet');
+    expect(status.ipAddress).toBe('192.168.1.170');
     expect(status.availableInputs.find((input: { id: string }) => input.id === 'BD')).toMatchObject({
       name: 'Disc Player',
       selected: false,
@@ -178,6 +187,12 @@ describe('fetchHttpStatus', () => {
           </rx>
         `,
       },
+      '/ajax/general/get_config?type=12': {
+        body: '<Information><Firmware><Version>8000-2122-F016-8380</Version></Firmware></Information>',
+      },
+      '/ajax/network/get_config?type=2': {
+        body: '<Information><Connection>4</Connection><IPAddress>192.168.1.171</IPAddress></Information>',
+      },
     });
 
     mockHeosResponses({
@@ -190,6 +205,9 @@ describe('fetchHttpStatus', () => {
 
     expect(status.power).toBe('ON');
     expect(status.muted).toBe(false);
+    expect(status.softwareVersion).toBe('8000-2122-F016-8380');
+    expect(status.networkConnection).toBe('Wi-Fi');
+    expect(status.ipAddress).toBe('192.168.1.171');
     expect(status.speakers).toEqual([
       { code: 'FL', name: 'Front Left', active: true, group: 'ear' },
       { code: 'FR', name: 'Front Right', active: false, group: 'ear' },
@@ -208,6 +226,12 @@ describe('fetchHttpStatus', () => {
       '/goform/AppCommand0300.xml': {
         error: new Error('AppCommand0300 unavailable'),
       },
+      '/ajax/general/get_config?type=12': {
+        body: '<Information><Firmware><Version>8000-2122-F016-8380</Version></Firmware></Information>',
+      },
+      '/ajax/network/get_config?type=2': {
+        body: '<Information><Connection>3</Connection><IPAddress>192.168.1.170</IPAddress></Information>',
+      },
     });
 
     mockHeosResponses({
@@ -220,6 +244,9 @@ describe('fetchHttpStatus', () => {
     expect(status).toEqual({
       power: 'ON',
       muted: false,
+      softwareVersion: '8000-2122-F016-8380',
+      networkConnection: 'Ethernet',
+      ipAddress: '192.168.1.170',
     });
     expect(errorSpy).toHaveBeenCalledWith('[HTTP] AppCommand0300 fetch error:', 'AppCommand0300 unavailable');
     expect(errorSpy).toHaveBeenCalledWith('[HTTP] HEOS smart select fetch error:', 'HEOS unavailable');

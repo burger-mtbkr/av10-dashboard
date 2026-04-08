@@ -44,6 +44,7 @@ export interface SmartSelectPreset {
 
 export interface AVRStatus {
   power: 'ON' | 'OFF' | 'STANDBY';
+  softwareVersion: string;
   volume: number;
   volumeDisplay: string;
   maxVolume: number;
@@ -57,6 +58,8 @@ export interface AVRStatus {
   subwoofers: SubwooferInfo[];
   lfeLevel: string;
   ecoMode: string;
+  networkConnection: string;
+  ipAddress: string;
   surroundMode: string;
   connected: boolean;
   lastUpdate: string;

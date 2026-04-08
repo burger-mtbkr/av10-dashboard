@@ -30,6 +30,7 @@ export class MarantzService extends EventEmitter {
   private getDefaultStatus(): AVRStatus {
     return {
       power: 'OFF',
+      softwareVersion: '---',
       volume: 0,
       volumeDisplay: '--',
       maxVolume: 98,
@@ -61,6 +62,8 @@ export class MarantzService extends EventEmitter {
       subwoofers: [],
       lfeLevel: '0 dB',
       ecoMode: '---',
+      networkConnection: '---',
+      ipAddress: '---',
       surroundMode: '---',
       connected: false,
       lastUpdate: new Date().toISOString(),
@@ -449,6 +452,11 @@ export class MarantzService extends EventEmitter {
 
     // Merge ECO
     if (http.ecoMode) this.status.ecoMode = http.ecoMode;
+
+    // Merge system info from the newer web control interface
+    if (http.softwareVersion) this.status.softwareVersion = http.softwareVersion;
+    if (http.networkConnection) this.status.networkConnection = http.networkConnection;
+    if (http.ipAddress) this.status.ipAddress = http.ipAddress;
   }
 
   private startHttpPolling(): void {

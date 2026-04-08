@@ -5,6 +5,7 @@ import { createApp } from '../index.js';
 // Create a mock status object
 const mockStatus = {
   power: 'ON',
+  softwareVersion: '8000-2122-F016-8380',
   volume: 45,
   volumeDisplay: '45',
   maxVolume: 75,
@@ -40,6 +41,8 @@ const mockStatus = {
   ],
   lfeLevel: '0 dB',
   ecoMode: 'OFF',
+  networkConnection: 'Ethernet',
+  ipAddress: '192.168.1.170',
   surroundMode: 'Dolby Atmos',
   connected: true,
   lastUpdate: '2025-01-01T00:00:00.000Z',
@@ -105,6 +108,13 @@ describe('API Routes', () => {
       const res = await request(app).get('/api/status');
       expect(res.body.audio.inputFormat).toBe('Dolby TrueHD');
       expect(res.body.audio.soundMode).toBe('Dolby Atmos');
+    });
+
+    it('should include system info details', async () => {
+      const res = await request(app).get('/api/status');
+      expect(res.body.softwareVersion).toBe('8000-2122-F016-8380');
+      expect(res.body.networkConnection).toBe('Ethernet');
+      expect(res.body.ipAddress).toBe('192.168.1.170');
     });
   });
 

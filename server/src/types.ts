@@ -70,6 +70,8 @@ export interface SmartSelectPreset {
 export interface AVRStatus {
   /** Power state */
   power: 'ON' | 'OFF' | 'STANDBY';
+  /** Installed firmware / software version */
+  softwareVersion: string;
   /** Main volume on absolute scale (0-98) */
   volume: number;
   /** Volume display string e.g. "50" */
@@ -96,6 +98,10 @@ export interface AVRStatus {
   lfeLevel: string;
   /** ECO mode */
   ecoMode: string;
+  /** Network connection type reported by the receiver */
+  networkConnection: string;
+  /** Receiver IP address */
+  ipAddress: string;
   /** Sound mode / surround mode name */
   surroundMode: string;
   /** Connection status to receiver */
