@@ -163,13 +163,14 @@ export default function SpeakerCard({ speakers }: SpeakerCardProps) {
   const activeCount = supportedSpeakers.filter((s) => s.active).length;
   const totalCount = supportedSpeakers.length;
 
-  // Compute layout label like "7.2.4" from ACTIVE speakers only
-  const activeSpeakers = supportedSpeakers.filter((s) => s.active);
-  const earCount = activeSpeakers.filter(
+  // Compute layout label like "7.2.4" from all configured speakers (val > 0)
+  const earCount = supportedSpeakers.filter(
     (s) => s.group === "ear" || s.group === "wide" || s.group === "back",
   ).length;
-  const subCount = activeSpeakers.filter((s) => s.group === "sub").length;
-  const heightCount = activeSpeakers.filter((s) => s.group === "height").length;
+  const subCount = supportedSpeakers.filter((s) => s.group === "sub").length;
+  const heightCount = supportedSpeakers.filter(
+    (s) => s.group === "height",
+  ).length;
   const layoutLabel =
     heightCount > 0
       ? `${earCount}.${subCount}.${heightCount}`

@@ -48,8 +48,8 @@ describe("SpeakerCard", () => {
     }));
     renderWithProviders(<SpeakerCard speakers={speakers} />);
     expect(screen.getByText("5/13")).toBeInTheDocument();
-    // Layout label shows active speakers only (first 5: FL FR C SL SR = 5.0)
-    expect(screen.getByText("5.0")).toBeInTheDocument();
+    // Layout label is derived from all configured speakers (not just active ones)
+    expect(screen.getByText("7.2.4")).toBeInTheDocument();
   });
 
   it("should compute correct layout for 5.1.2", () => {

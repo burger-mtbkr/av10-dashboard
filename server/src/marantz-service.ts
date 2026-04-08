@@ -250,12 +250,10 @@ export class MarantzService extends EventEmitter {
       case 'SS':
         // System settings — logged for debugging
         console.log('[Marantz] System setting (SS):', parameter);
-        changed = true;
         break;
 
       case 'OP':
-        this.handleOperationEvent(parameter);
-        changed = true;
+        changed = this.handleOperationEvent(parameter);
         break;
 
       case 'EC':
@@ -337,7 +335,7 @@ export class MarantzService extends EventEmitter {
     }
   }
 
-  private handleOperationEvent(param: string): void {
+  private handleOperationEvent(param: string): boolean {
     if (param.startsWith('INFASP ')) {
       // Active Speaker Profile: digit string with per-channel status
       // 0=not configured, 1=configured/inactive, 2=active
@@ -359,8 +357,10 @@ export class MarantzService extends EventEmitter {
       if (speakers.length > 0) {
         console.log(`[Marantz] OPINFASP: ${speakers.length} speakers parsed`);
         this.status.speakers = speakers;
+        return true;
       }
     }
+    return false;
   }
 
   private parseSubLevel(raw: string): string {
