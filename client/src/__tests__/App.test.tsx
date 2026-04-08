@@ -3,7 +3,7 @@ import { screen } from "@testing-library/react";
 import App from "../App";
 import { createMockStatus, renderWithProviders } from "./test-utils";
 
-vi.mock("../hooks/useAVRStatus", () => ({
+vi.mock("../hooks", () => ({
   useAVRStatus: () => ({
     status: createMockStatus(),
     wsConnected: true,

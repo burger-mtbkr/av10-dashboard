@@ -5,13 +5,15 @@ import { fetchAppCommand0300 } from './fetch-app-command-0300.js';
 import { fetchHeosQuickSelectNames } from './fetch-heos-quick-select-names.js';
 import { fetchMainZoneStatus } from './fetch-main-zone-status.js';
 import { fetchWebControlConfig } from './fetch-web-control-config.js';
-import { parseActiveSpeakers } from './parsers/parse-active-speakers.js';
-import { parseAudioInfo } from './parsers/parse-audio-info.js';
-import { parseNetworkInfo } from './parsers/parse-network-info.js';
-import { parseSmartSelectNames } from './parsers/parse-smart-select-names.js';
-import { parseSoftwareVersion } from './parsers/parse-software-version.js';
-import { parseSourceRenames } from './parsers/parse-source-renames.js';
-import { parseVideoInfo } from './parsers/parse-video-info.js';
+import {
+  parseActiveSpeakers,
+  parseAudioInfo,
+  parseNetworkInfo,
+  parseSmartSelectNames,
+  parseSoftwareVersion,
+  parseSourceRenames,
+  parseVideoInfo,
+} from './parsers/index.js';
 
 export const fetchHttpStatus = async (host: string, httpPort: number): Promise<IHttpStatusResult> => {
   let result: IHttpStatusResult = {};

@@ -143,7 +143,7 @@ describe('fetchHttpStatus', () => {
       quickselectsResponse: '{"heos":{"result":"success"},"payload":[{"id":1,"name":"HEOS Movie"},{"id":4,"name":"HEOS Games"}]}\r\n',
     });
 
-    const { fetchHttpStatus } = await import('../api/fetch-http-status.js');
+    const { fetchHttpStatus } = await import('../api/index.js');
     const status = await fetchHttpStatus('192.168.1.170', 8080);
 
     expect(status.power).toBe('ON');
@@ -214,7 +214,7 @@ describe('fetchHttpStatus', () => {
       quickselectsResponse: '{"heos":{"result":"success"},"payload":[]}\r\n',
     });
 
-    const { fetchHttpStatus } = await import('../api/fetch-http-status.js');
+    const { fetchHttpStatus } = await import('../api/index.js');
     const status = await fetchHttpStatus('192.168.1.170', 8080);
 
     expect(status.power).toBe('ON');
@@ -252,7 +252,7 @@ describe('fetchHttpStatus', () => {
       connectionError: new Error('HEOS unavailable'),
     });
 
-    const { fetchHttpStatus } = await import('../api/fetch-http-status.js');
+    const { fetchHttpStatus } = await import('../api/index.js');
     const status = await fetchHttpStatus('192.168.1.170', 8080);
 
     expect(status).toEqual({

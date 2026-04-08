@@ -1,11 +1,12 @@
+import { PLACEHOLDER_VALUE } from '../../constants.js';
 import type { IVideoSignalInfo } from '../types.js';
 
 export const parseVideoInfo = (data: unknown): IVideoSignalInfo => {
   const result: IVideoSignalInfo = {
-    inputResolution: '---',
-    outputResolution: '---',
-    hdrFormat: '---',
-    inputSignal: '---',
+    inputResolution: PLACEHOLDER_VALUE,
+    outputResolution: PLACEHOLDER_VALUE,
+    hdrFormat: PLACEHOLDER_VALUE,
+    inputSignal: PLACEHOLDER_VALUE,
   };
 
   try {

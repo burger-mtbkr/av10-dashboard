@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { screen } from "@testing-library/react";
-import SystemCard from "../../components/SystemCard";
+import { SystemCard } from "../../components";
 import { renderWithProviders } from "../test-utils";
 
 describe("SystemCard", () => {

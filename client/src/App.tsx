@@ -9,14 +9,16 @@ import {
 import Grid from "@mui/material/Grid2";
 import { useTranslation } from "react-i18next";
 import theme from "./theme";
-import { useAVRStatus } from "./hooks/useAVRStatus";
-import SpeakerCard from "./components/SpeakerCard";
-import VolumeCard from "./components/VolumeCard";
-import InputCard from "./components/InputCard";
-import VideoCard from "./components/VideoCard";
-import AudioCard from "./components/AudioCard";
-import SubwooferCard from "./components/SubwooferCard";
-import SystemCard from "./components/SystemCard";
+import {
+  AudioCard,
+  InputCard,
+  SpeakerCard,
+  SubwooferCard,
+  SystemCard,
+  VideoCard,
+  VolumeCard,
+} from "./components";
+import { useAVRStatus } from "./hooks";
 import FiberManualRecordIcon from "@mui/icons-material/FiberManualRecord";
 
 export default function App() {

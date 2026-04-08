@@ -1,4 +1,6 @@
 /** Channel code to human-readable name mapping */
+export const PLACEHOLDER_VALUE = '---';
+
 export const CHANNEL_MAP: Record<string, { name: string; group: 'ear' | 'height' | 'sub' | 'wide' | 'back' }> = {
   FL:  { name: 'Front Left',           group: 'ear' },
   FR:  { name: 'Front Right',          group: 'ear' },

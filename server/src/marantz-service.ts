@@ -1,8 +1,8 @@
 import * as net from 'net';
 import { EventEmitter } from 'events';
-import { CHANNEL_MAP, OPINFASP_CHANNEL_ORDER, SOURCE_MAP, SMART_SELECT_DEFAULTS, SMART_SELECT_SLOTS, TELNET_EVENT_MAP, parseVolume, volumeToCommand } from './constants.js';
+import { CHANNEL_MAP, OPINFASP_CHANNEL_ORDER, PLACEHOLDER_VALUE, SOURCE_MAP, SMART_SELECT_DEFAULTS, SMART_SELECT_SLOTS, TELNET_EVENT_MAP, parseVolume, volumeToCommand } from './constants.js';
+import { fetchHttpStatus } from './api/index.js';
 import type { IAVRStatus, IInputSource, ISmartSelectPreset, ISpeakerStatus, ITelnetEvent } from './types.js';
-import { fetchHttpStatus } from './api/fetch-http-status.js';
 
 export class MarantzService extends EventEmitter {
   private host: string;
@@ -30,7 +30,7 @@ export class MarantzService extends EventEmitter {
   private getDefaultStatus(): IAVRStatus {
     return {
       power: 'OFF',
-      softwareVersion: '---',
+      softwareVersion: PLACEHOLDER_VALUE,
       volume: 0,
       volumeDisplay: '--',
       maxVolume: 98,
@@ -44,27 +44,27 @@ export class MarantzService extends EventEmitter {
       })),
       speakers: [],
       video: {
-        inputResolution: '---',
-        outputResolution: '---',
-        hdrFormat: '---',
-        inputSignal: '---',
+        inputResolution: PLACEHOLDER_VALUE,
+        outputResolution: PLACEHOLDER_VALUE,
+        hdrFormat: PLACEHOLDER_VALUE,
+        inputSignal: PLACEHOLDER_VALUE,
         hdmiOutput: 'Auto',
       },
       audio: {
-        inputFormat: '---',
-        soundMode: '---',
-        samplingRate: '---',
+        inputFormat: PLACEHOLDER_VALUE,
+        soundMode: PLACEHOLDER_VALUE,
+        samplingRate: PLACEHOLDER_VALUE,
         dialogEnhancer: 'Off',
-        dynamicEq: '---',
-        dynamicVolume: '---',
-        multEq: '---',
+        dynamicEq: PLACEHOLDER_VALUE,
+        dynamicVolume: PLACEHOLDER_VALUE,
+        multEq: PLACEHOLDER_VALUE,
       },
       subwoofers: [],
       lfeLevel: '0 dB',
-      ecoMode: '---',
-      networkConnection: '---',
-      ipAddress: '---',
-      surroundMode: '---',
+      ecoMode: PLACEHOLDER_VALUE,
+      networkConnection: PLACEHOLDER_VALUE,
+      ipAddress: PLACEHOLDER_VALUE,
+      surroundMode: PLACEHOLDER_VALUE,
       connected: false,
       lastUpdate: new Date().toISOString(),
     };

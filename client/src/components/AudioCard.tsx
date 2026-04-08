@@ -2,6 +2,7 @@ import { Card, CardContent, Typography, Box, Chip } from "@mui/material";
 import { useTranslation } from "react-i18next";
 import AudiotrackIcon from "@mui/icons-material/Audiotrack";
 import SurroundSoundIcon from "@mui/icons-material/SurroundSound";
+import { PLACEHOLDER_VALUE } from "../constants";
 import type { IAudioInfo } from "../types";
 
 interface IAudioCardProps {
@@ -44,7 +45,7 @@ const InfoRow = ({
           fontSize: "0.8rem",
         }}
       >
-        {value || "---"}
+        {value || PLACEHOLDER_VALUE}
       </Typography>
     </Box>
   );
@@ -67,7 +68,7 @@ const AudioCard = ({ audio, surroundMode }: IAudioCardProps) => {
         <Box sx={{ textAlign: "center", mb: 2 }}>
           <Chip
             icon={<SurroundSoundIcon />}
-            label={surroundMode || "---"}
+            label={surroundMode || PLACEHOLDER_VALUE}
             color="secondary"
             sx={{
               fontWeight: 700,

@@ -1,10 +1,11 @@
+import { PLACEHOLDER_VALUE } from '../../constants.js';
 import type { IAudioSignalInfo } from '../types.js';
 
 export const parseAudioInfo = (data: unknown): IAudioSignalInfo => {
   const result: IAudioSignalInfo = {
-    inputFormat: '---',
-    soundMode: '---',
-    samplingRate: '---',
+    inputFormat: PLACEHOLDER_VALUE,
+    soundMode: PLACEHOLDER_VALUE,
+    samplingRate: PLACEHOLDER_VALUE,
   };
 
   try {

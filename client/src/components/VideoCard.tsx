@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import VideocamIcon from "@mui/icons-material/Videocam";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 import HdrOnIcon from "@mui/icons-material/HdrOn";
+import { PLACEHOLDER_VALUE } from "../constants";
 import type { IVideoInfo } from "../types";
 
 interface IVideoCardProps {
@@ -13,7 +14,9 @@ const VideoCard = ({ video }: IVideoCardProps) => {
   const { t } = useTranslation();
 
   const isHdr =
-    video.hdrFormat && video.hdrFormat !== "---" && video.hdrFormat !== "None";
+    video.hdrFormat &&
+    video.hdrFormat !== PLACEHOLDER_VALUE &&
+    video.hdrFormat !== "None";
 
   return (
     <Card>
@@ -47,7 +50,7 @@ const VideoCard = ({ video }: IVideoCardProps) => {
               {t("cards.video.inputResolution")}
             </Typography>
             <Chip
-              label={video.inputResolution || "---"}
+              label={video.inputResolution || PLACEHOLDER_VALUE}
               size="small"
               variant="outlined"
               sx={{ fontWeight: 600, mt: 0.5 }}
@@ -66,7 +69,7 @@ const VideoCard = ({ video }: IVideoCardProps) => {
               {t("cards.video.outputResolution")}
             </Typography>
             <Chip
-              label={video.outputResolution || "---"}
+              label={video.outputResolution || PLACEHOLDER_VALUE}
               size="small"
               color="primary"
               variant="outlined"
@@ -99,7 +102,7 @@ const VideoCard = ({ video }: IVideoCardProps) => {
             variant="outlined"
             sx={{ fontWeight: 500 }}
           />
-          {video.inputSignal && video.inputSignal !== "---" && (
+          {video.inputSignal && video.inputSignal !== PLACEHOLDER_VALUE && (
             <Chip
               label={video.inputSignal}
               size="small"

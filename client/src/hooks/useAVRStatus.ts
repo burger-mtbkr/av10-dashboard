@@ -1,10 +1,13 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { selectSmartPresetRequest } from '../api/select-smart-preset';
-import { setInputRequest } from '../api/set-input';
-import { setMuteRequest } from '../api/set-mute';
-import { setVolumeRequest } from '../api/set-volume';
-import { volumeDownRequest } from '../api/volume-down';
-import { volumeUpRequest } from '../api/volume-up';
+import {
+  selectSmartPresetRequest,
+  setInputRequest,
+  setMuteRequest,
+  setVolumeRequest,
+  volumeDownRequest,
+  volumeUpRequest,
+} from '../api';
+import { PLACEHOLDER_VALUE } from '../constants';
 import type { IAVRStatus, IWSMessage } from '../types';
 
 type OptimisticStatus = Partial<
@@ -20,12 +23,12 @@ const OPTIMISTIC_STATUS_TIMEOUT_MS = 5000;
 
 const DEFAULT_STATUS: IAVRStatus = {
   power: 'OFF',
-  softwareVersion: '---',
+  softwareVersion: PLACEHOLDER_VALUE,
   volume: 0,
   volumeDisplay: '--',
   maxVolume: 98,
   muted: false,
-  input: { id: '', name: '---', selected: true },
+  input: { id: '', name: PLACEHOLDER_VALUE, selected: true },
   availableInputs: [],
   smartSelect: [
     { number: 1, name: 'Smart Select 1', active: false },
@@ -35,27 +38,27 @@ const DEFAULT_STATUS: IAVRStatus = {
   ],
   speakers: [],
   video: {
-    inputResolution: '---',
-    outputResolution: '---',
-    hdrFormat: '---',
-    inputSignal: '---',
+    inputResolution: PLACEHOLDER_VALUE,
+    outputResolution: PLACEHOLDER_VALUE,
+    hdrFormat: PLACEHOLDER_VALUE,
+    inputSignal: PLACEHOLDER_VALUE,
     hdmiOutput: 'Auto',
   },
   audio: {
-    inputFormat: '---',
-    soundMode: '---',
-    samplingRate: '---',
+    inputFormat: PLACEHOLDER_VALUE,
+    soundMode: PLACEHOLDER_VALUE,
+    samplingRate: PLACEHOLDER_VALUE,
     dialogEnhancer: 'Off',
-    dynamicEq: '---',
-    dynamicVolume: '---',
-    multEq: '---',
+    dynamicEq: PLACEHOLDER_VALUE,
+    dynamicVolume: PLACEHOLDER_VALUE,
+    multEq: PLACEHOLDER_VALUE,
   },
   subwoofers: [],
   lfeLevel: '0 dB',
-  ecoMode: '---',
-  networkConnection: '---',
-  ipAddress: '---',
-  surroundMode: '---',
+  ecoMode: PLACEHOLDER_VALUE,
+  networkConnection: PLACEHOLDER_VALUE,
+  ipAddress: PLACEHOLDER_VALUE,
+  surroundMode: PLACEHOLDER_VALUE,
   connected: false,
   lastUpdate: '',
 };

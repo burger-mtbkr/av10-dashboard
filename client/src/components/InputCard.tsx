@@ -1,6 +1,7 @@
 import { Card, CardContent, Typography, Box, ButtonBase } from "@mui/material";
 import { useTranslation } from "react-i18next";
 import TouchAppIcon from "@mui/icons-material/TouchApp";
+import { PLACEHOLDER_VALUE } from "../constants";
 import type {
   IAudioInfo,
   IInputSource,
@@ -154,27 +155,29 @@ const InputCard = ({
             >
               <MetadataItem
                 label={t("cards.input.currentSource")}
-                value={currentInput.name || currentInput.id || "---"}
+                value={
+                  currentInput.name || currentInput.id || PLACEHOLDER_VALUE
+                }
               />
               <MetadataItem
                 label={t("cards.input.soundMode")}
-                value={surroundMode || audio.soundMode || "---"}
+                value={surroundMode || audio.soundMode || PLACEHOLDER_VALUE}
               />
               <MetadataItem
                 label={t("cards.input.inputFormat")}
-                value={audio.inputFormat || "---"}
+                value={audio.inputFormat || PLACEHOLDER_VALUE}
               />
               <MetadataItem
                 label={t("cards.input.samplingRate")}
-                value={audio.samplingRate || "---"}
+                value={audio.samplingRate || PLACEHOLDER_VALUE}
               />
               <MetadataItem
                 label={t("cards.input.inputResolution")}
-                value={video.inputResolution || "---"}
+                value={video.inputResolution || PLACEHOLDER_VALUE}
               />
               <MetadataItem
                 label={t("cards.input.hdrFormat")}
-                value={video.hdrFormat || "---"}
+                value={video.hdrFormat || PLACEHOLDER_VALUE}
               />
             </Box>
           </Box>

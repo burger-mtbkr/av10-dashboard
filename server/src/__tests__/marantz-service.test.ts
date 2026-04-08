@@ -19,7 +19,7 @@ vi.mock('net', () => {
 });
 
 // Mock the HTTP status API module
-vi.mock('../api/fetch-http-status.js', () => ({
+vi.mock('../api/index.js', () => ({
   fetchHttpStatus: vi.fn().mockResolvedValue({}),
 }));
 

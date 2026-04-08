@@ -7,6 +7,7 @@ import SettingsSuggestIcon from "@mui/icons-material/SettingsSuggest";
 import WifiIcon from "@mui/icons-material/Wifi";
 import SettingsEthernetIcon from "@mui/icons-material/SettingsEthernet";
 import DnsIcon from "@mui/icons-material/Dns";
+import { PLACEHOLDER_VALUE } from "../constants";
 
 interface ISystemCardProps {
   power: "ON" | "OFF" | "STANDBY";
@@ -28,7 +29,7 @@ const SystemCard = ({
   const { t } = useTranslation();
 
   const formatTime = (iso: string): string => {
-    if (!iso) return "---";
+    if (!iso) return PLACEHOLDER_VALUE;
     try {
       return new Date(iso).toLocaleTimeString();
     } catch {
@@ -38,7 +39,7 @@ const SystemCard = ({
 
   const formatValue = (value?: string): string => {
     if (!value || !value.trim()) {
-      return "---";
+      return PLACEHOLDER_VALUE;
     }
     return value;
   };

@@ -1,3 +1,4 @@
+import { PLACEHOLDER_VALUE } from '../../constants.js';
 import type { INetworkInfo } from '../types.js';
 
 const NETWORK_CONNECTION_MAP: Record<string, string> = {
@@ -19,10 +20,10 @@ export const parseNetworkInfo = (data: unknown): INetworkInfo => {
       : '';
   const ipAddress = typeof info?.IPAddress === 'string' && info.IPAddress.trim()
     ? info.IPAddress.trim()
-    : '---';
+    : PLACEHOLDER_VALUE;
 
   return {
-    networkConnection: NETWORK_CONNECTION_MAP[connectionCode] || '---',
+    networkConnection: NETWORK_CONNECTION_MAP[connectionCode] || PLACEHOLDER_VALUE,
     ipAddress,
   };
 };
