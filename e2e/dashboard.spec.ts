@@ -26,7 +26,7 @@ test.describe('Dashboard', () => {
     // Check all card titles are visible
     await expect(page.getByText('Speaker Configuration')).toBeVisible();
     await expect(page.getByText('Volume', { exact: true })).toBeVisible();
-    await expect(page.getByText('Smart Select')).toBeVisible();
+    await expect(page.getByText('Smart Select', { exact: true })).toBeVisible();
     await expect(page.getByText('Video Signal')).toBeVisible();
     await expect(page.getByText('Audio Signal')).toBeVisible();
     await expect(page.getByText('Subwoofer Settings')).toBeVisible();
