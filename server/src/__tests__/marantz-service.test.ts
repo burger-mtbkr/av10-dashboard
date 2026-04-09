@@ -396,6 +396,7 @@ describe('MarantzService', () => {
 
       (service as any).mergeHttpStatus({
         power: 'ON',
+        processorModel: 'Marantz AV10',
         softwareVersion: '8000-2122-F016-8380',
         volume: -25.5,
         muted: true,
@@ -423,6 +424,7 @@ describe('MarantzService', () => {
 
       const status = service.getStatus();
       expect(status.power).toBe('ON');
+      expect(status.processorModel).toBe('Marantz AV10');
       expect(status.softwareVersion).toBe('8000-2122-F016-8380');
       expect(status.volume).toBe(54.5);
       expect(status.volumeDisplay).toBe('54.5');

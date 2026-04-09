@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import {
   ThemeProvider,
   CssBaseline,
@@ -20,6 +21,7 @@ import {
 } from "./components";
 import { useAVRStatus } from "./hooks";
 import FiberManualRecordIcon from "@mui/icons-material/FiberManualRecord";
+import { PLACEHOLDER_VALUE } from "./constants";
 
 export default function App() {
   const { t } = useTranslation();
@@ -33,6 +35,14 @@ export default function App() {
     toggleMute,
     selectSmartPreset,
   } = useAVRStatus();
+  const dashboardTitle =
+    status.processorModel && status.processorModel !== PLACEHOLDER_VALUE
+      ? `${status.processorModel} Status`
+      : t("dashboard.title");
+
+  useEffect(() => {
+    document.title = dashboardTitle;
+  }, [dashboardTitle]);
 
   return (
     <ThemeProvider theme={theme}>
@@ -75,7 +85,7 @@ export default function App() {
                   letterSpacing: "-0.03em",
                 }}
               >
-                {t("dashboard.title")}
+                {dashboardTitle}
               </Typography>
               <Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
                 {/* AVR Connection status */}
@@ -192,6 +202,7 @@ export default function App() {
             <Grid size={{ xs: 12 }}>
               <SystemCard
                 power={status.power}
+                processorModel={status.processorModel}
                 softwareVersion={status.softwareVersion}
                 networkConnection={status.networkConnection}
                 ipAddress={status.ipAddress}

@@ -23,6 +23,7 @@ const OPTIMISTIC_STATUS_TIMEOUT_MS = 5000;
 
 const DEFAULT_STATUS: IAVRStatus = {
   power: 'OFF',
+  processorModel: PLACEHOLDER_VALUE,
   softwareVersion: PLACEHOLDER_VALUE,
   volume: 0,
   volumeDisplay: '--',

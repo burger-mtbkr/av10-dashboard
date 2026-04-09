@@ -36,6 +36,7 @@ export interface INetworkInfo {
 
 export interface IHttpStatusResult {
   power?: IAVRStatus['power'];
+  processorModel?: string;
   volume?: number;
   muted?: boolean;
   input?: IInputSource;

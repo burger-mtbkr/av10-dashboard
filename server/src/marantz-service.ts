@@ -30,6 +30,7 @@ export class MarantzService extends EventEmitter {
   private getDefaultStatus(): IAVRStatus {
     return {
       power: 'OFF',
+      processorModel: PLACEHOLDER_VALUE,
       softwareVersion: PLACEHOLDER_VALUE,
       volume: 0,
       volumeDisplay: '--',
@@ -399,6 +400,8 @@ export class MarantzService extends EventEmitter {
   private mergeHttpStatus(http: any): void {
     // Merge power
     if (http.power) this.status.power = http.power;
+
+    if (http.processorModel) this.status.processorModel = http.processorModel;
 
     // Merge volume (HTTP returns dB like -30.0, convert to absolute)
     if (http.volume !== undefined) {

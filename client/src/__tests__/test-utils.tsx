@@ -30,6 +30,7 @@ export const createMockStatus = (
 ): IAVRStatus => {
   return {
     power: "ON",
+    processorModel: "Marantz AV10",
     softwareVersion: "8000-2122-F016-8380",
     volume: 45,
     volumeDisplay: "45",

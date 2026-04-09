@@ -134,6 +134,12 @@ describe('fetchHttpStatus', () => {
       '/ajax/general/get_config?type=12': {
         body: '<Information><Firmware><Version>8000-2122-F016-8380</Version></Firmware></Information>',
       },
+      '/ajax/general/get_config?type=23': {
+        body: '<OwnerManual><ModelName>AV10</ModelName><Path>https://manuals.marantz.com/AV10/NA/EN/</Path></OwnerManual>',
+      },
+      '/ajax/globals/get_config?type=1': {
+        body: '<Brand>2</Brand>',
+      },
       '/ajax/network/get_config?type=2': {
         body: '<Information><Connection>3</Connection><IPAddress>192.168.1.170</IPAddress></Information>',
       },
@@ -148,6 +154,7 @@ describe('fetchHttpStatus', () => {
     const status = await fetchHttpStatus('192.168.1.170', 8080);
 
     expect(status.power).toBe('ON');
+    expect(status.processorModel).toBe('Marantz AV10');
     expect(status.softwareVersion).toBe('8000-2122-F016-8380');
     expect(status.volume).toBe(-35.5);
     expect(status.muted).toBe(true);
@@ -205,6 +212,12 @@ describe('fetchHttpStatus', () => {
       '/ajax/general/get_config?type=12': {
         body: '<Information><Firmware><Version>8000-2122-F016-8380</Version></Firmware></Information>',
       },
+      '/ajax/general/get_config?type=23': {
+        body: '<OwnerManual><ModelName>AV10</ModelName></OwnerManual>',
+      },
+      '/ajax/globals/get_config?type=1': {
+        body: '<Brand>2</Brand>',
+      },
       '/ajax/network/get_config?type=2': {
         body: '<Information><Connection>4</Connection><IPAddress>192.168.1.171</IPAddress></Information>',
       },
@@ -220,6 +233,7 @@ describe('fetchHttpStatus', () => {
 
     expect(status.power).toBe('ON');
     expect(status.muted).toBe(false);
+    expect(status.processorModel).toBe('Marantz AV10');
     expect(status.softwareVersion).toBe('8000-2122-F016-8380');
     expect(status.networkConnection).toBe('Wi-Fi');
     expect(status.ipAddress).toBe('192.168.1.171');
@@ -244,6 +258,12 @@ describe('fetchHttpStatus', () => {
       '/ajax/general/get_config?type=12': {
         body: '<Information><Firmware><Version>8000-2122-F016-8380</Version></Firmware></Information>',
       },
+      '/ajax/general/get_config?type=23': {
+        body: '<OwnerManual><ModelName>AV10</ModelName></OwnerManual>',
+      },
+      '/ajax/globals/get_config?type=1': {
+        body: '<Brand>2</Brand>',
+      },
       '/ajax/network/get_config?type=2': {
         body: '<Information><Connection>3</Connection><IPAddress>192.168.1.170</IPAddress></Information>',
       },
@@ -259,6 +279,7 @@ describe('fetchHttpStatus', () => {
     expect(status).toEqual({
       power: 'ON',
       muted: false,
+      processorModel: 'Marantz AV10',
       softwareVersion: '8000-2122-F016-8380',
       networkConnection: 'Ethernet',
       ipAddress: '192.168.1.170',

@@ -26,6 +26,11 @@ describe("App", () => {
   it("renders dashboard cards in the requested order", () => {
     renderWithProviders(<App />);
 
+    expect(
+      screen.getByRole("heading", { name: "Marantz AV10 Status" }),
+    ).toBeInTheDocument();
+    expect(document.title).toBe("Marantz AV10 Status");
+
     const volume = screen.getByText("Volume");
     const subwoofer = screen.getByText("Subwoofer Settings");
     const input = screen.getByText("Smart Select");

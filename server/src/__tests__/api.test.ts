@@ -5,6 +5,7 @@ import { createApp } from '../index.js';
 // Create a mock status object
 const mockStatus = {
   power: 'ON',
+  processorModel: 'Marantz AV10',
   softwareVersion: '8000-2122-F016-8380',
   volume: 45,
   volumeDisplay: '45',
@@ -112,6 +113,7 @@ describe('API Routes', () => {
 
     it('should include system info details', async () => {
       const res = await request(app).get('/api/status');
+      expect(res.body.processorModel).toBe('Marantz AV10');
       expect(res.body.softwareVersion).toBe('8000-2122-F016-8380');
       expect(res.body.networkConnection).toBe('Ethernet');
       expect(res.body.ipAddress).toBe('192.168.1.170');

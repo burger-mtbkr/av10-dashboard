@@ -62,6 +62,7 @@
     "system": {
       "title": "System Info",
       "power": "Power",
+      "model": "Model",
       "ecoMode": "ECO Mode",
       "softwareVersion": "Software Version",
       "networkConnection": "Network",

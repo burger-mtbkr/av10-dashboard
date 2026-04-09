@@ -70,6 +70,8 @@ export interface ISmartSelectPreset {
 export interface IAVRStatus {
   /** Power state */
   power: 'ON' | 'OFF' | 'STANDBY';
+  /** Receiver model reported by the unit, e.g. "Marantz AV10" */
+  processorModel: string;
   /** Installed firmware / software version */
   softwareVersion: string;
   /** Main volume on absolute scale (0-98) */

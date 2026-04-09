@@ -1,6 +1,7 @@
 import { Card, CardContent, Typography, Box, Chip } from "@mui/material";
 import { useTranslation } from "react-i18next";
 import InfoIcon from "@mui/icons-material/Info";
+import MemoryIcon from "@mui/icons-material/Memory";
 import PowerSettingsNewIcon from "@mui/icons-material/PowerSettingsNew";
 import AccessTimeIcon from "@mui/icons-material/AccessTime";
 import SettingsSuggestIcon from "@mui/icons-material/SettingsSuggest";
@@ -11,6 +12,7 @@ import { PLACEHOLDER_VALUE } from "../constants";
 
 interface ISystemCardProps {
   power: "ON" | "OFF" | "STANDBY";
+  processorModel?: string;
   softwareVersion?: string;
   networkConnection?: string;
   ipAddress?: string;
@@ -20,6 +22,7 @@ interface ISystemCardProps {
 
 const SystemCard = ({
   power,
+  processorModel,
   softwareVersion,
   networkConnection,
   ipAddress,
@@ -85,6 +88,27 @@ const SystemCard = ({
               }
               sx={{ fontWeight: 600 }}
             />
+          </Box>
+
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+            }}
+          >
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+              <MemoryIcon sx={{ fontSize: 18, color: "text.secondary" }} />
+              <Typography variant="body2" color="text.secondary">
+                {t("cards.system.model")}
+              </Typography>
+            </Box>
+            <Typography
+              variant="body2"
+              sx={{ fontWeight: 500, textAlign: "right" }}
+            >
+              {formatValue(processorModel)}
+            </Typography>
           </Box>
 
           <Box
