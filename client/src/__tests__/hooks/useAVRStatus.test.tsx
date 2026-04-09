@@ -1,7 +1,14 @@
 import { act, renderHook } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { useAVRStatus } from "../../hooks/useAVRStatus";
+import { apiClient } from "../../api/client";
+import { useAVRStatus } from "../../hooks";
 import { createMockStatus } from "../test-utils";
+
+vi.mock("../../api/client", () => ({
+  apiClient: {
+    post: vi.fn(),
+  },
+}));
 
 class TestWebSocket {
   static instances: TestWebSocket[] = [];
@@ -58,11 +65,13 @@ describe("useAVRStatus", () => {
       value: TestWebSocket,
       writable: true,
     });
-    globalThis.fetch = vi.fn().mockResolvedValue(
-      new Response(JSON.stringify({ success: true }), {
-        headers: { "Content-Type": "application/json" },
-      }),
-    ) as any;
+    vi.mocked(apiClient.post).mockResolvedValue({
+      status: 200,
+      data: { success: true },
+      statusText: "OK",
+      headers: {},
+      config: {} as any,
+    } as any);
     vi.spyOn(console, "log").mockImplementation(() => {});
     vi.spyOn(console, "error").mockImplementation(() => {});
   });
@@ -134,7 +143,6 @@ describe("useAVRStatus", () => {
   });
 
   it("calls the expected REST endpoints for control helpers", async () => {
-    const fetchMock = globalThis.fetch as unknown as ReturnType<typeof vi.fn>;
     const { result } = renderHook(() => useAVRStatus());
 
     await act(async () => {
@@ -146,42 +154,18 @@ describe("useAVRStatus", () => {
       await result.current.selectSmartPreset(3);
     });
 
-    expect(fetchMock).toHaveBeenNthCalledWith(
-      1,
-      "/api/volume",
-      expect.objectContaining({
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ volume: 62 }),
-      }),
-    );
-    expect(fetchMock).toHaveBeenNthCalledWith(2, "/api/volume/up", {
-      method: "POST",
+    expect(apiClient.post).toHaveBeenNthCalledWith(1, "/api/volume", {
+      volume: 62,
     });
-    expect(fetchMock).toHaveBeenNthCalledWith(3, "/api/volume/down", {
-      method: "POST",
+    expect(apiClient.post).toHaveBeenNthCalledWith(2, "/api/volume/up");
+    expect(apiClient.post).toHaveBeenNthCalledWith(3, "/api/volume/down");
+    expect(apiClient.post).toHaveBeenNthCalledWith(4, "/api/input", {
+      input: "GAME",
     });
-    expect(fetchMock).toHaveBeenNthCalledWith(
-      4,
-      "/api/input",
-      expect.objectContaining({
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ input: "GAME" }),
-      }),
-    );
-    expect(fetchMock).toHaveBeenNthCalledWith(
-      5,
-      "/api/mute",
-      expect.objectContaining({
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ muted: true }),
-      }),
-    );
-    expect(fetchMock).toHaveBeenNthCalledWith(6, "/api/smartselect/3", {
-      method: "POST",
+    expect(apiClient.post).toHaveBeenNthCalledWith(5, "/api/mute", {
+      muted: true,
     });
+    expect(apiClient.post).toHaveBeenNthCalledWith(6, "/api/smartselect/3");
   });
 
   it("keeps the optimistic volume until websocket status catches up", async () => {

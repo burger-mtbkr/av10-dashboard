@@ -14,7 +14,7 @@ import VolumeDownIcon from "@mui/icons-material/VolumeDown";
 import VolumeOffIcon from "@mui/icons-material/VolumeOff";
 import VolumeMuteIcon from "@mui/icons-material/VolumeMute";
 
-interface VolumeCardProps {
+interface IVolumeCardProps {
   volume: number;
   volumeDisplay: string;
   maxVolume: number;
@@ -25,7 +25,7 @@ interface VolumeCardProps {
   onToggleMute: () => void;
 }
 
-export default function VolumeCard({
+const VolumeCard = ({
   volume,
   volumeDisplay,
   maxVolume,
@@ -34,15 +34,17 @@ export default function VolumeCard({
   onVolumeUp,
   onVolumeDown,
   onToggleMute,
-}: VolumeCardProps) {
+}: IVolumeCardProps) => {
   const { t } = useTranslation();
   const [localVolume, setLocalVolume] = useState<number | null>(null);
 
   const displayVol = localVolume !== null ? localVolume : volume;
 
-  const formatVolumeValue = useCallback((value: number) => {
-    return Number.isInteger(value) ? String(value) : value.toFixed(1);
-  }, []);
+  const formatVolumeValue = useCallback(
+    (value: number) =>
+      Number.isInteger(value) ? String(value) : value.toFixed(1),
+    [],
+  );
 
   const handleSliderChange = useCallback(
     (_: Event, value: number | number[]) => {
@@ -184,4 +186,6 @@ export default function VolumeCard({
       </CardContent>
     </Card>
   );
-}
+};
+
+export default VolumeCard;

@@ -1,8 +1,8 @@
 import * as net from 'net';
 import { EventEmitter } from 'events';
-import { CHANNEL_MAP, OPINFASP_CHANNEL_ORDER, SOURCE_MAP, SMART_SELECT_DEFAULTS, SMART_SELECT_SLOTS, TELNET_EVENT_MAP, parseVolume, volumeToCommand } from './constants.js';
-import { AVRStatus, SpeakerStatus, InputSource, SmartSelectPreset, SubwooferInfo, TelnetEvent } from './types.js';
-import { fetchHttpStatus } from './http-client.js';
+import { CHANNEL_MAP, OPINFASP_CHANNEL_ORDER, PLACEHOLDER_VALUE, SOURCE_MAP, SMART_SELECT_DEFAULTS, SMART_SELECT_SLOTS, TELNET_EVENT_MAP, parseVolume, volumeToCommand } from './constants.js';
+import { fetchHttpStatus } from './api/index.js';
+import type { IAVRStatus, IInputSource, ISmartSelectPreset, ISpeakerStatus, ITelnetEvent } from './types.js';
 
 export class MarantzService extends EventEmitter {
   private host: string;
@@ -16,7 +16,7 @@ export class MarantzService extends EventEmitter {
   private pollTimer: ReturnType<typeof setInterval> | null = null;
   private pollInterval: number;
 
-  private status: AVRStatus = this.getDefaultStatus();
+  private status: IAVRStatus = this.getDefaultStatus();
 
   constructor(host: string, port: number, httpPort: number, reconnectInterval = 10000, pollInterval = 30000) {
     super();
@@ -27,9 +27,10 @@ export class MarantzService extends EventEmitter {
     this.pollInterval = pollInterval;
   }
 
-  private getDefaultStatus(): AVRStatus {
+  private getDefaultStatus(): IAVRStatus {
     return {
       power: 'OFF',
+      softwareVersion: PLACEHOLDER_VALUE,
       volume: 0,
       volumeDisplay: '--',
       maxVolume: 98,
@@ -43,31 +44,33 @@ export class MarantzService extends EventEmitter {
       })),
       speakers: [],
       video: {
-        inputResolution: '---',
-        outputResolution: '---',
-        hdrFormat: '---',
-        inputSignal: '---',
+        inputResolution: PLACEHOLDER_VALUE,
+        outputResolution: PLACEHOLDER_VALUE,
+        hdrFormat: PLACEHOLDER_VALUE,
+        inputSignal: PLACEHOLDER_VALUE,
         hdmiOutput: 'Auto',
       },
       audio: {
-        inputFormat: '---',
-        soundMode: '---',
-        samplingRate: '---',
+        inputFormat: PLACEHOLDER_VALUE,
+        soundMode: PLACEHOLDER_VALUE,
+        samplingRate: PLACEHOLDER_VALUE,
         dialogEnhancer: 'Off',
-        dynamicEq: '---',
-        dynamicVolume: '---',
-        multEq: '---',
+        dynamicEq: PLACEHOLDER_VALUE,
+        dynamicVolume: PLACEHOLDER_VALUE,
+        multEq: PLACEHOLDER_VALUE,
       },
       subwoofers: [],
       lfeLevel: '0 dB',
-      ecoMode: '---',
-      surroundMode: '---',
+      ecoMode: PLACEHOLDER_VALUE,
+      networkConnection: PLACEHOLDER_VALUE,
+      ipAddress: PLACEHOLDER_VALUE,
+      surroundMode: PLACEHOLDER_VALUE,
       connected: false,
       lastUpdate: new Date().toISOString(),
     };
   }
 
-  getStatus(): AVRStatus {
+  getStatus(): IAVRStatus {
     return JSON.parse(JSON.stringify(this.status));
   }
 
@@ -166,7 +169,7 @@ export class MarantzService extends EventEmitter {
       return;
     }
 
-    const telnetEvent: TelnetEvent = { zone: 'Main', event, parameter };
+    const telnetEvent: ITelnetEvent = { zone: 'Main', event, parameter };
     this.emit('event', telnetEvent);
 
     // Update internal status based on event
@@ -340,7 +343,7 @@ export class MarantzService extends EventEmitter {
       // Active Speaker Profile: digit string with per-channel status
       // 0=not configured, 1=configured/inactive, 2=active
       const digits = param.substring('INFASP '.length).trim();
-      const speakers: SpeakerStatus[] = [];
+      const speakers: ISpeakerStatus[] = [];
       for (let i = 0; i < digits.length && i < OPINFASP_CHANNEL_ORDER.length; i++) {
         const val = parseInt(digits[i], 10);
         if (isNaN(val) || val <= 0) continue; // 0 = not in layout
@@ -421,10 +424,10 @@ export class MarantzService extends EventEmitter {
     // Merge Smart Select
     if (http.smartSelect?.length) {
       // Preserve active state from telnet, update names from HTTP
-      const activeNum = this.status.smartSelect.find((p) => p.active)?.number;
-      this.status.smartSelect = http.smartSelect.map((p: SmartSelectPreset) => ({
-        ...p,
-        active: p.number === activeNum,
+      const activeNum = this.status.smartSelect.find((preset) => preset.active)?.number;
+      this.status.smartSelect = http.smartSelect.map((preset: ISmartSelectPreset) => ({
+        ...preset,
+        active: preset.number === activeNum,
       }));
     }
 
@@ -449,6 +452,11 @@ export class MarantzService extends EventEmitter {
 
     // Merge ECO
     if (http.ecoMode) this.status.ecoMode = http.ecoMode;
+
+    // Merge system info from the newer web control interface
+    if (http.softwareVersion) this.status.softwareVersion = http.softwareVersion;
+    if (http.networkConnection) this.status.networkConnection = http.networkConnection;
+    if (http.ipAddress) this.status.ipAddress = http.ipAddress;
   }
 
   private startHttpPolling(): void {

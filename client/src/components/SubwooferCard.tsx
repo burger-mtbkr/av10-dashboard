@@ -8,17 +8,13 @@ import {
 } from "@mui/material";
 import { useTranslation } from "react-i18next";
 import GraphicEqIcon from "@mui/icons-material/GraphicEq";
-import type { SubwooferInfo } from "../types";
+import type { ISubwooferInfo } from "../types";
 
-interface SubwooferCardProps {
-  subwoofers: SubwooferInfo[];
-  lfeLevel: string;
+interface ISubwooferCardProps {
+  subwoofers: ISubwooferInfo[];
 }
 
-export default function SubwooferCard({
-  subwoofers,
-  lfeLevel,
-}: SubwooferCardProps) {
+const SubwooferCard = ({ subwoofers }: ISubwooferCardProps) => {
   const { t } = useTranslation();
 
   /** Parse dB level string to number for the progress bar */
@@ -47,13 +43,6 @@ export default function SubwooferCard({
             />
             {t("cards.subwoofer.title")}
           </Typography>
-          <Chip
-            label={`LFE: ${lfeLevel}`}
-            size="small"
-            variant="outlined"
-            color="warning"
-            sx={{ fontWeight: 600 }}
-          />
         </Box>
 
         {subwoofers.length === 0 ? (
@@ -109,4 +98,6 @@ export default function SubwooferCard({
       </CardContent>
     </Card>
   );
-}
+};
+
+export default SubwooferCard;

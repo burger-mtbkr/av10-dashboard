@@ -4,22 +4,14 @@ import CssBaseline from "@mui/material/CssBaseline";
 import { I18nextProvider } from "react-i18next";
 import i18n from "../i18n";
 import theme from "../theme";
-import type {
-  AVRStatus,
-  SpeakerStatus,
-  VideoInfo,
-  AudioInfo,
-  SubwooferInfo,
-  InputSource,
-  SmartSelectPreset,
-} from "../types";
+import type { IAVRStatus, ISpeakerStatus } from "../types";
 
 /** Render with all providers (Theme, i18n) */
-export function renderWithProviders(
+export const renderWithProviders = (
   ui: React.ReactElement,
   options?: Omit<RenderOptions, "wrapper">,
-) {
-  function Wrapper({ children }: { children: React.ReactNode }) {
+) => {
+  const Wrapper = ({ children }: { children: React.ReactNode }) => {
     return (
       <I18nextProvider i18n={i18n}>
         <ThemeProvider theme={theme}>
@@ -28,16 +20,17 @@ export function renderWithProviders(
         </ThemeProvider>
       </I18nextProvider>
     );
-  }
+  };
   return render(ui, { wrapper: Wrapper, ...options });
-}
+};
 
 /** Factory for mock AVR status */
-export function createMockStatus(
-  overrides: Partial<AVRStatus> = {},
-): AVRStatus {
+export const createMockStatus = (
+  overrides: Partial<IAVRStatus> = {},
+): IAVRStatus => {
   return {
     power: "ON",
+    softwareVersion: "8000-2122-F016-8380",
     volume: 45,
     volumeDisplay: "45",
     maxVolume: 75,
@@ -78,15 +71,17 @@ export function createMockStatus(
     ],
     lfeLevel: "0 dB",
     ecoMode: "OFF",
+    networkConnection: "Ethernet",
+    ipAddress: "192.168.1.170",
     surroundMode: "Dolby Atmos",
     connected: true,
     lastUpdate: "2025-01-01T12:00:00.000Z",
     ...overrides,
   };
-}
+};
 
 /** Create mock speakers for a 7.2.4 setup */
-export function createMockSpeakers(): SpeakerStatus[] {
+export const createMockSpeakers = (): ISpeakerStatus[] => {
   return [
     // Ear level (7)
     { code: "FL", name: "Front Left", active: true, group: "ear" },
@@ -105,4 +100,4 @@ export function createMockSpeakers(): SpeakerStatus[] {
     { code: "TRL", name: "Top Rear Left", active: true, group: "height" },
     { code: "TRR", name: "Top Rear Right", active: true, group: "height" },
   ];
-}
+};

@@ -1,69 +1,81 @@
 import { EventEmitter } from 'events';
+import type { AxiosResponse } from 'axios';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { receiverHttpClient } from '../api/http-client.js';
 
-const httpRequestMock = vi.fn();
-const createConnectionMock = vi.fn();
-
-vi.mock('http', () => ({
-  default: {
-    request: httpRequestMock,
+vi.mock('../api/http-client.js', () => ({
+  receiverHttpClient: {
+    get: vi.fn(),
+    post: vi.fn(),
   },
+  toHttpRequestError: (error: unknown) => (error instanceof Error ? error : new Error('HTTP request failed')),
 }));
+
+const createConnectionMock = vi.fn();
 
 vi.mock('net', () => ({
   createConnection: createConnectionMock,
 }));
 
-function mockHttpResponses(responses: Record<string, { body?: string; error?: Error }>) {
-  httpRequestMock.mockImplementation((options: { path: string }, callback: (response: EventEmitter) => void) => {
-    const request = new EventEmitter() as EventEmitter & {
-      write: ReturnType<typeof vi.fn>;
-      end: ReturnType<typeof vi.fn>;
-      destroy: ReturnType<typeof vi.fn>;
-    };
-
-    request.write = vi.fn();
-    request.destroy = vi.fn();
-    request.end = vi.fn(() => {
-      const response = responses[options.path];
-      if (!response) {
-        throw new Error(`Unexpected HTTP path: ${options.path}`);
-      }
-
-      if (response.error) {
-        request.emit('error', response.error);
-        return;
-      }
-
-      const stream = new EventEmitter();
-      callback(stream);
-      if (response.body) {
-        stream.emit('data', response.body);
-      }
-      stream.emit('end');
-    });
-
-    return request;
+const mockHttpResponses = (responses: Record<string, { body?: string; error?: Error }>) => {
+  vi.mocked(receiverHttpClient.get).mockImplementation(async (url: string) => {
+    const key = new URL(url).pathname + new URL(url).search;
+    const response = responses[key];
+    if (!response) {
+      throw new Error(`Unexpected HTTP path: ${key}`);
+    }
+    if (response.error) {
+      throw response.error;
+    }
+    return {
+      data: response.body ?? '',
+      status: 200,
+      statusText: 'OK',
+      headers: {},
+      config: {} as any,
+    } as AxiosResponse<string>;
   });
-}
 
-function mockHeosResponses(options?: {
+  vi.mocked(receiverHttpClient.post).mockImplementation(async (url: string) => {
+    const key = new URL(url).pathname + new URL(url).search;
+    const response = responses[key];
+    if (!response) {
+      throw new Error(`Unexpected HTTP path: ${key}`);
+    }
+    if (response.error) {
+      throw response.error;
+    }
+    return {
+      data: response.body ?? '',
+      status: 200,
+      statusText: 'OK',
+      headers: {},
+      config: {} as any,
+    } as AxiosResponse<string>;
+  });
+};
+
+const mockHeosResponses = (options?: {
   playersResponse?: string;
   quickselectsResponse?: string;
   connectionError?: Error;
-}) {
+}) => {
   createConnectionMock.mockImplementation(() => {
     const socket = new EventEmitter() as EventEmitter & {
       setEncoding: ReturnType<typeof vi.fn>;
+      setTimeout: ReturnType<typeof vi.fn>;
       write: (command: string) => void;
       destroy: ReturnType<typeof vi.fn>;
     };
 
     socket.setEncoding = vi.fn();
+    socket.setTimeout = vi.fn();
     socket.destroy = vi.fn();
     socket.write = (command: string) => {
       if (options?.connectionError) {
-        socket.emit('error', options.connectionError);
+        process.nextTick(() => {
+          socket.emit('error', options.connectionError);
+        });
         return;
       }
 
@@ -72,20 +84,23 @@ function mockHeosResponses(options?: {
         : options?.quickselectsResponse;
 
       if (payload) {
-        socket.emit('data', payload);
+        process.nextTick(() => {
+          socket.emit('data', payload);
+        });
       }
     };
 
     process.nextTick(() => socket.emit('connect'));
     return socket;
   });
-}
+};
 
 describe('fetchHttpStatus', () => {
   beforeEach(() => {
     vi.resetModules();
-    httpRequestMock.mockReset();
     createConnectionMock.mockReset();
+    vi.mocked(receiverHttpClient.get).mockReset();
+    vi.mocked(receiverHttpClient.post).mockReset();
   });
 
   afterEach(() => {
@@ -116,6 +131,12 @@ describe('fetchHttpStatus', () => {
           </rx>
         `,
       },
+      '/ajax/general/get_config?type=12': {
+        body: '<Information><Firmware><Version>8000-2122-F016-8380</Version></Firmware></Information>',
+      },
+      '/ajax/network/get_config?type=2': {
+        body: '<Information><Connection>3</Connection><IPAddress>192.168.1.170</IPAddress></Information>',
+      },
     });
 
     mockHeosResponses({
@@ -123,10 +144,11 @@ describe('fetchHttpStatus', () => {
       quickselectsResponse: '{"heos":{"result":"success"},"payload":[{"id":1,"name":"HEOS Movie"},{"id":4,"name":"HEOS Games"}]}\r\n',
     });
 
-    const { fetchHttpStatus } = await import('../http-client.js');
+    const { fetchHttpStatus } = await import('../api/index.js');
     const status = await fetchHttpStatus('192.168.1.170', 8080);
 
     expect(status.power).toBe('ON');
+    expect(status.softwareVersion).toBe('8000-2122-F016-8380');
     expect(status.volume).toBe(-35.5);
     expect(status.muted).toBe(true);
     expect(status.input).toEqual({
@@ -135,7 +157,9 @@ describe('fetchHttpStatus', () => {
       selected: true,
     });
     expect(status.surroundMode).toBe('Dolby Atmos');
-    expect(status.availableInputs.find((input: { id: string }) => input.id === 'BD')).toMatchObject({
+    expect(status.networkConnection).toBe('Ethernet');
+    expect(status.ipAddress).toBe('192.168.1.170');
+    expect(status.availableInputs?.find((input: { id: string }) => input.id === 'BD')).toMatchObject({
       name: 'Disc Player',
       selected: false,
     });
@@ -178,6 +202,12 @@ describe('fetchHttpStatus', () => {
           </rx>
         `,
       },
+      '/ajax/general/get_config?type=12': {
+        body: '<Information><Firmware><Version>8000-2122-F016-8380</Version></Firmware></Information>',
+      },
+      '/ajax/network/get_config?type=2': {
+        body: '<Information><Connection>4</Connection><IPAddress>192.168.1.171</IPAddress></Information>',
+      },
     });
 
     mockHeosResponses({
@@ -185,17 +215,20 @@ describe('fetchHttpStatus', () => {
       quickselectsResponse: '{"heos":{"result":"success"},"payload":[]}\r\n',
     });
 
-    const { fetchHttpStatus } = await import('../http-client.js');
+    const { fetchHttpStatus } = await import('../api/index.js');
     const status = await fetchHttpStatus('192.168.1.170', 8080);
 
     expect(status.power).toBe('ON');
     expect(status.muted).toBe(false);
+    expect(status.softwareVersion).toBe('8000-2122-F016-8380');
+    expect(status.networkConnection).toBe('Wi-Fi');
+    expect(status.ipAddress).toBe('192.168.1.171');
     expect(status.speakers).toEqual([
       { code: 'FL', name: 'Front Left', active: true, group: 'ear' },
       { code: 'FR', name: 'Front Right', active: false, group: 'ear' },
       { code: 'SW2', name: 'Subwoofer 2', active: true, group: 'sub' },
     ]);
-    expect(status.smartSelect[2]).toEqual({ number: 3, name: 'Late Night', active: false });
+    expect(status.smartSelect?.[2]).toEqual({ number: 3, name: 'Late Night', active: false });
   });
 
   it('returns partial data when downstream requests fail', async () => {
@@ -208,18 +241,27 @@ describe('fetchHttpStatus', () => {
       '/goform/AppCommand0300.xml': {
         error: new Error('AppCommand0300 unavailable'),
       },
+      '/ajax/general/get_config?type=12': {
+        body: '<Information><Firmware><Version>8000-2122-F016-8380</Version></Firmware></Information>',
+      },
+      '/ajax/network/get_config?type=2': {
+        body: '<Information><Connection>3</Connection><IPAddress>192.168.1.170</IPAddress></Information>',
+      },
     });
 
     mockHeosResponses({
       connectionError: new Error('HEOS unavailable'),
     });
 
-    const { fetchHttpStatus } = await import('../http-client.js');
+    const { fetchHttpStatus } = await import('../api/index.js');
     const status = await fetchHttpStatus('192.168.1.170', 8080);
 
     expect(status).toEqual({
       power: 'ON',
       muted: false,
+      softwareVersion: '8000-2122-F016-8380',
+      networkConnection: 'Ethernet',
+      ipAddress: '192.168.1.170',
     });
     expect(errorSpy).toHaveBeenCalledWith('[HTTP] AppCommand0300 fetch error:', 'AppCommand0300 unavailable');
     expect(errorSpy).toHaveBeenCalledWith('[HTTP] HEOS smart select fetch error:', 'HEOS unavailable');

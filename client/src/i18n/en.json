@@ -63,6 +63,9 @@
       "title": "System Info",
       "power": "Power",
       "ecoMode": "ECO Mode",
+      "softwareVersion": "Software Version",
+      "networkConnection": "Network",
+      "ipAddress": "IP Address",
       "lastUpdate": "Last Update"
     }
   },

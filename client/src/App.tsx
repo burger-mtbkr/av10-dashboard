@@ -9,14 +9,16 @@ import {
 import Grid from "@mui/material/Grid2";
 import { useTranslation } from "react-i18next";
 import theme from "./theme";
-import { useAVRStatus } from "./hooks/useAVRStatus";
-import SpeakerCard from "./components/SpeakerCard";
-import VolumeCard from "./components/VolumeCard";
-import InputCard from "./components/InputCard";
-import VideoCard from "./components/VideoCard";
-import AudioCard from "./components/AudioCard";
-import SubwooferCard from "./components/SubwooferCard";
-import SystemCard from "./components/SystemCard";
+import {
+  AudioCard,
+  InputCard,
+  SpeakerCard,
+  SubwooferCard,
+  SystemCard,
+  VideoCard,
+  VolumeCard,
+} from "./components";
+import { useAVRStatus } from "./hooks";
 import FiberManualRecordIcon from "@mui/icons-material/FiberManualRecord";
 
 export default function App() {
@@ -149,10 +151,7 @@ export default function App() {
 
             {/* Subwoofer settings */}
             <Grid size={{ xs: 12, md: 6 }}>
-              <SubwooferCard
-                subwoofers={status.subwoofers}
-                lfeLevel={status.lfeLevel}
-              />
+              <SubwooferCard subwoofers={status.subwoofers} />
             </Grid>
 
             {/* Smart Select */}
@@ -193,7 +192,9 @@ export default function App() {
             <Grid size={{ xs: 12 }}>
               <SystemCard
                 power={status.power}
-                ecoMode={status.ecoMode}
+                softwareVersion={status.softwareVersion}
+                networkConnection={status.networkConnection}
+                ipAddress={status.ipAddress}
                 lastUpdate={status.lastUpdate}
                 connected={status.connected}
               />

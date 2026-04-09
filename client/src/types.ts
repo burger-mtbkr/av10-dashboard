@@ -1,12 +1,12 @@
 // Shared types — mirrors server types for the frontend
-export interface SpeakerStatus {
+export interface ISpeakerStatus {
   code: string;
   name: string;
   active: boolean;
   group: 'ear' | 'height' | 'sub' | 'wide' | 'back';
 }
 
-export interface VideoInfo {
+export interface IVideoInfo {
   inputResolution: string;
   outputResolution: string;
   hdrFormat: string;
@@ -14,7 +14,7 @@ export interface VideoInfo {
   hdmiOutput: string;
 }
 
-export interface AudioInfo {
+export interface IAudioInfo {
   inputFormat: string;
   soundMode: string;
   samplingRate: string;
@@ -24,45 +24,57 @@ export interface AudioInfo {
   multEq: string;
 }
 
-export interface SubwooferInfo {
+export interface ISubwooferInfo {
   number: number;
   level: string;
   active: boolean;
 }
 
-export interface InputSource {
+export interface IInputSource {
   id: string;
   name: string;
   selected: boolean;
 }
 
-export interface SmartSelectPreset {
+export interface ISmartSelectPreset {
   number: number;
   name: string;
   active: boolean;
 }
 
-export interface AVRStatus {
+export interface IAVRStatus {
   power: 'ON' | 'OFF' | 'STANDBY';
+  softwareVersion: string;
   volume: number;
   volumeDisplay: string;
   maxVolume: number;
   muted: boolean;
-  input: InputSource;
-  availableInputs: InputSource[];
-  smartSelect: SmartSelectPreset[];
-  speakers: SpeakerStatus[];
-  video: VideoInfo;
-  audio: AudioInfo;
-  subwoofers: SubwooferInfo[];
+  input: IInputSource;
+  availableInputs: IInputSource[];
+  smartSelect: ISmartSelectPreset[];
+  speakers: ISpeakerStatus[];
+  video: IVideoInfo;
+  audio: IAudioInfo;
+  subwoofers: ISubwooferInfo[];
   lfeLevel: string;
   ecoMode: string;
+  networkConnection: string;
+  ipAddress: string;
   surroundMode: string;
   connected: boolean;
   lastUpdate: string;
 }
 
-export interface WSMessage {
+export interface IWSMessage {
   type: 'status' | 'event' | 'error' | 'connected' | 'disconnected';
-  data: AVRStatus | any;
+  data: IAVRStatus | unknown;
 }
+
+export type SpeakerStatus = ISpeakerStatus;
+export type VideoInfo = IVideoInfo;
+export type AudioInfo = IAudioInfo;
+export type SubwooferInfo = ISubwooferInfo;
+export type InputSource = IInputSource;
+export type SmartSelectPreset = ISmartSelectPreset;
+export type AVRStatus = IAVRStatus;
+export type WSMessage = IWSMessage;

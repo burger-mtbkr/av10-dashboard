@@ -1,30 +1,31 @@
 import { Card, CardContent, Typography, Box, ButtonBase } from "@mui/material";
 import { useTranslation } from "react-i18next";
 import TouchAppIcon from "@mui/icons-material/TouchApp";
+import { PLACEHOLDER_VALUE } from "../constants";
 import type {
-  SmartSelectPreset,
-  InputSource,
-  AudioInfo,
-  VideoInfo,
+  IAudioInfo,
+  IInputSource,
+  ISmartSelectPreset,
+  IVideoInfo,
 } from "../types";
 
-interface InputCardProps {
-  smartSelect: SmartSelectPreset[];
-  currentInput: InputSource;
-  audio: AudioInfo;
+interface IInputCardProps {
+  smartSelect: ISmartSelectPreset[];
+  currentInput: IInputSource;
+  audio: IAudioInfo;
   surroundMode: string;
-  video: VideoInfo;
+  video: IVideoInfo;
   onSelectPreset: (preset: number) => void;
 }
 
-export default function InputCard({
+const InputCard = ({
   smartSelect,
   currentInput,
   audio,
   surroundMode,
   video,
   onSelectPreset,
-}: InputCardProps) {
+}: IInputCardProps) => {
   const { t } = useTranslation();
 
   const activePreset = smartSelect.find((p) => p.active);
@@ -154,27 +155,29 @@ export default function InputCard({
             >
               <MetadataItem
                 label={t("cards.input.currentSource")}
-                value={currentInput.name || currentInput.id || "---"}
+                value={
+                  currentInput.name || currentInput.id || PLACEHOLDER_VALUE
+                }
               />
               <MetadataItem
                 label={t("cards.input.soundMode")}
-                value={surroundMode || audio.soundMode || "---"}
+                value={surroundMode || audio.soundMode || PLACEHOLDER_VALUE}
               />
               <MetadataItem
                 label={t("cards.input.inputFormat")}
-                value={audio.inputFormat || "---"}
+                value={audio.inputFormat || PLACEHOLDER_VALUE}
               />
               <MetadataItem
                 label={t("cards.input.samplingRate")}
-                value={audio.samplingRate || "---"}
+                value={audio.samplingRate || PLACEHOLDER_VALUE}
               />
               <MetadataItem
                 label={t("cards.input.inputResolution")}
-                value={video.inputResolution || "---"}
+                value={video.inputResolution || PLACEHOLDER_VALUE}
               />
               <MetadataItem
                 label={t("cards.input.hdrFormat")}
-                value={video.hdrFormat || "---"}
+                value={video.hdrFormat || PLACEHOLDER_VALUE}
               />
             </Box>
           </Box>
@@ -182,9 +185,9 @@ export default function InputCard({
       </CardContent>
     </Card>
   );
-}
+};
 
-function MetadataItem({ label, value }: { label: string; value: string }) {
+const MetadataItem = ({ label, value }: { label: string; value: string }) => {
   return (
     <Box>
       <Typography
@@ -210,4 +213,6 @@ function MetadataItem({ label, value }: { label: string; value: string }) {
       </Typography>
     </Box>
   );
-}
+};
+
+export default InputCard;
