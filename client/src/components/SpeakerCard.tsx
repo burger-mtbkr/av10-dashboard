@@ -6,6 +6,7 @@ import type { ISpeakerStatus } from "../types";
 
 interface ISpeakerCardProps {
   speakers: ISpeakerStatus[];
+  speakerLayout: string;
 }
 
 /**
@@ -131,7 +132,7 @@ const SpeakerBlock = ({
   );
 };
 
-const SpeakerCard = ({ speakers }: ISpeakerCardProps) => {
+const SpeakerCard = ({ speakers, speakerLayout }: ISpeakerCardProps) => {
   const { t } = useTranslation();
 
   if (!speakers.length) {
@@ -163,18 +164,7 @@ const SpeakerCard = ({ speakers }: ISpeakerCardProps) => {
   const activeCount = supportedSpeakers.filter((s) => s.active).length;
   const totalCount = supportedSpeakers.length;
 
-  // Compute layout label like "7.2.4" from all configured speakers (val > 0)
-  const earCount = supportedSpeakers.filter(
-    (s) => s.group === "ear" || s.group === "wide" || s.group === "back",
-  ).length;
-  const subCount = supportedSpeakers.filter((s) => s.group === "sub").length;
-  const heightCount = supportedSpeakers.filter(
-    (s) => s.group === "height",
-  ).length;
-  const layoutLabel =
-    heightCount > 0
-      ? `${earCount}.${subCount}.${heightCount}`
-      : `${earCount}.${subCount}`;
+  const layoutLabel = speakerLayout.trim();
 
   const positionedSpeakers = [...supportedSpeakers].sort((a, b) => {
     const pa = SPEAKER_POSITIONS[a.code];
@@ -207,13 +197,15 @@ const SpeakerCard = ({ speakers }: ISpeakerCardProps) => {
             {t("cards.speakers.title")}
           </Typography>
           <Box sx={{ display: "flex", gap: 1 }}>
-            <Chip
-              label={layoutLabel}
-              size="small"
-              color="primary"
-              variant="outlined"
-              sx={{ fontWeight: 700, fontSize: "0.8rem" }}
-            />
+            {layoutLabel && (
+              <Chip
+                label={layoutLabel}
+                size="small"
+                color="primary"
+                variant="outlined"
+                sx={{ fontWeight: 700, fontSize: "0.8rem" }}
+              />
+            )}
             <Chip
               label={`${activeCount}/${totalCount}`}
               size="small"

@@ -53,6 +53,8 @@ export interface IAVRStatus {
   input: IInputSource;
   availableInputs: IInputSource[];
   smartSelect: ISmartSelectPreset[];
+  speakerPreset: 1 | 2 | null;
+  speakerLayout: string;
   speakers: ISpeakerStatus[];
   video: IVideoInfo;
   audio: IAudioInfo;

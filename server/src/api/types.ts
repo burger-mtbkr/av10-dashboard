@@ -42,6 +42,8 @@ export interface IHttpStatusResult {
   input?: IInputSource;
   availableInputs?: IInputSource[];
   smartSelect?: ISmartSelectPreset[];
+  speakerPreset?: IAVRStatus['speakerPreset'];
+  speakerLayout?: IAVRStatus['speakerLayout'];
   speakers?: ISpeakerStatus[];
   video?: IAVRStatus['video'];
   audio?: IAudioSignalInfo;

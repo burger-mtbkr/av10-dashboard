@@ -5,23 +5,31 @@ import { renderWithProviders, createMockSpeakers } from "../test-utils";
 
 describe("SpeakerCard", () => {
   it("should render the title", () => {
-    renderWithProviders(<SpeakerCard speakers={createMockSpeakers()} />);
+    renderWithProviders(
+      <SpeakerCard speakers={createMockSpeakers()} speakerLayout="7.2.4" />,
+    );
     expect(screen.getByText("Speaker Configuration")).toBeInTheDocument();
   });
 
   it("should show layout label (7.2.4) for a 7.2.4 setup", () => {
-    renderWithProviders(<SpeakerCard speakers={createMockSpeakers()} />);
+    renderWithProviders(
+      <SpeakerCard speakers={createMockSpeakers()} speakerLayout="7.2.4" />,
+    );
     expect(screen.getByText("7.2.4")).toBeInTheDocument();
   });
 
   it("should show active/total count", () => {
     const speakers = createMockSpeakers();
-    renderWithProviders(<SpeakerCard speakers={speakers} />);
+    renderWithProviders(
+      <SpeakerCard speakers={speakers} speakerLayout="7.2.4" />,
+    );
     expect(screen.getByText("13/13")).toBeInTheDocument();
   });
 
   it("should show room layout labels", () => {
-    renderWithProviders(<SpeakerCard speakers={createMockSpeakers()} />);
+    renderWithProviders(
+      <SpeakerCard speakers={createMockSpeakers()} speakerLayout="7.2.4" />,
+    );
     expect(screen.getByText("Listening Position")).toBeInTheDocument();
     expect(screen.getByText(/Height \/ Atmos/)).toBeInTheDocument();
     expect(screen.getByText(/Ear Level/)).toBeInTheDocument();
@@ -29,7 +37,9 @@ describe("SpeakerCard", () => {
   });
 
   it("should display speaker codes", () => {
-    renderWithProviders(<SpeakerCard speakers={createMockSpeakers()} />);
+    renderWithProviders(
+      <SpeakerCard speakers={createMockSpeakers()} speakerLayout="7.2.4" />,
+    );
     expect(screen.getByText("FL")).toBeInTheDocument();
     expect(screen.getByText("FR")).toBeInTheDocument();
     expect(screen.getByText("C")).toBeInTheDocument();
@@ -37,7 +47,7 @@ describe("SpeakerCard", () => {
   });
 
   it("should render fallback when no speakers", () => {
-    renderWithProviders(<SpeakerCard speakers={[]} />);
+    renderWithProviders(<SpeakerCard speakers={[]} speakerLayout="" />);
     expect(screen.getByText("No speaker data available")).toBeInTheDocument();
   });
 
@@ -46,13 +56,15 @@ describe("SpeakerCard", () => {
       ...s,
       active: i < 5, // Only first 5 active
     }));
-    renderWithProviders(<SpeakerCard speakers={speakers} />);
+    renderWithProviders(
+      <SpeakerCard speakers={speakers} speakerLayout="7.2.4" />,
+    );
     expect(screen.getByText("5/13")).toBeInTheDocument();
-    // Layout label is derived from all configured speakers (not just active ones)
+    // Layout label comes from the server config, not active channel count
     expect(screen.getByText("7.2.4")).toBeInTheDocument();
   });
 
-  it("should compute correct layout for 5.1.2", () => {
+  it("should display the speakerLayout prop as-is", () => {
     const speakers = [
       { code: "FL", name: "Front Left", active: true, group: "ear" as const },
       { code: "FR", name: "Front Right", active: true, group: "ear" as const },
@@ -83,7 +95,19 @@ describe("SpeakerCard", () => {
         group: "height" as const,
       },
     ];
-    renderWithProviders(<SpeakerCard speakers={speakers} />);
+    renderWithProviders(
+      <SpeakerCard speakers={speakers} speakerLayout="5.1.2" />,
+    );
     expect(screen.getByText("5.1.2")).toBeInTheDocument();
+  });
+
+  it("should hide the layout chip when speakerLayout is empty", () => {
+    renderWithProviders(
+      <SpeakerCard speakers={createMockSpeakers()} speakerLayout="" />,
+    );
+    // The active/total chip should still be present
+    expect(screen.getByText("13/13")).toBeInTheDocument();
+    // But no layout chip
+    expect(screen.queryByText("7.2.4")).not.toBeInTheDocument();
   });
 });

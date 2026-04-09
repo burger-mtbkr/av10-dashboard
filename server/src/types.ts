@@ -88,6 +88,10 @@ export interface IAVRStatus {
   availableInputs: IInputSource[];
   /** Smart Select presets 1-4 with friendly names from the receiver */
   smartSelect: ISmartSelectPreset[];
+  /** Active speaker preset selection */
+  speakerPreset: 1 | 2 | null;
+  /** Configured speaker layout label e.g. "7.2.4" */
+  speakerLayout: string;
   /** Active speakers */
   speakers: ISpeakerStatus[];
   /** Video signal information */

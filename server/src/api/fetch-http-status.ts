@@ -4,12 +4,14 @@ import type { IHttpStatusResult } from './types.js';
 import { fetchAppCommand0300 } from './fetch-app-command-0300.js';
 import { fetchHeosQuickSelectNames } from './fetch-heos-quick-select-names.js';
 import { fetchMainZoneStatus } from './fetch-main-zone-status.js';
+import { fetchSpeakerPreset } from './fetch-speaker-preset.js';
 import { fetchWebControlConfig } from './fetch-web-control-config.js';
 import {
   parseActiveSpeakers,
   parseAudioInfo,
   parseNetworkInfo,
   parseProcessorModel,
+  parseSpeakerLayout,
   parseSmartSelectNames,
   parseSoftwareVersion,
   parseSourceRenames,
@@ -108,11 +110,13 @@ export const fetchHttpStatus = async (host: string, httpPort: number): Promise<I
     console.error('[HTTP] HEOS smart select fetch error:', (error as Error).message);
   }
 
-  const [generalInfoResult, networkInfoResult, ownerManualResult, brandResult] = await Promise.allSettled([
+  const [generalInfoResult, networkInfoResult, ownerManualResult, brandResult, speakerPresetResult, speakerLayoutResult] = await Promise.allSettled([
     fetchWebControlConfig(host, '/ajax/general/get_config', 12),
     fetchWebControlConfig(host, '/ajax/network/get_config', 2),
     fetchWebControlConfig(host, '/ajax/general/get_config', 23),
     fetchWebControlConfig(host, '/ajax/globals/get_config', 1),
+    fetchSpeakerPreset(host),
+    fetchWebControlConfig(host, '/ajax/speakers/get_config', 15),
   ]);
 
   if (generalInfoResult.status === 'fulfilled') {
@@ -134,6 +138,20 @@ export const fetchHttpStatus = async (host: string, httpPort: number): Promise<I
       ownerManualResult.status === 'fulfilled' ? ownerManualResult.value : undefined,
       brandResult.status === 'fulfilled' ? brandResult.value : undefined,
     );
+  }
+
+  if (speakerPresetResult.status === 'fulfilled') {
+    result.speakerPreset = speakerPresetResult.value;
+  } else {
+    const reason = speakerPresetResult.reason;
+    console.error('[HTTP] Speaker preset fetch error:', reason instanceof Error ? reason.message : reason);
+  }
+
+  if (speakerLayoutResult.status === 'fulfilled') {
+    result.speakerLayout = parseSpeakerLayout(speakerLayoutResult.value);
+  } else {
+    const reason = speakerLayoutResult.reason;
+    console.error('[HTTP] Speaker layout fetch error:', reason instanceof Error ? reason.message : reason);
   }
 
   if (ownerManualResult.status === 'rejected') {

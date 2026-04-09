@@ -143,6 +143,23 @@ describe('fetchHttpStatus', () => {
       '/ajax/network/get_config?type=2': {
         body: '<Information><Connection>3</Connection><IPAddress>192.168.1.170</IPAddress></Information>',
       },
+      '/ajax/speakers/get_config?type=11': {
+        body: '<SpeakerPreset>2</SpeakerPreset>',
+      },
+      '/ajax/speakers/get_config?type=15': {
+        body: `
+          <SpeakerLayout>
+            <List>
+              <Item index="3"><Config><Value>4</Value></Config></Item>
+              <Item index="4"><Config><Value>4</Value></Config></Item>
+              <Item index="5"><Config><Value>7</Value></Config></Item>
+              <Item index="6"><Config><Value>5</Value></Config></Item>
+              <Item index="8"><Config><Value>2</Value></Config></Item>
+              <Item index="15"><Config><Value>7</Value></Config></Item>
+            </List>
+          </SpeakerLayout>
+        `,
+      },
     });
 
     mockHeosResponses({
@@ -166,6 +183,8 @@ describe('fetchHttpStatus', () => {
     expect(status.surroundMode).toBe('Dolby Atmos');
     expect(status.networkConnection).toBe('Ethernet');
     expect(status.ipAddress).toBe('192.168.1.170');
+    expect(status.speakerPreset).toBe(2);
+    expect(status.speakerLayout).toBe('7.2.4');
     expect(status.availableInputs?.find((input: { id: string }) => input.id === 'BD')).toMatchObject({
       name: 'Disc Player',
       selected: false,
@@ -221,6 +240,24 @@ describe('fetchHttpStatus', () => {
       '/ajax/network/get_config?type=2': {
         body: '<Information><Connection>4</Connection><IPAddress>192.168.1.171</IPAddress></Information>',
       },
+      '/ajax/speakers/get_config?type=11': {
+        body: '<SpeakerPreset>1</SpeakerPreset>',
+      },
+      '/ajax/speakers/get_config?type=15': {
+        body: `
+          <SpeakerLayout>
+            <List>
+              <Item index="3"><Config><Value>5</Value></Config></Item>
+              <Item index="4"><Config><Value>5</Value></Config></Item>
+              <Item index="5"><Config><Value>5</Value></Config></Item>
+              <Item index="6"><Config><Value>5</Value></Config></Item>
+              <Item index="8"><Config><Value>0</Value></Config></Item>
+              <Item index="14"><Config><Value>4</Value></Config></Item>
+              <Item index="15"><Config><Value>6</Value></Config></Item>
+            </List>
+          </SpeakerLayout>
+        `,
+      },
     });
 
     mockHeosResponses({
@@ -237,6 +274,8 @@ describe('fetchHttpStatus', () => {
     expect(status.softwareVersion).toBe('8000-2122-F016-8380');
     expect(status.networkConnection).toBe('Wi-Fi');
     expect(status.ipAddress).toBe('192.168.1.171');
+    expect(status.speakerPreset).toBe(1);
+    expect(status.speakerLayout).toBe('2.1');
     expect(status.speakers).toEqual([
       { code: 'FL', name: 'Front Left', active: true, group: 'ear' },
       { code: 'FR', name: 'Front Right', active: false, group: 'ear' },
@@ -267,6 +306,9 @@ describe('fetchHttpStatus', () => {
       '/ajax/network/get_config?type=2': {
         body: '<Information><Connection>3</Connection><IPAddress>192.168.1.170</IPAddress></Information>',
       },
+      '/ajax/speakers/get_config?type=11': {
+        body: '<SpeakerPreset>2</SpeakerPreset>',
+      },
     });
 
     mockHeosResponses({
@@ -283,8 +325,34 @@ describe('fetchHttpStatus', () => {
       softwareVersion: '8000-2122-F016-8380',
       networkConnection: 'Ethernet',
       ipAddress: '192.168.1.170',
+      speakerPreset: 2,
     });
     expect(errorSpy).toHaveBeenCalledWith('[HTTP] AppCommand0300 fetch error:', 'AppCommand0300 unavailable');
     expect(errorSpy).toHaveBeenCalledWith('[HTTP] HEOS smart select fetch error:', 'HEOS unavailable');
+  });
+});
+
+describe('setSpeakerPreset', () => {
+  beforeEach(() => {
+    vi.mocked(receiverHttpClient.get).mockReset();
+    vi.mocked(receiverHttpClient.post).mockReset();
+  });
+
+  it('uses the receiver web UI GET transport for speaker preset changes', async () => {
+    vi.mocked(receiverHttpClient.get).mockResolvedValue({
+      data: '',
+      status: 200,
+      statusText: 'OK',
+      headers: {},
+      config: {} as any,
+    } as AxiosResponse<string>);
+
+    const { setSpeakerPreset } = await import('../api/set-speaker-preset.js');
+    await setSpeakerPreset('192.168.1.170', 2);
+
+    expect(receiverHttpClient.get).toHaveBeenCalledWith(
+      'http://192.168.1.170:11080/ajax/speakers/set_config?type=11&data=%3CSpeakerPreset%3E2%3C%2FSpeakerPreset%3E',
+    );
+    expect(receiverHttpClient.post).not.toHaveBeenCalled();
   });
 });

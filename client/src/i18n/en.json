@@ -34,6 +34,12 @@
       "inputResolution": "Video In",
       "hdrFormat": "HDR"
     },
+    "speakerPreset": {
+      "title": "Speaker Preset",
+      "preset": "Preset {{number}}",
+      "selectedConfiguration": "Selected Configuration",
+      "updatingConfiguration": "Updating..."
+    },
     "video": {
       "title": "Video Signal",
       "inputResolution": "Input",

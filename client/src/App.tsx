@@ -14,6 +14,7 @@ import {
   AudioCard,
   InputCard,
   SpeakerCard,
+  SpeakerPresetCard,
   SubwooferCard,
   SystemCard,
   VideoCard,
@@ -27,13 +28,15 @@ export default function App() {
   const { t } = useTranslation();
   const {
     status,
+    selectedSpeakerPresetLayout,
+    speakerPresetLayoutPending,
     wsConnected,
     setVolume,
     volumeUp,
     volumeDown,
-    setInput,
     toggleMute,
     selectSmartPreset,
+    selectSpeakerPreset,
   } = useAVRStatus();
   const dashboardTitle =
     status.processorModel && status.processorModel !== PLACEHOLDER_VALUE
@@ -166,14 +169,26 @@ export default function App() {
 
             {/* Smart Select */}
             <Grid size={{ xs: 12, md: 6 }}>
-              <InputCard
-                smartSelect={status.smartSelect}
-                currentInput={status.input}
-                audio={status.audio}
-                surroundMode={status.surroundMode}
-                video={status.video}
-                onSelectPreset={selectSmartPreset}
-              />
+              <Grid container spacing={2.5}>
+                <Grid size={{ xs: 12 }}>
+                  <InputCard
+                    smartSelect={status.smartSelect}
+                    currentInput={status.input}
+                    audio={status.audio}
+                    surroundMode={status.surroundMode}
+                    video={status.video}
+                    onSelectPreset={selectSmartPreset}
+                  />
+                </Grid>
+                <Grid size={{ xs: 12 }}>
+                  <SpeakerPresetCard
+                    speakerPreset={status.speakerPreset}
+                    layoutLabel={selectedSpeakerPresetLayout}
+                    layoutPending={speakerPresetLayoutPending}
+                    onSelectPreset={selectSpeakerPreset}
+                  />
+                </Grid>
+              </Grid>
             </Grid>
 
             <Grid size={{ xs: 12, md: 6 }}>
@@ -195,7 +210,10 @@ export default function App() {
 
             {/* Speaker configuration */}
             <Grid size={{ xs: 12, md: 6 }}>
-              <SpeakerCard speakers={status.speakers} />
+              <SpeakerCard
+                speakers={status.speakers}
+                speakerLayout={status.speakerLayout}
+              />
             </Grid>
 
             {/* System info */}

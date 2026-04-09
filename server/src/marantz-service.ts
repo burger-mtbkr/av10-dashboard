@@ -1,10 +1,12 @@
 import * as net from 'net';
 import { EventEmitter } from 'events';
 import { CHANNEL_MAP, OPINFASP_CHANNEL_ORDER, PLACEHOLDER_VALUE, SOURCE_MAP, SMART_SELECT_DEFAULTS, SMART_SELECT_SLOTS, TELNET_EVENT_MAP, parseVolume, volumeToCommand } from './constants.js';
-import { fetchHttpStatus } from './api/index.js';
+import { fetchHttpStatus, setSpeakerPreset as setSpeakerPresetRequest } from './api/index.js';
 import type { IAVRStatus, IInputSource, ISmartSelectPreset, ISpeakerStatus, ITelnetEvent } from './types.js';
 
 export class MarantzService extends EventEmitter {
+  private static readonly SPEAKER_PRESET_REFRESH_DELAYS_MS = [150, 400, 800, 1500, 2500, 4000] as const;
+
   private host: string;
   private port: number;
   private httpPort: number;
@@ -15,6 +17,8 @@ export class MarantzService extends EventEmitter {
   private buffer = '';
   private pollTimer: ReturnType<typeof setInterval> | null = null;
   private pollInterval: number;
+  private speakerPresetRefreshTimers: ReturnType<typeof setTimeout>[] = [];
+  private pendingSpeakerPreset: 1 | 2 | null = null;
 
   private status: IAVRStatus = this.getDefaultStatus();
 
@@ -43,6 +47,8 @@ export class MarantzService extends EventEmitter {
         name: SMART_SELECT_DEFAULTS[n],
         active: false,
       })),
+      speakerPreset: null,
+      speakerLayout: '',
       speakers: [],
       video: {
         inputResolution: PLACEHOLDER_VALUE,
@@ -75,12 +81,37 @@ export class MarantzService extends EventEmitter {
     return JSON.parse(JSON.stringify(this.status));
   }
 
+  async refreshStatus(): Promise<void> {
+    await this.pollHttpStatus();
+  }
+
+  private clearSpeakerPresetRefreshTimers(): void {
+    for (const timer of this.speakerPresetRefreshTimers) {
+      clearTimeout(timer);
+    }
+    this.speakerPresetRefreshTimers = [];
+  }
+
+  private scheduleSpeakerPresetRefreshBurst(): void {
+    this.clearSpeakerPresetRefreshTimers();
+
+    for (const delay of MarantzService.SPEAKER_PRESET_REFRESH_DELAYS_MS) {
+      const timer = setTimeout(() => {
+        void this.refreshStatus().finally(() => {
+          this.speakerPresetRefreshTimers = this.speakerPresetRefreshTimers.filter((entry) => entry !== timer);
+        });
+      }, delay);
+
+      this.speakerPresetRefreshTimers.push(timer);
+    }
+  }
+
   async connect(): Promise<void> {
     console.log(`[Marantz] Connecting to ${this.host}:${this.port} (telnet)...`);
     this.createSocket();
 
     // Also do an initial HTTP poll for full status
-    await this.pollHttpStatus();
+    await this.refreshStatus();
     this.startHttpPolling();
   }
 
@@ -398,6 +429,11 @@ export class MarantzService extends EventEmitter {
   }
 
   private mergeHttpStatus(http: any): void {
+    const pendingSpeakerPreset = this.pendingSpeakerPreset;
+    const httpSpeakerPreset = http.speakerPreset as IAVRStatus['speakerPreset'] | undefined;
+    const shouldHoldSpeakerPresetState = pendingSpeakerPreset !== null
+      && httpSpeakerPreset !== pendingSpeakerPreset;
+
     // Merge power
     if (http.power) this.status.power = http.power;
 
@@ -434,8 +470,23 @@ export class MarantzService extends EventEmitter {
       }));
     }
 
+    if (httpSpeakerPreset !== undefined) {
+      if (!shouldHoldSpeakerPresetState) {
+        this.status.speakerPreset = httpSpeakerPreset;
+      }
+
+      if (pendingSpeakerPreset !== null && httpSpeakerPreset === pendingSpeakerPreset) {
+        this.pendingSpeakerPreset = null;
+        this.clearSpeakerPresetRefreshTimers();
+      }
+    }
+
+    if (http.speakerLayout !== undefined && !shouldHoldSpeakerPresetState) {
+      this.status.speakerLayout = http.speakerLayout;
+    }
+
     // Merge speakers from active speaker query
-    if (http.speakers?.length) this.status.speakers = http.speakers;
+    if (http.speakers?.length && !shouldHoldSpeakerPresetState) this.status.speakers = http.speakers;
 
     // Merge video info
     if (http.video) {
@@ -498,9 +549,23 @@ export class MarantzService extends EventEmitter {
     this.sendCommand(`MSSMART${preset}`);
   }
 
+  async setSpeakerPreset(preset: number): Promise<void> {
+    if (preset < 1 || preset > 2) return;
+
+    this.pendingSpeakerPreset = preset as 1 | 2;
+    await setSpeakerPresetRequest(this.host, preset as 1 | 2);
+    this.status.speakerPreset = preset as 1 | 2;
+    this.status.speakerLayout = '';
+    this.status.lastUpdate = new Date().toISOString();
+    this.emit('statusChanged', this.status);
+    void this.refreshStatus();
+    this.scheduleSpeakerPresetRefreshBurst();
+  }
+
   disconnect(): void {
     if (this.reconnectTimer) clearTimeout(this.reconnectTimer);
     if (this.pollTimer) clearInterval(this.pollTimer);
+    this.clearSpeakerPresetRefreshTimers();
     if (this.socket) {
       this.socket.removeAllListeners();
       this.socket.destroy();

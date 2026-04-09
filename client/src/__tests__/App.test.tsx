@@ -6,13 +6,15 @@ import { createMockStatus, renderWithProviders } from "./test-utils";
 vi.mock("../hooks", () => ({
   useAVRStatus: () => ({
     status: createMockStatus(),
+    selectedSpeakerPresetLayout: "7.2.4",
+    speakerPresetLayoutPending: false,
     wsConnected: true,
     setVolume: vi.fn(),
     volumeUp: vi.fn(),
     volumeDown: vi.fn(),
-    setInput: vi.fn(),
     toggleMute: vi.fn(),
     selectSmartPreset: vi.fn(),
+    selectSpeakerPreset: vi.fn(),
   }),
 }));
 
@@ -34,6 +36,7 @@ describe("App", () => {
     const volume = screen.getByText("Volume");
     const subwoofer = screen.getByText("Subwoofer Settings");
     const input = screen.getByText("Smart Select");
+    const speakerPreset = screen.getByText("Speaker Preset");
     const audio = screen.getByText("Audio Signal");
     const video = screen.getByText("Video Signal");
     const speaker = screen.getByText("Speaker Configuration");
@@ -41,7 +44,8 @@ describe("App", () => {
 
     expectBefore(volume, subwoofer);
     expectBefore(subwoofer, input);
-    expectBefore(input, audio);
+    expectBefore(input, speakerPreset);
+    expectBefore(speakerPreset, audio);
     expectBefore(audio, video);
     expectBefore(video, speaker);
     expectBefore(speaker, system);

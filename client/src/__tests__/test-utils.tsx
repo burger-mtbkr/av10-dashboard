@@ -49,6 +49,8 @@ export const createMockStatus = (
       { number: 3, name: "PS3", active: false },
       { number: 4, name: "Xbox", active: false },
     ],
+    speakerPreset: 1,
+    speakerLayout: "7.2.4",
     speakers: createMockSpeakers(),
     video: {
       inputResolution: "3840x2160p",

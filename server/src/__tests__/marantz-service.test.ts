@@ -21,6 +21,7 @@ vi.mock('net', () => {
 // Mock the HTTP status API module
 vi.mock('../api/index.js', () => ({
   fetchHttpStatus: vi.fn().mockResolvedValue({}),
+  setSpeakerPreset: vi.fn().mockResolvedValue(undefined),
 }));
 
 describe('MarantzService', () => {
@@ -42,6 +43,7 @@ describe('MarantzService', () => {
       expect(status.volume).toBe(0);
       expect(status.muted).toBe(false);
       expect(status.connected).toBe(false);
+      expect(status.speakerPreset).toBeNull();
       expect(status.speakers).toEqual([]);
       expect(status.subwoofers).toEqual([]);
     });
@@ -91,6 +93,50 @@ describe('MarantzService', () => {
     });
   });
 
+  describe('setSpeakerPreset', () => {
+    it('should update the selected speaker preset and refresh HTTP state', async () => {
+      const refreshStatus = vi.spyOn(service, 'refreshStatus').mockResolvedValue(undefined);
+      const scheduleSpeakerPresetRefreshBurst = vi.spyOn(service as any, 'scheduleSpeakerPresetRefreshBurst').mockImplementation(() => {});
+
+      await service.setSpeakerPreset(2);
+
+      expect(service.getStatus().speakerPreset).toBe(2);
+      expect(refreshStatus).toHaveBeenCalledTimes(1);
+      expect(scheduleSpeakerPresetRefreshBurst).toHaveBeenCalledTimes(1);
+    });
+
+    it('should clear speakerLayout immediately on preset change', async () => {
+      vi.spyOn(service, 'refreshStatus').mockResolvedValue(undefined);
+      vi.spyOn(service as any, 'scheduleSpeakerPresetRefreshBurst').mockImplementation(() => {});
+      (service as any).status.speakerLayout = '7.2.4';
+
+      await service.setSpeakerPreset(2);
+
+      expect(service.getStatus().speakerLayout).toBe('');
+    });
+
+    it('should ignore invalid speaker preset values', async () => {
+      const refreshStatus = vi.spyOn(service, 'refreshStatus').mockResolvedValue(undefined);
+
+      await service.setSpeakerPreset(0);
+      await service.setSpeakerPreset(3);
+
+      expect(service.getStatus().speakerPreset).toBeNull();
+      expect(refreshStatus).not.toHaveBeenCalled();
+    });
+
+    it('should schedule multiple follow-up refreshes after changing speaker preset', async () => {
+      vi.useFakeTimers();
+      const refreshStatus = vi.spyOn(service, 'refreshStatus').mockResolvedValue(undefined);
+
+      (service as any).scheduleSpeakerPresetRefreshBurst();
+      vi.runAllTimers();
+
+      expect(refreshStatus).toHaveBeenCalledTimes(6);
+      vi.useRealTimers();
+    });
+  });
+
   describe('disconnect', () => {
     it('should set connected to false', () => {
       service.disconnect();
@@ -119,14 +165,22 @@ describe('MarantzService', () => {
   describe('connect and reconnect helpers', () => {
     it('should create the socket, poll HTTP state, and start polling on connect', async () => {
       const createSocket = vi.spyOn(service as any, 'createSocket').mockImplementation(() => {});
-      const pollHttpStatus = vi.spyOn(service as any, 'pollHttpStatus').mockResolvedValue(undefined);
+      const refreshStatus = vi.spyOn(service, 'refreshStatus').mockResolvedValue(undefined);
       const startHttpPolling = vi.spyOn(service as any, 'startHttpPolling').mockImplementation(() => {});
 
       await service.connect();
 
       expect(createSocket).toHaveBeenCalledTimes(1);
-      expect(pollHttpStatus).toHaveBeenCalledTimes(1);
+      expect(refreshStatus).toHaveBeenCalledTimes(1);
       expect(startHttpPolling).toHaveBeenCalledTimes(1);
+    });
+
+    it('should expose refreshStatus as a public immediate HTTP refresh', async () => {
+      const pollHttpStatus = vi.spyOn(service as any, 'pollHttpStatus').mockResolvedValue(undefined);
+
+      await service.refreshStatus();
+
+      expect(pollHttpStatus).toHaveBeenCalledTimes(1);
     });
 
     it('should schedule a reconnect attempt', () => {
@@ -322,8 +376,8 @@ describe('MarantzService', () => {
       (service as any).handleOperationEvent('INFASP 21000000000000000000000000000000');
       const status = service.getStatus();
       expect(status.speakers).toHaveLength(2);
-      expect(status.speakers.find((s: any) => s.code === 'FL').active).toBe(true);
-      expect(status.speakers.find((s: any) => s.code === 'FR').active).toBe(false);
+      expect(status.speakers.find((s: any) => s.code === 'FL')?.active).toBe(true);
+      expect(status.speakers.find((s: any) => s.code === 'FR')?.active).toBe(false);
     });
 
     it('should ignore positions with value 0', () => {
@@ -360,7 +414,7 @@ describe('MarantzService', () => {
     it('should activate a preset on MSQUICK event', () => {
       (service as any).updateStatusFromEvent('MSQUICK', '2');
       const status = service.getStatus();
-      expect(status.smartSelect.find((p: any) => p.number === 2).active).toBe(true);
+      expect(status.smartSelect.find((p: any) => p.number === 2)?.active).toBe(true);
       expect(status.smartSelect.filter((p: any) => p.active)).toHaveLength(1);
     });
 
@@ -368,8 +422,8 @@ describe('MarantzService', () => {
       (service as any).updateStatusFromEvent('MSQUICK', '1');
       (service as any).updateStatusFromEvent('MSQUICK', '3');
       const status = service.getStatus();
-      expect(status.smartSelect.find((p: any) => p.number === 1).active).toBe(false);
-      expect(status.smartSelect.find((p: any) => p.number === 3).active).toBe(true);
+      expect(status.smartSelect.find((p: any) => p.number === 1)?.active).toBe(false);
+      expect(status.smartSelect.find((p: any) => p.number === 3)?.active).toBe(true);
     });
 
     it('should ignore invalid preset numbers', () => {
@@ -412,6 +466,8 @@ describe('MarantzService', () => {
           { number: 3, name: 'Music', active: false },
           { number: 4, name: 'Night', active: false },
         ],
+        speakerPreset: 2,
+        speakerLayout: '7.2.4',
         speakers: [{ code: 'FL', name: 'Front Left', active: true, group: 'ear' }],
         video: { inputResolution: '2160p', outputResolution: '2160p', hdrFormat: 'HDR10', inputSignal: 'HDMI' },
         audio: { inputFormat: 'PCM', soundMode: 'AURO-3D', samplingRate: '96kHz' },
@@ -433,8 +489,10 @@ describe('MarantzService', () => {
       expect(status.availableInputs[0]).toMatchObject({ id: 'GAME', selected: true });
       expect(status.surroundMode).toBe('AURO-3D');
       expect(status.audio.soundMode).toBe('AURO-3D');
-      expect(status.smartSelect.find((preset: any) => preset.number === 2).active).toBe(true);
-      expect(status.smartSelect.find((preset: any) => preset.number === 2).name).toBe('Gaming');
+      expect(status.smartSelect.find((preset: any) => preset.number === 2)?.active).toBe(true);
+      expect(status.smartSelect.find((preset: any) => preset.number === 2)?.name).toBe('Gaming');
+      expect(status.speakerPreset).toBe(2);
+      expect(status.speakerLayout).toBe('7.2.4');
       expect(status.video).toMatchObject({ hdrFormat: 'HDR10', inputResolution: '2160p' });
       expect(status.audio).toMatchObject({ inputFormat: 'PCM', samplingRate: '96kHz' });
       expect(status.subwoofers[0]).toMatchObject({ level: '+2.0 dB' });
@@ -442,6 +500,67 @@ describe('MarantzService', () => {
       expect(status.ecoMode).toBe('AUTO');
       expect(status.networkConnection).toBe('Ethernet');
       expect(status.ipAddress).toBe('192.168.1.170');
+    });
+
+    it('should ignore stale speaker preset and speaker layout while a preset change is pending', () => {
+      (service as any).pendingSpeakerPreset = 2;
+      (service as any).status.speakerPreset = 2;
+      (service as any).status.speakerLayout = '7.2.4';
+      (service as any).status.speakers = [
+        { code: 'FL', name: 'Front Left', active: true, group: 'ear' },
+        { code: 'FR', name: 'Front Right', active: true, group: 'ear' },
+        { code: 'C', name: 'Center', active: true, group: 'ear' },
+        { code: 'SL', name: 'Surround Left', active: true, group: 'ear' },
+        { code: 'SR', name: 'Surround Right', active: true, group: 'ear' },
+        { code: 'SW', name: 'Subwoofer', active: true, group: 'sub' },
+        { code: 'TFL', name: 'Top Front Left', active: true, group: 'height' },
+        { code: 'TFR', name: 'Top Front Right', active: true, group: 'height' },
+      ];
+
+      (service as any).mergeHttpStatus({
+        speakerPreset: 1,
+        speakerLayout: '2.1',
+        speakers: [
+          { code: 'FL', name: 'Front Left', active: true, group: 'ear' },
+          { code: 'FR', name: 'Front Right', active: true, group: 'ear' },
+          { code: 'C', name: 'Center', active: true, group: 'ear' },
+          { code: 'SW', name: 'Subwoofer', active: true, group: 'sub' },
+        ],
+      });
+
+      const status = service.getStatus();
+      expect(status.speakerPreset).toBe(2);
+      expect(status.speakerLayout).toBe('7.2.4');
+      expect(status.speakers).toHaveLength(8);
+      expect((service as any).pendingSpeakerPreset).toBe(2);
+    });
+
+    it('should merge speaker layout and clear pending state once the target preset is confirmed', () => {
+      (service as any).pendingSpeakerPreset = 2;
+      (service as any).status.speakerPreset = 2;
+      (service as any).speakerPresetRefreshTimers = [setTimeout(() => {}, 10000), setTimeout(() => {}, 10000)];
+
+      (service as any).mergeHttpStatus({
+        speakerPreset: 2,
+        speakerLayout: '5.2.4',
+        speakers: [
+          { code: 'FL', name: 'Front Left', active: true, group: 'ear' },
+          { code: 'FR', name: 'Front Right', active: true, group: 'ear' },
+          { code: 'C', name: 'Center', active: true, group: 'ear' },
+          { code: 'SL', name: 'Surround Left', active: true, group: 'ear' },
+          { code: 'SR', name: 'Surround Right', active: true, group: 'ear' },
+          { code: 'SW', name: 'Subwoofer', active: true, group: 'sub' },
+          { code: 'TFL', name: 'Top Front Left', active: true, group: 'height' },
+          { code: 'TFR', name: 'Top Front Right', active: true, group: 'height' },
+        ],
+      });
+
+      const status = service.getStatus();
+      expect(status.speakerPreset).toBe(2);
+      expect(status.speakerLayout).toBe('5.2.4');
+      expect(status.speakers).toHaveLength(8);
+      expect((service as any).pendingSpeakerPreset).toBeNull();
+      expect((service as any).speakerPresetRefreshTimers).toHaveLength(0);
     });
 
     it('should resolve custom input names before falling back to source ids', () => {
