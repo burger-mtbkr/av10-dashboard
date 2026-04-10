@@ -121,7 +121,7 @@ The backend is an Express 5 and WebSocket service that keeps a single AVR status
 | `server/package.json` | Backend dependencies and scripts for `dev`, `build`, `start`, `test`, and `test:coverage`. |
 | `server/tsconfig.json` | Backend TypeScript settings. |
 | `server/vitest.config.ts` | Vitest configuration for backend tests. |
-| `server/debug/` | Ad hoc probe and debugging scripts for receiver endpoints and transports. |
+| `server/debug/` | Optional local-only folder for ad hoc probe and debugging scripts for receiver endpoints and transports. Not committed by default. |
 | `server/coverage/` | Generated coverage artifacts for the backend test suite. |
 
 ### Backend Runtime Modules
