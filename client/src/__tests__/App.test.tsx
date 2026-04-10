@@ -36,18 +36,16 @@ describe("App", () => {
     const volume = screen.getByText("Volume");
     const subwoofer = screen.getByText("Subwoofer Settings");
     const input = screen.getByText("Smart Select");
-    const speakerPreset = screen.getByText("Speaker Preset");
+    const speakerConfig = screen.getByText("Speaker Configuration");
     const audio = screen.getByText("Audio Signal");
     const video = screen.getByText("Video Signal");
-    const speaker = screen.getByText("Speaker Configuration");
     const system = screen.getByText("System Info");
 
     expectBefore(volume, subwoofer);
     expectBefore(subwoofer, input);
-    expectBefore(input, speakerPreset);
-    expectBefore(speakerPreset, audio);
+    expectBefore(input, speakerConfig);
+    expectBefore(speakerConfig, audio);
     expectBefore(audio, video);
-    expectBefore(video, speaker);
-    expectBefore(speaker, system);
+    expectBefore(video, system);
   });
 });

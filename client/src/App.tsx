@@ -13,7 +13,6 @@ import theme from "./theme";
 import {
   AudioCard,
   InputCard,
-  SpeakerCard,
   SpeakerPresetCard,
   SubwooferCard,
   SystemCard,
@@ -183,7 +182,8 @@ export default function App() {
                 <Grid size={{ xs: 12 }}>
                   <SpeakerPresetCard
                     speakerPreset={status.speakerPreset}
-                    layoutLabel={selectedSpeakerPresetLayout}
+                    speakers={status.speakers}
+                    speakerLayout={selectedSpeakerPresetLayout}
                     layoutPending={speakerPresetLayoutPending}
                     onSelectPreset={selectSpeakerPreset}
                   />
@@ -206,14 +206,6 @@ export default function App() {
                   <VideoCard video={status.video} />
                 </Grid>
               </Grid>
-            </Grid>
-
-            {/* Speaker configuration */}
-            <Grid size={{ xs: 12, md: 6 }}>
-              <SpeakerCard
-                speakers={status.speakers}
-                speakerLayout={status.speakerLayout}
-              />
             </Grid>
 
             {/* System info */}

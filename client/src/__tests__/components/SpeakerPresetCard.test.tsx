@@ -1,19 +1,20 @@
 import { describe, it, expect, vi } from "vitest";
 import { fireEvent, screen } from "@testing-library/react";
 import { SpeakerPresetCard } from "../../components";
-import { renderWithProviders } from "../test-utils";
+import { renderWithProviders, createMockSpeakers } from "../test-utils";
 
 describe("SpeakerPresetCard", () => {
   it("should render the title and both preset buttons", () => {
     renderWithProviders(
       <SpeakerPresetCard
         speakerPreset={1}
-        layoutLabel="7.2.4"
+        speakers={createMockSpeakers()}
+        speakerLayout="7.2.4"
         onSelectPreset={vi.fn()}
       />,
     );
 
-    expect(screen.getByText("Speaker Preset")).toBeInTheDocument();
+    expect(screen.getByText("Speaker Configuration")).toBeInTheDocument();
     expect(screen.getByText("Preset 1")).toBeInTheDocument();
     expect(screen.getByText("Preset 2")).toBeInTheDocument();
   });
@@ -24,7 +25,8 @@ describe("SpeakerPresetCard", () => {
     renderWithProviders(
       <SpeakerPresetCard
         speakerPreset={1}
-        layoutLabel="7.2.4"
+        speakers={createMockSpeakers()}
+        speakerLayout="7.2.4"
         onSelectPreset={onSelectPreset}
       />,
     );
@@ -33,44 +35,109 @@ describe("SpeakerPresetCard", () => {
     expect(onSelectPreset).toHaveBeenCalledWith(2);
   });
 
-  it("should show the selected speaker layout for the active preset", () => {
+  it("should show layout chip and active/total count", () => {
     renderWithProviders(
       <SpeakerPresetCard
-        speakerPreset={2}
-        layoutLabel="7.2.4"
+        speakerPreset={1}
+        speakers={createMockSpeakers()}
+        speakerLayout="7.2.4"
         onSelectPreset={vi.fn()}
       />,
     );
 
-    expect(screen.getByText("Selected Configuration")).toBeInTheDocument();
     expect(screen.getByText("7.2.4")).toBeInTheDocument();
+    expect(screen.getByText("13/13")).toBeInTheDocument();
   });
 
-  it("should hide the selected layout when no preset is active", () => {
+  it("should display speaker codes in the grid", () => {
     renderWithProviders(
       <SpeakerPresetCard
-        speakerPreset={null}
-        layoutLabel=""
+        speakerPreset={1}
+        speakers={createMockSpeakers()}
+        speakerLayout="7.2.4"
         onSelectPreset={vi.fn()}
       />,
     );
 
-    expect(
-      screen.queryByText("Selected Configuration"),
-    ).not.toBeInTheDocument();
+    expect(screen.getByText("FL")).toBeInTheDocument();
+    expect(screen.getByText("FR")).toBeInTheDocument();
+    expect(screen.getByText("C")).toBeInTheDocument();
+    expect(screen.getByText("SW")).toBeInTheDocument();
   });
 
-  it("should show updating state when layout is still syncing", () => {
+  it("should show room layout labels and group legend", () => {
+    renderWithProviders(
+      <SpeakerPresetCard
+        speakerPreset={1}
+        speakers={createMockSpeakers()}
+        speakerLayout="7.2.4"
+        onSelectPreset={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText("Listening Position")).toBeInTheDocument();
+    expect(screen.getByText(/Height \/ Atmos/)).toBeInTheDocument();
+    expect(screen.getByText(/Ear Level/)).toBeInTheDocument();
+    expect(screen.getByText(/Subwoofers/)).toBeInTheDocument();
+  });
+
+  it("should show updating state when layoutPending is true", () => {
     renderWithProviders(
       <SpeakerPresetCard
         speakerPreset={2}
-        layoutLabel=""
+        speakers={[]}
+        speakerLayout=""
         layoutPending
         onSelectPreset={vi.fn()}
       />,
     );
 
-    expect(screen.getByText("Selected Configuration")).toBeInTheDocument();
     expect(screen.getByText("Updating...")).toBeInTheDocument();
+    expect(screen.queryByText("Listening Position")).not.toBeInTheDocument();
+  });
+
+  it("should show updating state when speakers are empty during a preset switch", () => {
+    renderWithProviders(
+      <SpeakerPresetCard
+        speakerPreset={2}
+        speakers={[]}
+        speakerLayout=""
+        onSelectPreset={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText("Updating...")).toBeInTheDocument();
+  });
+
+  it("should hide layout chip and count when no preset is selected", () => {
+    renderWithProviders(
+      <SpeakerPresetCard
+        speakerPreset={null}
+        speakers={[]}
+        speakerLayout=""
+        onSelectPreset={vi.fn()}
+      />,
+    );
+
+    expect(screen.queryByText("7.2.4")).not.toBeInTheDocument();
+    expect(screen.queryByText("13/13")).not.toBeInTheDocument();
+  });
+
+  it("should handle partially active speakers", () => {
+    const speakers = createMockSpeakers().map((s, i) => ({
+      ...s,
+      active: i < 5,
+    }));
+    renderWithProviders(
+      <SpeakerPresetCard
+        speakerPreset={1}
+        speakers={speakers}
+        speakerLayout="7.2.4"
+        onSelectPreset={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText("5/13")).toBeInTheDocument();
+    expect(screen.getByText("7.2.4")).toBeInTheDocument();
   });
 });

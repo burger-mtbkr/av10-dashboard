@@ -146,20 +146,6 @@ describe('fetchHttpStatus', () => {
       '/ajax/speakers/get_config?type=11': {
         body: '<SpeakerPreset>2</SpeakerPreset>',
       },
-      '/ajax/speakers/get_config?type=15': {
-        body: `
-          <SpeakerLayout>
-            <List>
-              <Item index="3"><Config><Value>4</Value></Config></Item>
-              <Item index="4"><Config><Value>4</Value></Config></Item>
-              <Item index="5"><Config><Value>7</Value></Config></Item>
-              <Item index="6"><Config><Value>5</Value></Config></Item>
-              <Item index="8"><Config><Value>2</Value></Config></Item>
-              <Item index="15"><Config><Value>7</Value></Config></Item>
-            </List>
-          </SpeakerLayout>
-        `,
-      },
     });
 
     mockHeosResponses({
@@ -184,7 +170,6 @@ describe('fetchHttpStatus', () => {
     expect(status.networkConnection).toBe('Ethernet');
     expect(status.ipAddress).toBe('192.168.1.170');
     expect(status.speakerPreset).toBe(2);
-    expect(status.speakerLayout).toBe('7.2.4');
     expect(status.availableInputs?.find((input: { id: string }) => input.id === 'BD')).toMatchObject({
       name: 'Disc Player',
       selected: false,
@@ -243,21 +228,6 @@ describe('fetchHttpStatus', () => {
       '/ajax/speakers/get_config?type=11': {
         body: '<SpeakerPreset>1</SpeakerPreset>',
       },
-      '/ajax/speakers/get_config?type=15': {
-        body: `
-          <SpeakerLayout>
-            <List>
-              <Item index="3"><Config><Value>5</Value></Config></Item>
-              <Item index="4"><Config><Value>5</Value></Config></Item>
-              <Item index="5"><Config><Value>5</Value></Config></Item>
-              <Item index="6"><Config><Value>5</Value></Config></Item>
-              <Item index="8"><Config><Value>0</Value></Config></Item>
-              <Item index="14"><Config><Value>4</Value></Config></Item>
-              <Item index="15"><Config><Value>6</Value></Config></Item>
-            </List>
-          </SpeakerLayout>
-        `,
-      },
     });
 
     mockHeosResponses({
@@ -275,7 +245,6 @@ describe('fetchHttpStatus', () => {
     expect(status.networkConnection).toBe('Wi-Fi');
     expect(status.ipAddress).toBe('192.168.1.171');
     expect(status.speakerPreset).toBe(1);
-    expect(status.speakerLayout).toBe('2.1');
     expect(status.speakers).toEqual([
       { code: 'FL', name: 'Front Left', active: true, group: 'ear' },
       { code: 'FR', name: 'Front Right', active: false, group: 'ear' },

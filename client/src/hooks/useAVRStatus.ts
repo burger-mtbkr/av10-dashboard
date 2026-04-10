@@ -274,8 +274,7 @@ export const useAVRStatus = () => {
   const speakerPresetLayoutPending =
     status.speakerPreset !== null
     && optimisticStatus.speakerPreset !== undefined
-    && baseStatus.speakerPreset !== status.speakerPreset
-    && !speakerPresetLayoutsRef.current[status.speakerPreset];
+    && selectedSpeakerPresetLayout === '';
 
   const connect = useCallback(() => {
     // Determine WebSocket URL based on current page location

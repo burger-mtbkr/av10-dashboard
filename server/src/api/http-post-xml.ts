@@ -12,7 +12,7 @@ export const httpPostXml = async (
       body,
       {
         headers: {
-          'Content-Type': 'text/xml',
+          'Content-Type': 'text/xml; charset=utf-8',
         },
       },
     );

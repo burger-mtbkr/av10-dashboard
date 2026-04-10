@@ -84,6 +84,7 @@ export const SMART_SELECT_DEFAULTS: Record<number, string> = {
 export const TELNET_EVENT_MAP: Record<string, string> = {
   MSSMART: 'smartSelect',
   MSQUICK: 'smartSelect',
+  SPPR: 'speakerPreset',
   MV: 'volume',
   SI: 'input',
   MS: 'surroundMode',

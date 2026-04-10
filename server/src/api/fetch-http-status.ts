@@ -11,7 +11,6 @@ import {
   parseAudioInfo,
   parseNetworkInfo,
   parseProcessorModel,
-  parseSpeakerLayout,
   parseSmartSelectNames,
   parseSoftwareVersion,
   parseSourceRenames,
@@ -110,13 +109,12 @@ export const fetchHttpStatus = async (host: string, httpPort: number): Promise<I
     console.error('[HTTP] HEOS smart select fetch error:', (error as Error).message);
   }
 
-  const [generalInfoResult, networkInfoResult, ownerManualResult, brandResult, speakerPresetResult, speakerLayoutResult] = await Promise.allSettled([
+  const [generalInfoResult, networkInfoResult, ownerManualResult, brandResult, speakerPresetResult] = await Promise.allSettled([
     fetchWebControlConfig(host, '/ajax/general/get_config', 12),
     fetchWebControlConfig(host, '/ajax/network/get_config', 2),
     fetchWebControlConfig(host, '/ajax/general/get_config', 23),
     fetchWebControlConfig(host, '/ajax/globals/get_config', 1),
     fetchSpeakerPreset(host),
-    fetchWebControlConfig(host, '/ajax/speakers/get_config', 15),
   ]);
 
   if (generalInfoResult.status === 'fulfilled') {
@@ -145,13 +143,6 @@ export const fetchHttpStatus = async (host: string, httpPort: number): Promise<I
   } else {
     const reason = speakerPresetResult.reason;
     console.error('[HTTP] Speaker preset fetch error:', reason instanceof Error ? reason.message : reason);
-  }
-
-  if (speakerLayoutResult.status === 'fulfilled') {
-    result.speakerLayout = parseSpeakerLayout(speakerLayoutResult.value);
-  } else {
-    const reason = speakerLayoutResult.reason;
-    console.error('[HTTP] Speaker layout fetch error:', reason instanceof Error ? reason.message : reason);
   }
 
   if (ownerManualResult.status === 'rejected') {

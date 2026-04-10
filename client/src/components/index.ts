@@ -1,6 +1,5 @@
 export { default as AudioCard } from "./AudioCard";
 export { default as InputCard } from "./InputCard";
-export { default as SpeakerCard } from "./SpeakerCard";
 export { default as SpeakerPresetCard } from "./SpeakerPresetCard";
 export { default as SubwooferCard } from "./SubwooferCard";
 export { default as SystemCard } from "./SystemCard";

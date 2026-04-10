@@ -1,11 +1,11 @@
 import * as net from 'net';
 import { EventEmitter } from 'events';
 import { CHANNEL_MAP, OPINFASP_CHANNEL_ORDER, PLACEHOLDER_VALUE, SOURCE_MAP, SMART_SELECT_DEFAULTS, SMART_SELECT_SLOTS, TELNET_EVENT_MAP, parseVolume, volumeToCommand } from './constants.js';
-import { fetchHttpStatus, setSpeakerPreset as setSpeakerPresetRequest } from './api/index.js';
+import { fetchHttpStatus } from './api/index.js';
 import type { IAVRStatus, IInputSource, ISmartSelectPreset, ISpeakerStatus, ITelnetEvent } from './types.js';
 
 export class MarantzService extends EventEmitter {
-  private static readonly SPEAKER_PRESET_REFRESH_DELAYS_MS = [150, 400, 800, 1500, 2500, 4000] as const;
+  private static readonly SPEAKER_PRESET_REFRESH_DELAYS_MS = [100, 300, 600, 1000, 1500, 2000, 3000, 4000, 6000, 8000] as const;
 
   private host: string;
   private port: number;
@@ -19,6 +19,7 @@ export class MarantzService extends EventEmitter {
   private pollInterval: number;
   private speakerPresetRefreshTimers: ReturnType<typeof setTimeout>[] = [];
   private pendingSpeakerPreset: 1 | 2 | null = null;
+  private preSwitchSpeakerLayout: string | null = null;
 
   private status: IAVRStatus = this.getDefaultStatus();
 
@@ -85,6 +86,18 @@ export class MarantzService extends EventEmitter {
     await this.pollHttpStatus();
   }
 
+  private computeSpeakerLayout(speakers: ISpeakerStatus[]): string {
+    if (speakers.length === 0) return '';
+    const earCount = speakers.filter(s => s.group === 'ear' || s.group === 'wide' || s.group === 'back').length;
+    const opinfaspSubCount = speakers.filter(s => s.group === 'sub').length;
+    // OPINFASP only reports a single SW channel even when multiple physical
+    // subwoofers are connected.  Use the larger of the two counts so the
+    // layout label reflects the actual speaker configuration (e.g. 7.2.4).
+    const subCount = Math.max(opinfaspSubCount, this.status.subwoofers.length);
+    const heightCount = speakers.filter(s => s.group === 'height').length;
+    return heightCount > 0 ? `${earCount}.${subCount}.${heightCount}` : `${earCount}.${subCount}`;
+  }
+
   private clearSpeakerPresetRefreshTimers(): void {
     for (const timer of this.speakerPresetRefreshTimers) {
       clearTimeout(timer);
@@ -99,6 +112,13 @@ export class MarantzService extends EventEmitter {
       const timer = setTimeout(() => {
         void this.refreshStatus().finally(() => {
           this.speakerPresetRefreshTimers = this.speakerPresetRefreshTimers.filter((entry) => entry !== timer);
+          // Safety valve: if all burst polls completed without resolving
+          // the transition (e.g. both presets have the same layout), accept
+          // whatever data is current and clear the hold.
+          if (this.speakerPresetRefreshTimers.length === 0 && this.pendingSpeakerPreset !== null) {
+            this.pendingSpeakerPreset = null;
+            this.preSwitchSpeakerLayout = null;
+          }
         });
       }, delay);
 
@@ -143,6 +163,7 @@ export class MarantzService extends EventEmitter {
       this.sendCommand('ECO?');
       this.sendCommand('OPINF?');
       this.sendCommand('MSSMART ?');
+      this.sendCommand('SPPR ?');
     });
 
     this.socket.on('data', (data: string) => {
@@ -298,6 +319,18 @@ export class MarantzService extends EventEmitter {
         }
         break;
 
+      case 'SPPR': {
+        const presetNum = parseInt(parameter, 10);
+        if (presetNum === 1 || presetNum === 2) {
+          this.status.speakerPreset = presetNum;
+          // Do NOT clear pendingSpeakerPreset here — that guard must stay active
+          // to block stale HTTP poll data until the HTTP endpoint itself confirms
+          // the new preset alongside the updated speakerLayout.
+          changed = true;
+        }
+        break;
+      }
+
       default:
         // Log unhandled events for debugging
         console.log(`[Marantz] Unhandled: ${event}${parameter}`);
@@ -391,7 +424,25 @@ export class MarantzService extends EventEmitter {
       }
       if (speakers.length > 0) {
         console.log(`[Marantz] OPINFASP: ${speakers.length} speakers parsed`);
-        this.status.speakers = speakers;
+        if (this.pendingSpeakerPreset === null) {
+          this.status.speakers = speakers;
+          this.status.speakerLayout = this.computeSpeakerLayout(speakers);
+        } else {
+          // During a preset transition, accept OPINFASP data once the layout
+          // changes from the pre-switch value — this event is pushed by the
+          // receiver in real-time as soon as the DSP reconfigures, so it is
+          // the fastest path to resolve the transition.
+          const computedLayout = this.computeSpeakerLayout(speakers);
+          const layoutChanged = this.preSwitchSpeakerLayout === null
+            || computedLayout !== this.preSwitchSpeakerLayout;
+          if (layoutChanged) {
+            this.status.speakers = speakers;
+            this.status.speakerLayout = computedLayout;
+            this.pendingSpeakerPreset = null;
+            this.preSwitchSpeakerLayout = null;
+            this.clearSpeakerPresetRefreshTimers();
+          }
+        }
         return true;
       }
     }
@@ -431,8 +482,6 @@ export class MarantzService extends EventEmitter {
   private mergeHttpStatus(http: any): void {
     const pendingSpeakerPreset = this.pendingSpeakerPreset;
     const httpSpeakerPreset = http.speakerPreset as IAVRStatus['speakerPreset'] | undefined;
-    const shouldHoldSpeakerPresetState = pendingSpeakerPreset !== null
-      && httpSpeakerPreset !== pendingSpeakerPreset;
 
     // Merge power
     if (http.power) this.status.power = http.power;
@@ -470,23 +519,37 @@ export class MarantzService extends EventEmitter {
       }));
     }
 
-    if (httpSpeakerPreset !== undefined) {
-      if (!shouldHoldSpeakerPresetState) {
+    // Merge subwoofers BEFORE speaker data so computeSpeakerLayout() sees
+    // the correct physical subwoofer count (dual-mono = 2 speakers, 1 OPINFASP channel).
+    if (http.subwoofers?.length) this.status.subwoofers = http.subwoofers;
+
+    // Speaker preset, speakers, and layout are guarded during transitions.
+    // While pendingSpeakerPreset is active, stale data from the old preset
+    // must not contaminate the new preset's status.
+    if (pendingSpeakerPreset === null) {
+      // No transition — accept all speaker data
+      if (httpSpeakerPreset !== undefined) {
         this.status.speakerPreset = httpSpeakerPreset;
       }
+      if (http.speakers?.length) {
+        this.status.speakers = http.speakers;
+        this.status.speakerLayout = this.computeSpeakerLayout(http.speakers);
+      }
+    } else if (httpSpeakerPreset === pendingSpeakerPreset && http.speakers?.length) {
+      // Preset matches the target — check if layout changed (DSP reconfigured)
+      const computedLayout = this.computeSpeakerLayout(http.speakers);
+      const layoutChanged = this.preSwitchSpeakerLayout === null
+        || computedLayout !== this.preSwitchSpeakerLayout;
 
-      if (pendingSpeakerPreset !== null && httpSpeakerPreset === pendingSpeakerPreset) {
+      if (layoutChanged) {
+        this.status.speakerPreset = httpSpeakerPreset;
+        this.status.speakers = http.speakers;
+        this.status.speakerLayout = computedLayout;
         this.pendingSpeakerPreset = null;
+        this.preSwitchSpeakerLayout = null;
         this.clearSpeakerPresetRefreshTimers();
       }
     }
-
-    if (http.speakerLayout !== undefined && !shouldHoldSpeakerPresetState) {
-      this.status.speakerLayout = http.speakerLayout;
-    }
-
-    // Merge speakers from active speaker query
-    if (http.speakers?.length && !shouldHoldSpeakerPresetState) this.status.speakers = http.speakers;
 
     // Merge video info
     if (http.video) {
@@ -497,9 +560,6 @@ export class MarantzService extends EventEmitter {
     if (http.audio) {
       this.status.audio = { ...this.status.audio, ...http.audio };
     }
-
-    // Merge subwoofers
-    if (http.subwoofers?.length) this.status.subwoofers = http.subwoofers;
 
     // Merge LFE
     if (http.lfeLevel) this.status.lfeLevel = http.lfeLevel;
@@ -552,13 +612,15 @@ export class MarantzService extends EventEmitter {
   async setSpeakerPreset(preset: number): Promise<void> {
     if (preset < 1 || preset > 2) return;
 
+    this.preSwitchSpeakerLayout = this.status.speakerLayout || null;
     this.pendingSpeakerPreset = preset as 1 | 2;
-    await setSpeakerPresetRequest(this.host, preset as 1 | 2);
     this.status.speakerPreset = preset as 1 | 2;
     this.status.speakerLayout = '';
+    this.status.speakers = [];
     this.status.lastUpdate = new Date().toISOString();
     this.emit('statusChanged', this.status);
-    void this.refreshStatus();
+
+    this.sendCommand(`SPPR ${preset}`);
     this.scheduleSpeakerPresetRefreshBurst();
   }
 
