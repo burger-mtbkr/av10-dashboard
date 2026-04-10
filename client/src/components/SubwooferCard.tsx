@@ -27,8 +27,8 @@ const SubwooferCard = ({ subwoofers }: ISubwooferCardProps) => {
   };
 
   return (
-    <Card sx={{ height: "100%" }}>
-      <CardContent sx={{ height: "100%" }}>
+    <Card>
+      <CardContent>
         <Box
           sx={{
             display: "flex",

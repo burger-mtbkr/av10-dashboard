@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import {
   ThemeProvider,
   CssBaseline,
@@ -12,7 +13,7 @@ import theme from "./theme";
 import {
   AudioCard,
   InputCard,
-  SpeakerCard,
+  SpeakerPresetCard,
   SubwooferCard,
   SystemCard,
   VideoCard,
@@ -20,19 +21,30 @@ import {
 } from "./components";
 import { useAVRStatus } from "./hooks";
 import FiberManualRecordIcon from "@mui/icons-material/FiberManualRecord";
+import { PLACEHOLDER_VALUE } from "./constants";
 
 export default function App() {
   const { t } = useTranslation();
   const {
     status,
+    selectedSpeakerPresetLayout,
+    speakerPresetLayoutPending,
     wsConnected,
     setVolume,
     volumeUp,
     volumeDown,
-    setInput,
     toggleMute,
     selectSmartPreset,
+    selectSpeakerPreset,
   } = useAVRStatus();
+  const dashboardTitle =
+    status.processorModel && status.processorModel !== PLACEHOLDER_VALUE
+      ? `${status.processorModel} Status`
+      : t("dashboard.title");
+
+  useEffect(() => {
+    document.title = dashboardTitle;
+  }, [dashboardTitle]);
 
   return (
     <ThemeProvider theme={theme}>
@@ -75,7 +87,7 @@ export default function App() {
                   letterSpacing: "-0.03em",
                 }}
               >
-                {t("dashboard.title")}
+                {dashboardTitle}
               </Typography>
               <Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
                 {/* AVR Connection status */}
@@ -149,13 +161,8 @@ export default function App() {
               />
             </Grid>
 
-            {/* Subwoofer settings */}
-            <Grid size={{ xs: 12, md: 6 }}>
-              <SubwooferCard subwoofers={status.subwoofers} />
-            </Grid>
-
             {/* Smart Select */}
-            <Grid size={{ xs: 12, md: 6 }}>
+            <Grid size={{ xs: 12 }}>
               <InputCard
                 smartSelect={status.smartSelect}
                 currentInput={status.input}
@@ -166,8 +173,24 @@ export default function App() {
               />
             </Grid>
 
+            {/* Speaker Configuration (left) | Subwoofer + Audio (right) */}
+            <Grid size={{ xs: 12, md: 6 }}>
+              <SpeakerPresetCard
+                speakerPreset={status.speakerPreset}
+                speakers={status.speakers}
+                speakerLayout={selectedSpeakerPresetLayout}
+                layoutPending={speakerPresetLayoutPending}
+                onSelectPreset={selectSpeakerPreset}
+              />
+            </Grid>
+
             <Grid size={{ xs: 12, md: 6 }}>
               <Grid container spacing={2.5}>
+                {/* Subwoofer settings */}
+                <Grid size={{ xs: 12 }}>
+                  <SubwooferCard subwoofers={status.subwoofers} />
+                </Grid>
+
                 {/* Audio signal */}
                 <Grid size={{ xs: 12 }}>
                   <AudioCard
@@ -175,23 +198,19 @@ export default function App() {
                     surroundMode={status.surroundMode}
                   />
                 </Grid>
-
-                {/* Video signal */}
-                <Grid size={{ xs: 12 }}>
-                  <VideoCard video={status.video} />
-                </Grid>
               </Grid>
             </Grid>
 
-            {/* Speaker configuration */}
+            {/* Video signal */}
             <Grid size={{ xs: 12, md: 6 }}>
-              <SpeakerCard speakers={status.speakers} />
+              <VideoCard video={status.video} />
             </Grid>
 
             {/* System info */}
             <Grid size={{ xs: 12 }}>
               <SystemCard
                 power={status.power}
+                processorModel={status.processorModel}
                 softwareVersion={status.softwareVersion}
                 networkConnection={status.networkConnection}
                 ipAddress={status.ipAddress}

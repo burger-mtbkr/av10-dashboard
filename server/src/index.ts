@@ -9,8 +9,8 @@ import { pathToFileURL } from 'url';
 import { MarantzService } from './marantz-service.js';
 import type { IAVRStatus, IWSMessage } from './types.js';
 
-type MarantzApi = Pick<MarantzService, 'getStatus' | 'setVolume' | 'setInput' | 'setSmartSelect' | 'sendCommand'>;
-type MarantzRealtimeApi = Pick<MarantzService, 'getStatus' | 'on'>;
+type MarantzApi = Pick<MarantzService, 'getStatus' | 'setVolume' | 'setInput' | 'setSmartSelect' | 'setSpeakerPreset' | 'sendCommand'>;
+type MarantzRealtimeApi = Pick<MarantzService, 'getStatus' | 'on' | 'refreshStatus'>;
 
 export interface ISettings {
   app?: {
@@ -120,6 +120,22 @@ export const createApp = (marantz: MarantzApi, settings: ISettings = {}): expres
     res.json({ success: true, preset: num });
   });
 
+  app.post('/api/speakerpreset/:preset', async (req, res) => {
+    const num = parseInt(req.params.preset, 10);
+    if (isNaN(num) || num < 1 || num > 2) {
+      res.status(400).json({ error: 'Preset must be 1-2' });
+      return;
+    }
+
+    try {
+      await marantz.setSpeakerPreset(num);
+      res.json({ success: true, preset: num });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to set speaker preset';
+      res.status(502).json({ error: message });
+    }
+  });
+
   return app;
 };
 
@@ -133,6 +149,11 @@ export const createRealtimeServer = (server: HttpServer, marantz: MarantzRealtim
 
     const msg: IWSMessage = { type: 'status', data: marantz.getStatus() };
     ws.send(JSON.stringify(msg));
+
+    void marantz.refreshStatus().catch((error) => {
+      const message = error instanceof Error ? error.message : String(error);
+      console.error('[WS] Failed to refresh status on client connect:', message);
+    });
 
     ws.on('close', () => {
       console.log('[WS] Client disconnected');

@@ -34,6 +34,10 @@
       "inputResolution": "Video In",
       "hdrFormat": "HDR"
     },
+    "speakerPreset": {
+      "preset": "Preset {{number}}",
+      "updatingConfiguration": "Updating..."
+    },
     "video": {
       "title": "Video Signal",
       "inputResolution": "Input",
@@ -62,6 +66,7 @@
     "system": {
       "title": "System Info",
       "power": "Power",
+      "model": "Model",
       "ecoMode": "ECO Mode",
       "softwareVersion": "Software Version",
       "networkConnection": "Network",

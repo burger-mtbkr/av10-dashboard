@@ -24,6 +24,7 @@ class MockMarantzService {
   connect = vi.fn().mockResolvedValue(undefined);
   disconnect = vi.fn();
   getStatus = vi.fn(() => ({ power: 'ON', connected: true }));
+  refreshStatus = vi.fn().mockResolvedValue(undefined);
   setVolume = vi.fn();
   setInput = vi.fn();
   setSmartSelect = vi.fn();
@@ -123,6 +124,7 @@ describe('index runtime helpers', () => {
 
     wss.emit('connection', client);
     expect(client.send).toHaveBeenCalledWith(JSON.stringify({ type: 'status', data: { power: 'ON', connected: true } }));
+    expect(marantz.refreshStatus).toHaveBeenCalledTimes(1);
 
     marantz.emit('connected');
     marantz.emit('event', { event: 'MV', parameter: '50' });

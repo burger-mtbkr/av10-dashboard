@@ -44,6 +44,7 @@ export interface ISmartSelectPreset {
 
 export interface IAVRStatus {
   power: 'ON' | 'OFF' | 'STANDBY';
+  processorModel: string;
   softwareVersion: string;
   volume: number;
   volumeDisplay: string;
@@ -52,6 +53,8 @@ export interface IAVRStatus {
   input: IInputSource;
   availableInputs: IInputSource[];
   smartSelect: ISmartSelectPreset[];
+  speakerPreset: 1 | 2 | null;
+  speakerLayout: string;
   speakers: ISpeakerStatus[];
   video: IVideoInfo;
   audio: IAudioInfo;

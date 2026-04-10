@@ -5,6 +5,7 @@ import { createApp } from '../index.js';
 // Create a mock status object
 const mockStatus = {
   power: 'ON',
+  processorModel: 'Marantz AV10',
   softwareVersion: '8000-2122-F016-8380',
   volume: 45,
   volumeDisplay: '45',
@@ -39,6 +40,8 @@ const mockStatus = {
     { number: 3, name: 'PS3', active: false },
     { number: 4, name: 'Xbox', active: false },
   ],
+  speakerLayout: '7.2.4',
+  speakerPreset: 1,
   lfeLevel: '0 dB',
   ecoMode: 'OFF',
   networkConnection: 'Ethernet',
@@ -54,6 +57,7 @@ const mockMarantz = {
   setVolume: vi.fn(),
   setInput: vi.fn(),
   setSmartSelect: vi.fn(),
+  setSpeakerPreset: vi.fn(),
   sendCommand: vi.fn(),
 };
 
@@ -112,6 +116,7 @@ describe('API Routes', () => {
 
     it('should include system info details', async () => {
       const res = await request(app).get('/api/status');
+      expect(res.body.processorModel).toBe('Marantz AV10');
       expect(res.body.softwareVersion).toBe('8000-2122-F016-8380');
       expect(res.body.networkConnection).toBe('Ethernet');
       expect(res.body.ipAddress).toBe('192.168.1.170');
@@ -250,6 +255,35 @@ describe('API Routes', () => {
     it('should reject non-numeric preset', async () => {
       const res = await request(app)
         .post('/api/smartselect/abc');
+      expect(res.status).toBe(400);
+    });
+  });
+
+  describe('POST /api/speakerpreset/:preset', () => {
+    it('should accept valid preset 1-2', async () => {
+      const res = await request(app)
+        .post('/api/speakerpreset/2');
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      expect(res.body.preset).toBe(2);
+      expect(mockMarantz.setSpeakerPreset).toHaveBeenCalledWith(2);
+    });
+
+    it('should reject preset 0', async () => {
+      const res = await request(app)
+        .post('/api/speakerpreset/0');
+      expect(res.status).toBe(400);
+    });
+
+    it('should reject preset 3', async () => {
+      const res = await request(app)
+        .post('/api/speakerpreset/3');
+      expect(res.status).toBe(400);
+    });
+
+    it('should reject non-numeric preset', async () => {
+      const res = await request(app)
+        .post('/api/speakerpreset/abc');
       expect(res.status).toBe(400);
     });
   });

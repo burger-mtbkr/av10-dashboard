@@ -134,8 +134,17 @@ describe('fetchHttpStatus', () => {
       '/ajax/general/get_config?type=12': {
         body: '<Information><Firmware><Version>8000-2122-F016-8380</Version></Firmware></Information>',
       },
+      '/ajax/general/get_config?type=23': {
+        body: '<OwnerManual><ModelName>AV10</ModelName><Path>https://manuals.marantz.com/AV10/NA/EN/</Path></OwnerManual>',
+      },
+      '/ajax/globals/get_config?type=1': {
+        body: '<Brand>2</Brand>',
+      },
       '/ajax/network/get_config?type=2': {
         body: '<Information><Connection>3</Connection><IPAddress>192.168.1.170</IPAddress></Information>',
+      },
+      '/ajax/speakers/get_config?type=11': {
+        body: '<SpeakerPreset>2</SpeakerPreset>',
       },
     });
 
@@ -148,6 +157,7 @@ describe('fetchHttpStatus', () => {
     const status = await fetchHttpStatus('192.168.1.170', 8080);
 
     expect(status.power).toBe('ON');
+    expect(status.processorModel).toBe('Marantz AV10');
     expect(status.softwareVersion).toBe('8000-2122-F016-8380');
     expect(status.volume).toBe(-35.5);
     expect(status.muted).toBe(true);
@@ -159,6 +169,7 @@ describe('fetchHttpStatus', () => {
     expect(status.surroundMode).toBe('Dolby Atmos');
     expect(status.networkConnection).toBe('Ethernet');
     expect(status.ipAddress).toBe('192.168.1.170');
+    expect(status.speakerPreset).toBe(2);
     expect(status.availableInputs?.find((input: { id: string }) => input.id === 'BD')).toMatchObject({
       name: 'Disc Player',
       selected: false,
@@ -205,8 +216,17 @@ describe('fetchHttpStatus', () => {
       '/ajax/general/get_config?type=12': {
         body: '<Information><Firmware><Version>8000-2122-F016-8380</Version></Firmware></Information>',
       },
+      '/ajax/general/get_config?type=23': {
+        body: '<OwnerManual><ModelName>AV10</ModelName></OwnerManual>',
+      },
+      '/ajax/globals/get_config?type=1': {
+        body: '<Brand>2</Brand>',
+      },
       '/ajax/network/get_config?type=2': {
         body: '<Information><Connection>4</Connection><IPAddress>192.168.1.171</IPAddress></Information>',
+      },
+      '/ajax/speakers/get_config?type=11': {
+        body: '<SpeakerPreset>1</SpeakerPreset>',
       },
     });
 
@@ -220,9 +240,11 @@ describe('fetchHttpStatus', () => {
 
     expect(status.power).toBe('ON');
     expect(status.muted).toBe(false);
+    expect(status.processorModel).toBe('Marantz AV10');
     expect(status.softwareVersion).toBe('8000-2122-F016-8380');
     expect(status.networkConnection).toBe('Wi-Fi');
     expect(status.ipAddress).toBe('192.168.1.171');
+    expect(status.speakerPreset).toBe(1);
     expect(status.speakers).toEqual([
       { code: 'FL', name: 'Front Left', active: true, group: 'ear' },
       { code: 'FR', name: 'Front Right', active: false, group: 'ear' },
@@ -244,8 +266,17 @@ describe('fetchHttpStatus', () => {
       '/ajax/general/get_config?type=12': {
         body: '<Information><Firmware><Version>8000-2122-F016-8380</Version></Firmware></Information>',
       },
+      '/ajax/general/get_config?type=23': {
+        body: '<OwnerManual><ModelName>AV10</ModelName></OwnerManual>',
+      },
+      '/ajax/globals/get_config?type=1': {
+        body: '<Brand>2</Brand>',
+      },
       '/ajax/network/get_config?type=2': {
         body: '<Information><Connection>3</Connection><IPAddress>192.168.1.170</IPAddress></Information>',
+      },
+      '/ajax/speakers/get_config?type=11': {
+        body: '<SpeakerPreset>2</SpeakerPreset>',
       },
     });
 
@@ -259,11 +290,38 @@ describe('fetchHttpStatus', () => {
     expect(status).toEqual({
       power: 'ON',
       muted: false,
+      processorModel: 'Marantz AV10',
       softwareVersion: '8000-2122-F016-8380',
       networkConnection: 'Ethernet',
       ipAddress: '192.168.1.170',
+      speakerPreset: 2,
     });
     expect(errorSpy).toHaveBeenCalledWith('[HTTP] AppCommand0300 fetch error:', 'AppCommand0300 unavailable');
     expect(errorSpy).toHaveBeenCalledWith('[HTTP] HEOS smart select fetch error:', 'HEOS unavailable');
+  });
+});
+
+describe('setSpeakerPreset', () => {
+  beforeEach(() => {
+    vi.mocked(receiverHttpClient.get).mockReset();
+    vi.mocked(receiverHttpClient.post).mockReset();
+  });
+
+  it('uses the receiver web UI GET transport for speaker preset changes', async () => {
+    vi.mocked(receiverHttpClient.get).mockResolvedValue({
+      data: '',
+      status: 200,
+      statusText: 'OK',
+      headers: {},
+      config: {} as any,
+    } as AxiosResponse<string>);
+
+    const { setSpeakerPreset } = await import('../api/set-speaker-preset.js');
+    await setSpeakerPreset('192.168.1.170', 2);
+
+    expect(receiverHttpClient.get).toHaveBeenCalledWith(
+      'http://192.168.1.170:11080/ajax/speakers/set_config?type=11&data=%3CSpeakerPreset%3E2%3C%2FSpeakerPreset%3E',
+    );
+    expect(receiverHttpClient.post).not.toHaveBeenCalled();
   });
 });

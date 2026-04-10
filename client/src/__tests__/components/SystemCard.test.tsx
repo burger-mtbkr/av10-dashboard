@@ -8,6 +8,7 @@ describe("SystemCard", () => {
     renderWithProviders(
       <SystemCard
         power="ON"
+        processorModel="Marantz AV10"
         softwareVersion="8000-2122-F016-8380"
         networkConnection="Ethernet"
         ipAddress="192.168.1.170"
@@ -43,6 +44,7 @@ describe("SystemCard", () => {
     renderWithProviders(
       <SystemCard
         power="ON"
+        processorModel="Marantz AV10"
         softwareVersion="8000-2122-F016-8380"
         networkConnection="Wi-Fi"
         ipAddress="192.168.1.170"
@@ -51,6 +53,8 @@ describe("SystemCard", () => {
       />,
     );
 
+    expect(screen.getByText("Model")).toBeInTheDocument();
+    expect(screen.getByText("Marantz AV10")).toBeInTheDocument();
     expect(screen.getByText("Software Version")).toBeInTheDocument();
     expect(screen.getByText("8000-2122-F016-8380")).toBeInTheDocument();
     expect(screen.getByText("Network")).toBeInTheDocument();
@@ -63,6 +67,7 @@ describe("SystemCard", () => {
     renderWithProviders(
       <SystemCard
         power="ON"
+        processorModel=""
         softwareVersion=""
         networkConnection=""
         ipAddress=""
@@ -100,6 +105,7 @@ describe("SystemCard", () => {
     renderWithProviders(
       <SystemCard
         power="ON"
+        processorModel="Marantz AV10"
         softwareVersion="8000-2122-F016-8380"
         networkConnection="Ethernet"
         ipAddress="192.168.1.170"
@@ -110,6 +116,7 @@ describe("SystemCard", () => {
     // Should display a time string (exact format depends on locale)
     const labels = [
       "Power",
+      "Model",
       "Software Version",
       "Network",
       "IP Address",

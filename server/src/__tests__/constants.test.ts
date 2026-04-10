@@ -116,6 +116,7 @@ describe('TELNET_EVENT_MAP', () => {
     expect(TELNET_EVENT_MAP.PS).toBe('parameterSetting');
     expect(TELNET_EVENT_MAP.VS).toBe('videoSelect');
     expect(TELNET_EVENT_MAP.OP).toBe('operation');
+    expect(TELNET_EVENT_MAP.SPPR).toBe('speakerPreset');
   });
 });
 

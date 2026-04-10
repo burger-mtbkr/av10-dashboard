@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import {
+  selectSpeakerPresetRequest,
   selectSmartPresetRequest,
   setInputRequest,
   setMuteRequest,
@@ -13,7 +14,7 @@ import type { IAVRStatus, IWSMessage } from '../types';
 type OptimisticStatus = Partial<
   Pick<
     IAVRStatus,
-    'volume' | 'volumeDisplay' | 'muted' | 'input' | 'availableInputs' | 'smartSelect'
+    'volume' | 'volumeDisplay' | 'muted' | 'input' | 'availableInputs' | 'smartSelect' | 'speakerPreset' | 'speakers' | 'speakerLayout'
   >
 >;
 
@@ -23,6 +24,7 @@ const OPTIMISTIC_STATUS_TIMEOUT_MS = 5000;
 
 const DEFAULT_STATUS: IAVRStatus = {
   power: 'OFF',
+  processorModel: PLACEHOLDER_VALUE,
   softwareVersion: PLACEHOLDER_VALUE,
   volume: 0,
   volumeDisplay: '--',
@@ -36,6 +38,8 @@ const DEFAULT_STATUS: IAVRStatus = {
     { number: 3, name: 'Smart Select 3', active: false },
     { number: 4, name: 'Smart Select 4', active: false },
   ],
+  speakerPreset: null,
+  speakerLayout: '',
   speakers: [],
   video: {
     inputResolution: PLACEHOLDER_VALUE,
@@ -72,6 +76,20 @@ export const useAVRStatus = () => {
   const optimisticTimers = useRef<Map<OptimisticKey, ReturnType<typeof setTimeout>>>(new Map());
   const baseStatusRef = useRef(DEFAULT_STATUS);
   const optimisticStatusRef = useRef<OptimisticStatus>({});
+  const speakerPresetLayoutsRef = useRef<Partial<Record<1 | 2, string>>>({});
+
+  const cacheSpeakerPresetLayout = useCallback((nextStatus: IAVRStatus) => {
+    if (nextStatus.speakerPreset === null) {
+      return;
+    }
+
+    const layoutLabel = nextStatus.speakerLayout.trim();
+    if (!layoutLabel) {
+      return;
+    }
+
+    speakerPresetLayoutsRef.current[nextStatus.speakerPreset] = layoutLabel;
+  }, []);
 
   const syncBaseStatus = useCallback(
     (nextStatus: IAVRStatus | ((prev: IAVRStatus) => IAVRStatus)) => {
@@ -191,6 +209,14 @@ export const useAVRStatus = () => {
         }
       }
 
+      if (
+        currentOptimisticStatus.speakerPreset !== undefined &&
+        nextStatus.speakerPreset === currentOptimisticStatus.speakerPreset &&
+        nextStatus.speakerLayout.trim() !== ''
+      ) {
+        keysToClear.push('speakerPreset', 'speakers', 'speakerLayout');
+      }
+
       clearOptimisticKeys(keysToClear);
     },
     [clearOptimisticKeys],
@@ -224,6 +250,32 @@ export const useAVRStatus = () => {
     ...optimisticStatus,
   };
 
+  const selectedSpeakerPresetLayout = (() => {
+    if (status.speakerPreset === null) {
+      return '';
+    }
+
+    const cachedLayout = speakerPresetLayoutsRef.current[status.speakerPreset];
+    if (cachedLayout) {
+      return cachedLayout;
+    }
+
+    const isOptimisticPresetChange =
+      optimisticStatus.speakerPreset !== undefined
+      && baseStatus.speakerPreset !== status.speakerPreset;
+
+    if (isOptimisticPresetChange) {
+      return '';
+    }
+
+    return status.speakerLayout.trim();
+  })();
+
+  const speakerPresetLayoutPending =
+    status.speakerPreset !== null
+    && optimisticStatus.speakerPreset !== undefined
+    && selectedSpeakerPresetLayout === '';
+
   const connect = useCallback(() => {
     // Determine WebSocket URL based on current page location
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
@@ -242,6 +294,7 @@ export const useAVRStatus = () => {
         const msg: IWSMessage = JSON.parse(event.data);
         switch (msg.type) {
           case 'status':
+            cacheSpeakerPresetLayout(msg.data as IAVRStatus);
             syncBaseStatus(msg.data as IAVRStatus);
             reconcileOptimisticStatus(msg.data as IAVRStatus);
             break;
@@ -270,7 +323,7 @@ export const useAVRStatus = () => {
       console.error('[WS] Error:', err);
       ws.close();
     };
-  }, []);
+  }, [cacheSpeakerPresetLayout, reconcileOptimisticStatus, syncBaseStatus]);
 
   useEffect(() => {
     connect();
@@ -367,8 +420,17 @@ export const useAVRStatus = () => {
     );
   }, [getRenderedStatus, runOptimisticRequest]);
 
+  const selectSpeakerPreset = useCallback(async (preset: 1 | 2) => {
+    await runOptimisticRequest(
+      { speakerPreset: preset, speakers: [], speakerLayout: '' },
+      () => selectSpeakerPresetRequest(preset),
+    );
+  }, [runOptimisticRequest]);
+
   return {
     status,
+    selectedSpeakerPresetLayout,
+    speakerPresetLayoutPending,
     wsConnected,
     setVolume,
     volumeUp,
@@ -376,5 +438,6 @@ export const useAVRStatus = () => {
     setInput,
     toggleMute,
     selectSmartPreset,
+    selectSpeakerPreset,
   };
 };

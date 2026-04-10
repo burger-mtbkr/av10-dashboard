@@ -36,11 +36,13 @@ export interface INetworkInfo {
 
 export interface IHttpStatusResult {
   power?: IAVRStatus['power'];
+  processorModel?: string;
   volume?: number;
   muted?: boolean;
   input?: IInputSource;
   availableInputs?: IInputSource[];
   smartSelect?: ISmartSelectPreset[];
+  speakerPreset?: IAVRStatus['speakerPreset'];
   speakers?: ISpeakerStatus[];
   video?: IAVRStatus['video'];
   audio?: IAudioSignalInfo;
