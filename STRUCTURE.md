@@ -206,4 +206,4 @@ The backend is an Express 5 and WebSocket service that keeps a single AVR status
 
 ## Generated And Support Artifacts
 
-The repository also contains generated or support directories such as `client/coverage/`, `server/coverage/`, `test-results/`, and `.tmp-ui/`. Those are operational artifacts rather than primary source modules, so they are only referenced here when they affect testing or documentation.
+The repository may generate or include local support directories such as `client/coverage/`, `server/coverage/`, `test-results/`, and `.tmp-ui/` after running tests or UI tooling. Those are operational artifacts rather than primary source modules, so they are only referenced here when they affect testing or documentation.
