@@ -41,10 +41,10 @@ describe("App", () => {
     const video = screen.getByText("Video Signal");
     const system = screen.getByText("System Info");
 
-    expectBefore(volume, subwoofer);
-    expectBefore(subwoofer, input);
+    expectBefore(volume, input);
     expectBefore(input, speakerConfig);
-    expectBefore(speakerConfig, audio);
+    expectBefore(speakerConfig, subwoofer);
+    expectBefore(subwoofer, audio);
     expectBefore(audio, video);
     expectBefore(video, system);
   });

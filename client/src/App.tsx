@@ -161,38 +161,36 @@ export default function App() {
               />
             </Grid>
 
-            {/* Subwoofer settings */}
-            <Grid size={{ xs: 12, md: 6 }}>
-              <SubwooferCard subwoofers={status.subwoofers} />
-            </Grid>
-
             {/* Smart Select */}
+            <Grid size={{ xs: 12 }}>
+              <InputCard
+                smartSelect={status.smartSelect}
+                currentInput={status.input}
+                audio={status.audio}
+                surroundMode={status.surroundMode}
+                video={status.video}
+                onSelectPreset={selectSmartPreset}
+              />
+            </Grid>
+
+            {/* Speaker Configuration (left) | Subwoofer + Audio (right) */}
             <Grid size={{ xs: 12, md: 6 }}>
-              <Grid container spacing={2.5}>
-                <Grid size={{ xs: 12 }}>
-                  <InputCard
-                    smartSelect={status.smartSelect}
-                    currentInput={status.input}
-                    audio={status.audio}
-                    surroundMode={status.surroundMode}
-                    video={status.video}
-                    onSelectPreset={selectSmartPreset}
-                  />
-                </Grid>
-                <Grid size={{ xs: 12 }}>
-                  <SpeakerPresetCard
-                    speakerPreset={status.speakerPreset}
-                    speakers={status.speakers}
-                    speakerLayout={selectedSpeakerPresetLayout}
-                    layoutPending={speakerPresetLayoutPending}
-                    onSelectPreset={selectSpeakerPreset}
-                  />
-                </Grid>
-              </Grid>
+              <SpeakerPresetCard
+                speakerPreset={status.speakerPreset}
+                speakers={status.speakers}
+                speakerLayout={selectedSpeakerPresetLayout}
+                layoutPending={speakerPresetLayoutPending}
+                onSelectPreset={selectSpeakerPreset}
+              />
             </Grid>
 
             <Grid size={{ xs: 12, md: 6 }}>
               <Grid container spacing={2.5}>
+                {/* Subwoofer settings */}
+                <Grid size={{ xs: 12 }}>
+                  <SubwooferCard subwoofers={status.subwoofers} />
+                </Grid>
+
                 {/* Audio signal */}
                 <Grid size={{ xs: 12 }}>
                   <AudioCard
@@ -200,12 +198,12 @@ export default function App() {
                     surroundMode={status.surroundMode}
                   />
                 </Grid>
-
-                {/* Video signal */}
-                <Grid size={{ xs: 12 }}>
-                  <VideoCard video={status.video} />
-                </Grid>
               </Grid>
+            </Grid>
+
+            {/* Video signal */}
+            <Grid size={{ xs: 12, md: 6 }}>
+              <VideoCard video={status.video} />
             </Grid>
 
             {/* System info */}
