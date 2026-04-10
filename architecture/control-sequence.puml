@@ -1,0 +1,122 @@
+@startuml
+title AV10 Dashboard Connection And Control Sequence
+
+skinparam shadowing false
+skinparam backgroundColor #FFFFFF
+skinparam defaultFontName Arial
+skinparam ArrowColor #2F4F4F
+skinparam sequence {
+  LifeLineBorderColor #4C6A92
+  LifeLineBackgroundColor #FFFFFF
+  ParticipantBorderColor #4C6A92
+  ParticipantBackgroundColor #F7F9FC
+  GroupBorderColor #7F8FA4
+  GroupBackgroundColor #F7F9FC
+}
+
+actor User
+participant "Browser App\nApp.tsx + cards" as Browser
+participant "useAVRStatus" as Hook
+participant "client/src/api\nrequest helpers" as ClientApi
+participant "REST API\ncreateApp()" as RestApi
+participant "WebSocket Server\ncreateRealtimeServer()" as WsServer
+participant "MarantzService" as Service
+participant "Telnet :23" as Telnet
+participant "HTTP/XML :8080\nMain Zone + AppCommand0300" as HttpXml
+participant "Web Control :11080" as WebControl
+participant "HEOS CLI :1255" as Heos
+
+note over WsServer,Service
+By the time a browser connects, the backend may already hold cached
+status from startup-time connect(), telnet subscription, and polling.
+The client-connection refresh below is an additional synchronization step.
+end note
+
+== Browser Connects ==
+
+User -> Browser : Open dashboard
+Browser -> Hook : mount hook
+Hook -> WsServer : open /ws
+WsServer -> Hook : send cached status snapshot
+Hook -> Browser : render initial state
+WsServer -> Service : refreshStatus()
+
+group Initial status hydration
+Service -> HttpXml : fetch Main Zone XML
+HttpXml --> Service : power / volume / mute / input
+Service -> HttpXml : fetch AppCommand0300
+HttpXml --> Service : speakers / audio / video / renames
+Service -> WebControl : fetch general/network/config XML
+WebControl --> Service : firmware / model / network / speaker preset
+Service -> Heos : fetch Quick Select names fallback
+Heos --> Service : preset names when available
+Service -> Service : merge sources into IAVRStatus
+Service -> WsServer : emit statusChanged
+WsServer -> Hook : status frame
+Hook -> Browser : reconcile and rerender
+end
+
+group Realtime receiver events
+Telnet -> Service : MV / MU / SI / MS / OP / SS / SY / SPPR
+Service -> Service : update in-memory status
+Service -> WsServer : emit statusChanged or event
+WsServer -> Hook : push update
+Hook -> Browser : rerender live status
+end
+
+== Speaker Preset Change ==
+
+User -> Browser : Select speaker preset 2
+Browser -> Hook : selectSpeakerPreset(2)
+Hook -> Hook : apply optimistic preset change\nmark layout pending
+Hook -> Browser : show pending state immediately
+Hook -> ClientApi : POST /api/speakerpreset/2
+ClientApi -> RestApi : POST /api/speakerpreset/2
+RestApi -> Service : setSpeakerPreset(2)
+Service -> Service : store pendingSpeakerPreset\nrecord preSwitchSpeakerLayout\nset local preset + empty layout/speakers
+Service -> WsServer : emit interim statusChanged
+WsServer -> Hook : pending status frame
+Service -> Telnet : send SPPR 2
+Service -> Service : schedule refresh burst\n100ms to 8000ms
+RestApi --> ClientApi : success
+ClientApi --> Hook : success
+
+group Transition confirmation guard
+loop Until new preset/layout confirmed
+  Service -> Service : refreshStatus()
+  Service -> HttpXml : fetch Main Zone + AppCommand0300
+  HttpXml --> Service : current status + active speakers
+  Service -> WebControl : fetch config + active preset snapshot
+  WebControl --> Service : config + preset value
+  alt Telnet OPINFASP arrives first with new layout
+    Telnet -> Service : OPINFASP ...
+    Service -> Service : accept layout if it changed
+  else aggregated refresh confirms target preset + new layout
+    Service -> Service : accept HTTP speaker snapshot
+  else stale data still matches old layout
+    Service -> Service : keep pending guard active
+  end
+end
+Service -> WsServer : emit confirmed statusChanged
+WsServer -> Hook : status frame with preset 2 + new layout
+Hook -> Hook : clear optimistic preset state when status matches
+Hook -> Browser : render confirmed layout
+end
+
+== Volume Change Example ==
+
+User -> Browser : Drag volume slider to 62
+Browser -> Hook : setVolume(62)
+Hook -> Hook : apply optimistic volume + display
+Hook -> Browser : render 62 immediately
+Hook -> ClientApi : POST /api/volume { volume: 62 }
+ClientApi -> RestApi : POST /api/volume
+RestApi -> Service : setVolume(62)
+Service -> Telnet : send MV command
+Telnet --> Service : MV confirmation event
+Service -> WsServer : broadcast updated status
+WsServer -> Hook : status frame volume 62
+Hook -> Hook : clear optimistic volume state
+Hook -> Browser : keep confirmed value
+
+@enduml
