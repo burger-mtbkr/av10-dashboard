@@ -94,6 +94,7 @@ export const TELNET_EVENT_MAP: Record<string, string> = {
   CV: 'channelVolume',
   PS: 'parameterSetting',
   VS: 'videoSelect',
+  SY: 'system',
   SS: 'systemSettings',
   SD: 'inputMode',
   SV: 'videoInput',

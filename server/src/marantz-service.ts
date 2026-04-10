@@ -164,6 +164,12 @@ export class MarantzService extends EventEmitter {
       this.sendCommand('OPINF?');
       this.sendCommand('MSSMART ?');
       this.sendCommand('SPPR ?');
+      this.sendCommand('PSDYNEQ ?');
+      this.sendCommand('PSDYNVOL ?');
+      this.sendCommand('PSMULTEQ: ?');
+      this.sendCommand('PSDIL ?');
+      this.sendCommand('SYSDA ?');
+      this.sendCommand('SSINFAISFSV ?');
     });
 
     this.socket.on('data', (data: string) => {
@@ -304,8 +310,11 @@ export class MarantzService extends EventEmitter {
         break;
 
       case 'SS':
-        // System settings — logged for debugging
-        console.log('[Marantz] System setting (SS):', parameter);
+        changed = this.handleSystemSettings(parameter);
+        break;
+
+      case 'SY':
+        changed = this.handleSystemEvent(parameter);
         break;
 
       case 'OP':
@@ -390,7 +399,46 @@ export class MarantzService extends EventEmitter {
       this.status.audio.dynamicVolume = param.replace('DYNVOL ', '').trim();
     } else if (param.startsWith('MULTEQ:')) {
       this.status.audio.multEq = param.replace('MULTEQ:', '').trim();
+    } else if (param.startsWith('DIL')) {
+      this.status.audio.dialogEnhancer = param.replace('DIL ', '').trim();
     }
+  }
+
+  private handleSystemSettings(param: string): boolean {
+    if (param.startsWith('INFAISFSV ')) {
+      const value = param.replace('INFAISFSV ', '').trim();
+      if (value && value !== 'NON') {
+        // Normalize: receiver may send "48K", "48", or "48 kHz"
+        const numeric = value.replace(/\s*[kK](Hz)?$/i, '').trim();
+        this.status.audio.samplingRate = `${numeric} kHz`;
+      } else {
+        this.status.audio.samplingRate = PLACEHOLDER_VALUE;
+      }
+      return true;
+    }
+    if (param.startsWith('INFAISSIG ')) {
+      return false; // signal type code, not directly displayed
+    }
+    return false;
+  }
+
+  private handleSystemEvent(param: string): boolean {
+    if (param.startsWith('SDA ')) {
+      const value = param.replace('SDA ', '').trim();
+      if (value && value !== 'Unknown') {
+        this.status.audio.inputFormat = value;
+      } else {
+        this.status.audio.inputFormat = PLACEHOLDER_VALUE;
+      }
+      // Receiver pushes SYSDA but not SSINFAISFSV — re-query sampling rate
+      this.sendCommand('SSINFAISFSV ?');
+      return true;
+    }
+    if (param.startsWith('SMI ')) {
+      // System mode info (e.g. "Stereo") — duplicates MS event
+      return false;
+    }
+    return false;
   }
 
   private handleVideoSetting(param: string): void {
@@ -556,9 +604,15 @@ export class MarantzService extends EventEmitter {
       this.status.video = { ...this.status.video, ...http.video };
     }
 
-    // Merge audio info
+    // Merge audio info — only overwrite with non-placeholder HTTP values
+    // so telnet-sourced data (SYSDA, SSINFAISFSV) is not clobbered
     if (http.audio) {
-      this.status.audio = { ...this.status.audio, ...http.audio };
+      const httpAudio = http.audio as Record<string, string>;
+      for (const [key, value] of Object.entries(httpAudio)) {
+        if (value && value !== PLACEHOLDER_VALUE) {
+          (this.status.audio as Record<string, string>)[key] = value;
+        }
+      }
     }
 
     // Merge LFE

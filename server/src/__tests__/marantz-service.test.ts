@@ -367,6 +367,11 @@ describe('MarantzService', () => {
       expect(service.getStatus().audio.multEq).toBe('AUDYSSEY');
     });
 
+    it('should handle Dialog Enhancer', () => {
+      (service as any).handleParameterSetting('DIL MED');
+      expect(service.getStatus().audio.dialogEnhancer).toBe('MED');
+    });
+
     it('should leave unhandled SWR settings unchanged', () => {
       const before = service.getStatus();
       (service as any).handleParameterSetting('SWR ON');
@@ -388,6 +393,99 @@ describe('MarantzService', () => {
     it('should handle HDMI monitor output 2', () => {
       (service as any).handleVideoSetting('MONI2');
       expect(service.getStatus().video.hdmiOutput).toBe('HDMI 2');
+    });
+  });
+
+  describe('system settings (SS) - audio signal', () => {
+    it('should parse sampling rate from SSINFAISFSV', () => {
+      (service as any).handleSystemSettings('INFAISFSV 48');
+      expect(service.getStatus().audio.samplingRate).toBe('48 kHz');
+    });
+
+    it('should parse sampling rate with uppercase K suffix', () => {
+      (service as any).handleSystemSettings('INFAISFSV 48K');
+      expect(service.getStatus().audio.samplingRate).toBe('48 kHz');
+    });
+
+    it('should parse sampling rate with kHz in value', () => {
+      (service as any).handleSystemSettings('INFAISFSV 96kHz');
+      expect(service.getStatus().audio.samplingRate).toBe('96 kHz');
+    });
+
+    it('should set placeholder when sampling rate is NON (no signal)', () => {
+      (service as any).handleSystemSettings('INFAISFSV NON');
+      expect(service.getStatus().audio.samplingRate).toBe('---');
+    });
+
+    it('should return false for INFAISSIG (not directly displayed)', () => {
+      const result = (service as any).handleSystemSettings('INFAISSIG 12');
+      expect(result).toBe(false);
+    });
+
+    it('should return false for unrecognized SS parameters', () => {
+      const result = (service as any).handleSystemSettings('SOMETHING ELSE');
+      expect(result).toBe(false);
+    });
+  });
+
+  describe('system events (SY) - audio signal', () => {
+    it('should parse input format from SYSDA', () => {
+      (service as any).handleSystemEvent('SDA Dolby Digital');
+      expect(service.getStatus().audio.inputFormat).toBe('Dolby Digital');
+    });
+
+    it('should re-query sampling rate when input format changes', () => {
+      const sendCommand = vi.spyOn(service, 'sendCommand');
+      (service as any).handleSystemEvent('SDA PCM');
+      expect(sendCommand).toHaveBeenCalledWith('SSINFAISFSV ?');
+    });
+
+    it('should set placeholder when input format is Unknown', () => {
+      (service as any).handleSystemEvent('SDA Unknown');
+      expect(service.getStatus().audio.inputFormat).toBe('---');
+    });
+
+    it('should parse PCM input format', () => {
+      (service as any).handleSystemEvent('SDA PCM');
+      expect(service.getStatus().audio.inputFormat).toBe('PCM');
+    });
+
+    it('should return false for SMI (duplicates MS event)', () => {
+      const result = (service as any).handleSystemEvent('SMI Stereo');
+      expect(result).toBe(false);
+    });
+
+    it('should return false for unrecognized SY parameters', () => {
+      const result = (service as any).handleSystemEvent('SOMETHING ELSE');
+      expect(result).toBe(false);
+    });
+  });
+
+  describe('HTTP merge does not overwrite telnet audio data', () => {
+    it('should not overwrite telnet-sourced inputFormat with HTTP placeholder', () => {
+      // Simulate telnet providing input format
+      (service as any).handleSystemEvent('SDA Dolby TrueHD');
+      expect(service.getStatus().audio.inputFormat).toBe('Dolby TrueHD');
+
+      // HTTP returns placeholder (AppCommand0300 returned empty)
+      (service as any).mergeHttpStatus({
+        audio: { inputFormat: '---', soundMode: '---', samplingRate: '---' },
+      });
+
+      // Telnet value should be preserved
+      expect(service.getStatus().audio.inputFormat).toBe('Dolby TrueHD');
+    });
+
+    it('should overwrite telnet data when HTTP has real values', () => {
+      (service as any).handleSystemEvent('SDA PCM');
+      expect(service.getStatus().audio.inputFormat).toBe('PCM');
+
+      // HTTP returns a real value
+      (service as any).mergeHttpStatus({
+        audio: { inputFormat: 'DTS-HD Master Audio', soundMode: '---', samplingRate: '---' },
+      });
+
+      expect(service.getStatus().audio.inputFormat).toBe('DTS-HD Master Audio');
     });
   });
 
