@@ -385,6 +385,65 @@ describe("useAVRStatus", () => {
     expect(result.current.speakerPresetLayoutPending).toBe(true);
   });
 
+  it("clears speakers and speakerLayout optimistically when switching speaker presets", async () => {
+    const { result } = renderHook(() => useAVRStatus());
+    const socket = TestWebSocket.instances[0];
+
+    act(() => {
+      socket.emitMessage({
+        type: "status",
+        data: createMockStatus({ speakerPreset: 1, speakerLayout: "7.2.4" }),
+      });
+    });
+
+    expect(result.current.status.speakers.length).toBeGreaterThan(0);
+    expect(result.current.status.speakerLayout).toBe("7.2.4");
+
+    await act(async () => {
+      await result.current.selectSpeakerPreset(2);
+    });
+
+    expect(result.current.status.speakerPreset).toBe(2);
+    expect(result.current.status.speakers).toEqual([]);
+    expect(result.current.status.speakerLayout).toBe("");
+  });
+
+  it("restores speakers and speakerLayout once the server confirms the new preset with layout data", async () => {
+    const { result } = renderHook(() => useAVRStatus());
+    const socket = TestWebSocket.instances[0];
+
+    const presetTwoSpeakers = [
+      { code: "FL", name: "Front Left", active: true, group: "ear" as const },
+      { code: "FR", name: "Front Right", active: true, group: "ear" as const },
+    ];
+
+    act(() => {
+      socket.emitMessage({
+        type: "status",
+        data: createMockStatus({ speakerPreset: 1, speakerLayout: "7.2.4" }),
+      });
+    });
+
+    await act(async () => {
+      await result.current.selectSpeakerPreset(2);
+    });
+
+    expect(result.current.status.speakers).toEqual([]);
+    expect(result.current.status.speakerLayout).toBe("");
+
+    act(() => {
+      socket.emitMessage({
+        type: "status",
+        data: createMockStatus({ speakerPreset: 2, speakerLayout: "5.1.2", speakers: presetTwoSpeakers }),
+      });
+    });
+
+    expect(result.current.status.speakerPreset).toBe(2);
+    expect(result.current.status.speakerLayout).toBe("5.1.2");
+    expect(result.current.status.speakers).toEqual(presetTwoSpeakers);
+    expect(result.current.speakerPresetLayoutPending).toBe(false);
+  });
+
   it("reconnects after close and closes the active socket on cleanup", () => {
     const { result, unmount } = renderHook(() => useAVRStatus());
     const firstSocket = TestWebSocket.instances[0];

@@ -14,7 +14,7 @@ import type { IAVRStatus, IWSMessage } from '../types';
 type OptimisticStatus = Partial<
   Pick<
     IAVRStatus,
-    'volume' | 'volumeDisplay' | 'muted' | 'input' | 'availableInputs' | 'smartSelect' | 'speakerPreset'
+    'volume' | 'volumeDisplay' | 'muted' | 'input' | 'availableInputs' | 'smartSelect' | 'speakerPreset' | 'speakers' | 'speakerLayout'
   >
 >;
 
@@ -214,7 +214,7 @@ export const useAVRStatus = () => {
         nextStatus.speakerPreset === currentOptimisticStatus.speakerPreset &&
         nextStatus.speakerLayout.trim() !== ''
       ) {
-        keysToClear.push('speakerPreset');
+        keysToClear.push('speakerPreset', 'speakers', 'speakerLayout');
       }
 
       clearOptimisticKeys(keysToClear);
@@ -422,7 +422,7 @@ export const useAVRStatus = () => {
 
   const selectSpeakerPreset = useCallback(async (preset: 1 | 2) => {
     await runOptimisticRequest(
-      { speakerPreset: preset },
+      { speakerPreset: preset, speakers: [], speakerLayout: '' },
       () => selectSpeakerPresetRequest(preset),
     );
   }, [runOptimisticRequest]);
