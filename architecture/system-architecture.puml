@@ -1,0 +1,159 @@
+@startuml
+title AV10 Dashboard Runtime Architecture
+
+skinparam shadowing false
+skinparam backgroundColor #FFFFFF
+skinparam componentStyle rectangle
+skinparam packageStyle rectangle
+skinparam defaultFontName Arial
+skinparam ArrowColor #2F4F4F
+skinparam package {
+  BackgroundColor #F7F9FC
+  BorderColor #7F8FA4
+}
+skinparam component {
+  BackgroundColor #FFFFFF
+  BorderColor #4C6A92
+}
+skinparam node {
+  BackgroundColor #F7F9FC
+  BorderColor #4C6A92
+}
+
+actor User
+
+node "Browser\nReact 19 + Vite + MUI" as Browser {
+  component "App.tsx" as App
+  component "useAVRStatus.ts\nWebSocket + optimistic state" as Hook
+  component "Dashboard Cards\nVolume, Smart Select,\nSpeaker Preset, Audio,\nVideo, Subwoofer, System" as Cards
+
+  package "client/src/api" as ClientApi {
+    component "set-volume.ts" as ClientSetVolume
+    component "set-input.ts" as ClientSetInput
+    component "set-mute.ts" as ClientSetMute
+    component "select-smart-preset.ts" as ClientSmartSelect
+    component "select-speaker-preset.ts" as ClientSpeakerPreset
+    component "volume-up.ts / volume-down.ts" as ClientVolumeStep
+  }
+
+  database "Rendered UI State\nbase status + optimistic patches" as UiState
+}
+
+node "Node.js Backend :3001\nExpress 5 + ws" as Backend {
+  component "createApp()\nREST /api/*" as RestApi
+  component "createRealtimeServer()\nWebSocket /ws" as WsServer
+  component "MarantzService\nstatus model + telnet parser\n+ refresh orchestration" as Service
+  database "Canonical IAVRStatus\nin-memory snapshot" as StatusStore
+
+  package "server/src/api" as ServerApi {
+    component "fetch-http-status.ts" as FetchHttpStatus
+    component "fetch-main-zone-status.ts" as FetchMainZone
+    component "fetch-app-command-0300.ts" as FetchApp0300
+    component "fetch-web-control-config.ts" as FetchWebControl
+    component "fetch-speaker-preset.ts" as FetchSpeakerPreset
+    component "set-speaker-preset.ts\nexported helper, not\nused by live route" as SetSpeakerPreset
+    component "fetch-heos-quick-select-names.ts" as FetchHeosNames
+    component "heos-command.ts\nget-heos-player-id.ts" as HeosTransport
+    component "http-get.ts\nhttp-post-xml.ts\nhttp-client.ts" as HttpHelpers
+  }
+
+  package "server/src/api/parsers" as Parsers {
+    component "parse-active-speakers.ts" as ParseActiveSpeakers
+    component "parse-audio-info.ts" as ParseAudioInfo
+    component "parse-video-info.ts" as ParseVideoInfo
+    component "parse-network-info.ts" as ParseNetworkInfo
+    component "parse-processor-model.ts" as ParseProcessorModel
+    component "parse-smart-select-names.ts" as ParseSmartSelect
+    component "parse-source-renames.ts\nparse-software-version.ts\nparse-speaker-preset.ts" as ParseOther
+  }
+}
+
+node "Marantz AV10" as AVR {
+  interface "Telnet TCP :23\nlive events + commands" as Telnet
+  interface "HTTP/XML :8080\nMain Zone + AppCommand0300" as HttpXml
+  interface "Web Control :11080\nconfig + speaker preset" as WebControl
+  interface "HEOS CLI :1255\nQuick Select names" as Heos
+}
+
+User --> App : interacts with dashboard
+App --> Hook : consume state + callbacks
+Hook --> Cards : props
+Hook --> UiState : merge base + optimistic status
+
+Hook --> WsServer : connect /ws
+WsServer --> Hook : status / connected / event frames
+
+Hook --> ClientSetVolume : POST /api/volume
+Hook --> ClientVolumeStep : POST /api/volume/up|down
+Hook --> ClientSetInput : POST /api/input
+Hook --> ClientSetMute : POST /api/mute
+Hook --> ClientSmartSelect : POST /api/smartselect/:preset
+Hook --> ClientSpeakerPreset : POST /api/speakerpreset/:preset
+
+ClientSetVolume --> RestApi
+ClientVolumeStep --> RestApi
+ClientSetInput --> RestApi
+ClientSetMute --> RestApi
+ClientSmartSelect --> RestApi
+ClientSpeakerPreset --> RestApi
+
+RestApi --> Service : send commands / set state intent
+Service --> StatusStore : update canonical status
+Service --> WsServer : emit statusChanged
+WsServer --> Hook : broadcast latest snapshot
+
+Service --> Telnet : connect + query + command writes
+Telnet --> Service : MV / MU / SI / MS / OP / SS / SY / SPPR events
+
+Service --> FetchHttpStatus : periodic refresh\nand connect-time hydration
+FetchHttpStatus --> FetchMainZone
+FetchHttpStatus --> FetchApp0300
+FetchHttpStatus --> FetchWebControl
+FetchHttpStatus --> FetchSpeakerPreset
+FetchHttpStatus --> FetchHeosNames
+FetchHeosNames --> HeosTransport
+
+FetchMainZone --> HttpHelpers
+FetchApp0300 --> HttpHelpers
+FetchWebControl --> HttpHelpers
+FetchSpeakerPreset --> HttpHelpers
+HeosTransport --> Heos
+HttpHelpers --> HttpXml
+HttpHelpers --> WebControl
+
+FetchApp0300 --> ParseActiveSpeakers
+FetchApp0300 --> ParseAudioInfo
+FetchApp0300 --> ParseVideoInfo
+FetchApp0300 --> ParseSmartSelect
+FetchApp0300 --> ParseOther
+FetchWebControl --> ParseNetworkInfo
+FetchWebControl --> ParseProcessorModel
+FetchSpeakerPreset --> ParseOther
+
+SetSpeakerPreset --> HttpHelpers
+
+note right of Service
+Maintains the only authoritative runtime snapshot.
+
+Speaker preset transitions are guarded:
+- current runtime writes presets with telnet SPPR
+- pending preset blocks stale speaker layouts
+- burst refresh polls until new layout is confirmed
+- Web Control is used to read preset/config state, not
+  to perform the live REST preset write path
+end note
+
+note right of SetSpeakerPreset
+This helper targets the Web Control API and is covered
+by tests, but createApp() and MarantzService do not call
+it in the current runtime path.
+end note
+
+note bottom of Hook
+Optimistic state is kept for volume, mute, input,
+Smart Select, and speaker preset changes until
+matching WebSocket status confirms the change or
+the timeout expires.
+end note
+
+@enduml

@@ -1,225 +1,209 @@
-# Project Structure & File Reference
+# Project Structure And File Reference
 
-This document provides a detailed breakdown of the primary source, config, and test files in the **Home Theater Status Dashboard** project, explaining the purpose and responsibility of each.
+This document maps the primary source, config, documentation, and test files in the Home Theater Status Dashboard repository.
 
-## Folder Structure
+## Top Level
 
-```
+```text
 av10-dashboard/
-│
-├── .gitignore
-├── .npmrc
-├── package.json
-├── package-lock.json
+├── architecture/
+├── client/
+├── e2e/
+├── server/
 ├── README.md
 ├── STRUCTURE.md
-├── settings.json
-├── sample-data.json
+├── package.json
 ├── playwright.config.ts
-│
-├── e2e/
-│   └── dashboard.spec.ts
-│
-├── server/
-│   ├── .env
-│   ├── .env.example
-│   ├── .gitignore
-│   ├── package.json
-│   ├── package-lock.json
-│   ├── tsconfig.json
-│   ├── vitest.config.ts
-│   └── src/
-│       ├── index.ts
-│       ├── marantz-service.ts
-│       ├── http-client.ts
-│       ├── constants.ts
-│       ├── types.ts
-│       └── __tests__/
-│           ├── api.test.ts
-│           ├── constants.test.ts
-│           └── marantz-service.test.ts
-│
-└── client/
-    ├── .gitignore
-    ├── index.html
-    ├── package.json
-    ├── package-lock.json
-    ├── tsconfig.json
-    ├── vite.config.ts
-    ├── vitest.config.ts
-    ├── vite-env.d.ts
-    ├── public/
-    │   └── vite.svg
-    └── src/
-        ├── App.tsx
-        ├── main.tsx
-        ├── theme.ts
-        ├── types.ts
-        ├── __tests__/
-        │   ├── App.test.tsx
-        │   ├── setup.ts
-        │   ├── test-utils.tsx
-        │   └── components/
-        │       ├── AudioCard.test.tsx
-        │       ├── InputCard.test.tsx
-        │       ├── SpeakerCard.test.tsx
-        │       ├── SubwooferCard.test.tsx
-        │       ├── SystemCard.test.tsx
-        │       ├── VideoCard.test.tsx
-        │       └── VolumeCard.test.tsx
-        ├── hooks/
-        │   └── useAVRStatus.ts
-        ├── components/
-        │   ├── SpeakerCard.tsx
-        │   ├── VolumeCard.tsx
-        │   ├── InputCard.tsx
-        │   ├── VideoCard.tsx
-        │   ├── AudioCard.tsx
-        │   ├── SubwooferCard.tsx
-        │   └── SystemCard.tsx
-        └── i18n/
-            ├── index.ts
-            └── en.json
+├── settings.json
+└── sample-data.json
 ```
 
----
+| Path | Purpose |
+| --- | --- |
+| `.gitignore` | Root ignore rules for dependencies, build output, env files, and test artifacts. |
+| `.npmrc` | Pins installs to the public npm registry. |
+| `package.json` | Root scripts for `dev`, `test`, `test:coverage`, `test:e2e`, `build`, and `install:all`. |
+| `playwright.config.ts` | Playwright config. Starts `npm run dev` as the web server and runs Chromium plus mobile projects. |
+| `settings.json` | Non-secret app settings. Only `app.title` and `app.defaultLanguage` are used at runtime; the remaining fields are placeholders today. |
+| `sample-data.json` | Sample AVR status payload used for development and testing. |
+| `README.md` | High-level setup, runtime architecture, protocol notes, and testing summary. |
+| `STRUCTURE.md` | This file. |
 
-## Root Files
+## Architecture Artifacts
 
-These files live at the top level of the monorepo and control the overall project configuration.
+| Path | Purpose |
+| --- | --- |
+| `architecture/system-architecture.puml` | Raw PlantUML component diagram for the runtime architecture. |
+| `architecture/system-architecture.svg` | Rendered SVG output for the runtime architecture diagram. |
+| `architecture/control-sequence.puml` | Raw PlantUML sequence diagram covering connection, control, and reconciliation flow. |
+| `architecture/control-sequence.svg` | Rendered SVG output for the control sequence diagram. |
 
-| File | Purpose |
-|------|---------|
-| `.gitignore` | Excludes `node_modules/`, `dist/`, `.env`, `server/.env`, and `*.log` files from version control. |
-| `.npmrc` | Pins the npm registry to `https://registry.npmjs.org` so installs work regardless of any corporate/private registry configured globally on the machine. |
-| `package.json` | Root monorepo package. Defines the `dev`, `build`, `start`, `test`, and `test:coverage` scripts that orchestrate both the server and client using `concurrently`. |
-| `package-lock.json` | Lock file for the root `concurrently` dependency. Ensures deterministic installs. |
-| `README.md` | Main project documentation — architecture, features, quick start guide, configuration reference, protocol details, and tech stack. |
-| `STRUCTURE.md` | This file. Detailed breakdown of the primary source, config, and test files in the project with purpose descriptions. |
-| `settings.json` | Non-sensitive application configuration. The backend currently reads `app.title` and `app.defaultLanguage` and exposes them via `/api/settings`. The `inputLabels.overrides` section exists in config but is not yet consumed at runtime. |
-| `sample-data.json` | Sample AVR status JSON payload used for development and testing without a live receiver. |
-| `playwright.config.ts` | Configuration for Playwright E2E tests (browser automation). |
+## Frontend
 
----
+The frontend is a React 19 single-page app built with Vite and MUI. It renders the dashboard, manages optimistic control state, and receives live status over WebSocket.
 
-## Server Folder (`server/`)
+### Frontend Root
 
-The backend is a **Node.js + Express + WebSocket** server that acts as a bridge between the Marantz AV10 receiver (on your LAN) and the browser dashboard.
+| Path | Purpose |
+| --- | --- |
+| `client/package.json` | Frontend dependencies and scripts for `dev`, `build`, `preview`, `test`, and `test:coverage`. |
+| `client/vite.config.ts` | Vite config, React plugin setup, path aliasing, and proxy rules for `/api` and `/ws`. |
+| `client/vitest.config.ts` | Vitest configuration for the React test suite. |
+| `client/tsconfig.json` | Browser TypeScript settings. |
+| `client/index.html` | App shell and mount point. |
+| `client/public/vite.svg` | Static favicon asset. |
+| `client/coverage/` | Generated coverage artifacts for the frontend test suite. |
 
-### Server Root Files
+### Frontend Source
 
-| File | Purpose |
-|------|---------|
-| `.env` | **Not committed.** Contains sensitive/environment-specific config: the receiver's IP address (`AVR_HOST`), telnet port, HTTP port, server port, and poll interval. Created by copying `.env.example`. |
-| `.env.example` | Template for `.env` with placeholder values. Committed to git so new developers (or new machines) know which variables to set. |
-| `.gitignore` | Server-specific ignore rules: `node_modules/`, `dist/`, `.env`. |
-| `package.json` | Server dependencies (`express`, `ws`, `xml2js`, `dotenv`, `cors`) and dev dependencies (`typescript`, `tsx`, `@types/*`). Defines `dev` (tsx watch), `build` (tsc), and `start` (node) scripts. |
-| `package-lock.json` | Lock file for deterministic server dependency installs. |
-| `tsconfig.json` | TypeScript configuration targeting ES2022 with ESNext modules, bundler module resolution, Node.js type definitions, and output to `dist/`. |
-| `vitest.config.ts` | Vitest configuration for server unit tests. |
+| Path | Purpose |
+| --- | --- |
+| `client/src/App.tsx` | Top-level dashboard composition. Renders header chips plus Volume, Smart Select, Speaker Preset, Subwoofer, Audio, Video, and System cards. |
+| `client/src/main.tsx` | React bootstrap entry point. |
+| `client/src/theme.ts` | Shared MUI theme configuration. |
+| `client/src/constants.ts` | Shared frontend constants such as placeholder values. |
+| `client/src/types.ts` | Frontend type definitions that mirror the backend status model. |
 
-### Server Source Files (`server/src/`)
+### Frontend API Helpers
 
-| File | Purpose |
-|------|---------|
-| `index.ts` | **Main entry point.** Loads environment variables via `dotenv`, reads `settings.json`, creates the Express app with CORS, defines REST API routes (`/api/status`, `/api/volume`, `/api/volume/:direction`, `/api/input`, `/api/mute`, `/api/smartselect/:preset`, `/api/health`, `/api/settings`), starts the HTTP server, attaches the WebSocket server, initialises the `MarantzService`, and wires up event listeners to broadcast real-time status to all connected browser clients. |
-| `marantz-service.ts` | **Core Marantz communication service.** Extends `EventEmitter`. Opens a persistent TCP/telnet connection (port 23) to the receiver for real-time event streaming. Parses incoming telnet events (e.g. `MV50` → volume change, `SIBD` → input change, `MSSMART2` → Smart Select 2) and updates an internal `AVRStatus` object including `smartSelect`, `volumeDisplay`, audio/video state, and subwoofer data. Also triggers periodic HTTP polling as a backup. Emits `statusChanged`, `connected`, and `disconnected` events consumed by `index.ts`. Provides `setVolume()`, `setInput()`, and `setSmartSelect()` methods for control. |
-| `http-client.ts` | **HTTP/XML API client.** Makes HTTP GET and POST requests to the receiver's XML endpoints (`/goform/formMainZone_MainZoneXmlStatus.xml`, `/goform/AppCommand.xml`, `/goform/AppCommand0300.xml`) and uses the HEOS CLI on port 1255 for Quick Select names when needed. Parses XML responses with `xml2js` to extract: main zone status (power, volume, mute, input, surround mode), active speakers (`GetActiveSpeaker`), custom source names (`GetSourceRename`), Smart Select names, video info (`GetVideoInfo`), and audio info (`GetAudioInfo`). |
-| `constants.ts` | **Protocol constants and lookup tables.** Maps speaker channel codes to human-readable names and groups (e.g. `FL` → "Front Left" / ear level). Maps source IDs to default names (e.g. `SAT/CBL` → "CBL/SAT"). Maps telnet event prefixes to status fields. Contains `parseVolume()` and `volumeToCommand()` functions for converting between Marantz's raw volume format and absolute 0-98 values. |
-| `types.ts` | **Shared TypeScript type definitions.** Defines all interfaces used across the backend: `AVRStatus`, `SpeakerStatus`, `VideoInfo`, `AudioInfo`, `SubwooferInfo`, `InputSource`, `SmartSelectPreset`, `WSMessage`, and `TelnetEvent`. These same shapes are mirrored on the client side. |
+Each action has its own request module under `client/src/api/`.
 
----
+| Path | Purpose |
+| --- | --- |
+| `client/src/api/client.ts` | Shared axios instance for browser API calls. |
+| `client/src/api/request.ts` | Small helpers for POST and JSON POST requests. |
+| `client/src/api/index.ts` | Re-export surface for the action helpers. |
+| `client/src/api/set-volume.ts` | Set absolute volume. |
+| `client/src/api/volume-up.ts` | Send volume-up command. |
+| `client/src/api/volume-down.ts` | Send volume-down command. |
+| `client/src/api/set-input.ts` | Change the input source. |
+| `client/src/api/set-mute.ts` | Toggle mute state. |
+| `client/src/api/select-smart-preset.ts` | Recall a Smart Select preset. |
+| `client/src/api/select-speaker-preset.ts` | Switch speaker preset 1 or 2. |
 
-## Client Folder (`client/`)
+### Frontend Hook
 
-The frontend is a **React 19 + Vite + MUI 6** single-page application that connects to the backend via WebSocket for real-time updates and REST API for controls.
+| Path | Purpose |
+| --- | --- |
+| `client/src/hooks/useAVRStatus.ts` | Maintains live AVR state, opens the WebSocket, handles reconnects, applies optimistic updates, and reconciles them against server-confirmed status. |
+| `client/src/hooks/index.ts` | Re-export surface for hooks. |
 
-### Client Root Files
+### Frontend Components
 
-| File | Purpose |
-|------|---------|
-| `.gitignore` | Client-specific ignore rules: `node_modules/`, `dist/`, `.env`. |
-| `index.html` | The single HTML page served by Vite. Sets the dark background colour (`#121212`), viewport meta tag for mobile, and mounts the React app into `<div id="root">`. |
-| `package.json` | Client dependencies (`react`, `react-dom`, `@mui/material`, `@mui/icons-material`, `@emotion/react`, `@emotion/styled`, `i18next`, `react-i18next`) and dev dependencies (`typescript`, `vite`, `@vitejs/plugin-react`, `@types/react*`). |
-| `package-lock.json` | Lock file for deterministic client dependency installs. |
-| `tsconfig.json` | TypeScript configuration for the browser: ES2022 + DOM + DOM.Iterable libs, React JSX transform, bundler module resolution, path alias `@/*` → `src/*`, `noEmit` (Vite handles bundling). |
-| `vite.config.ts` | Vite bundler configuration. Enables the React plugin, sets up the `@` path alias, configures the dev server on port 5173 with proxy rules that forward `/api` requests to the backend at `localhost:3001` and upgrade `/ws` to WebSocket. Production build outputs to `dist/`. |
-| `vitest.config.ts` | Vitest configuration for client component unit tests. |
-| `vite-env.d.ts` | Type declaration file that references Vite's client types, enabling TypeScript to understand Vite-specific imports (e.g. `import.meta.env`). |
+| Path | Purpose |
+| --- | --- |
+| `client/src/components/VolumeCard.tsx` | Volume slider, mute button, and step controls. |
+| `client/src/components/InputCard.tsx` | Smart Select buttons plus metadata for the active preset. |
+| `client/src/components/SpeakerPresetCard.tsx` | Speaker preset selector and live speaker-position visualization. |
+| `client/src/components/SubwooferCard.tsx` | Per-sub level display with progress bars. |
+| `client/src/components/AudioCard.tsx` | Current sound mode and audio-processing details. |
+| `client/src/components/VideoCard.tsx` | Signal resolution, HDR, and HDMI output view. |
+| `client/src/components/SystemCard.tsx` | Power, model, firmware, network, IP, last update, and connection status. |
+| `client/src/components/index.ts` | Re-export surface for the dashboard cards. |
 
-### Static Assets (`client/public/`)
+### Frontend i18n
 
-| File | Purpose |
-|------|---------|
-| `vite.svg` | Custom SVG favicon/logo depicting a stylised speaker icon with coloured equaliser bars. Served as-is at the root URL. |
+| Path | Purpose |
+| --- | --- |
+| `client/src/i18n/index.ts` | i18next bootstrap and resource registration. |
+| `client/src/i18n/en.json` | English translation bundle used across the UI. |
 
-### Client Source Files (`client/src/`)
+## Backend
 
-| File | Purpose |
-|------|---------|
-| `App.tsx` | **Root React component.** Wraps the app in MUI's `ThemeProvider` (dark theme) and `CssBaseline`. Renders the dashboard header with connection status indicators (AVR + WebSocket) and a responsive `Grid2` layout containing the dashboard cards in this order: Volume, Subwoofer Settings, Smart Select, Audio Signal, Video Signal, Speaker Configuration, System Info. Consumes the `useAVRStatus` hook and passes data/callbacks to each card. |
-| `main.tsx` | **React entry point.** Imports `i18n` to initialise translations, then mounts `<App />` inside `<StrictMode>` into the `#root` DOM element. |
-| `theme.ts` | **MUI dark theme definition.** Configures palette (primary: `#4fc3f7` cyan, secondary: `#66bb6a` green, background: `#0a0a0f` / `#141420`), typography (Inter/Roboto font stack, weighted headings), border radius (16px), and component style overrides for `Card`, `CardContent`, `Chip`, and `Slider`. |
-| `types.ts` | **Client-side TypeScript interfaces.** Mirrors the server's `types.ts` — defines `AVRStatus`, `SpeakerStatus`, `VideoInfo`, `AudioInfo`, `SubwooferInfo`, `InputSource`, `SmartSelectPreset`, and `WSMessage` so the frontend has full type safety on all data from the backend. |
+The backend is an Express 5 and WebSocket service that keeps a single AVR status model in memory, proxies control actions, and integrates with the receiver over telnet, HTTP/XML, web-control, and HEOS interfaces.
 
-### Hooks (`client/src/hooks/`)
+### Backend Root
 
-| File | Purpose |
-|------|---------|
-| `useAVRStatus.ts` | **Real-time data hook.** Manages the WebSocket connection to the backend, handles automatic reconnection (3-second retry), parses incoming `WSMessage` events, and maintains the full `AVRStatus` state. Exposes API helper functions (`setVolume`, `volumeUp`, `volumeDown`, `setInput`, `toggleMute`, `selectSmartPreset`) that call the REST endpoints. Returns `{ status, wsConnected, setVolume, volumeUp, volumeDown, setInput, toggleMute, selectSmartPreset }`. |
+| Path | Purpose |
+| --- | --- |
+| `server/.env.example` | Template for the backend runtime variables. |
+| `server/.env` | Local environment file used during development. Not committed. |
+| `server/package.json` | Backend dependencies and scripts for `dev`, `build`, `start`, `test`, and `test:coverage`. |
+| `server/tsconfig.json` | Backend TypeScript settings. |
+| `server/vitest.config.ts` | Vitest configuration for backend tests. |
+| `server/debug/` | Ad hoc probe and debugging scripts for receiver endpoints and transports. |
+| `server/coverage/` | Generated coverage artifacts for the backend test suite. |
 
-### Components (`client/src/components/`)
+### Backend Runtime Modules
 
-Each component is a self-contained MUI `Card` responsible for one section of the dashboard.
+| Path | Purpose |
+| --- | --- |
+| `server/src/index.ts` | Backend entry point. Loads settings, exposes the REST API, creates the WebSocket server, and wires `MarantzService` events into broadcasts. |
+| `server/src/marantz-service.ts` | Long-lived receiver integration service. Maintains the canonical `IAVRStatus`, parses telnet events, runs HTTP refreshes, performs speaker-preset transition guarding, and emits status updates. |
+| `server/src/constants.ts` | Receiver protocol constants, channel/source maps, and volume conversion helpers. |
+| `server/src/types.ts` | Shared backend types, mirrored on the client. |
 
-| File | Purpose |
-|------|---------|
-| `SpeakerCard.tsx` | **Speaker configuration display.** Renders a block layout of speaker icons grouped by type (ear level, height/Atmos, subwoofer). Active speakers are highlighted in green, inactive ones are dimmed. Auto-detects any speaker configuration (7.2.4, 9.2.4, 5.1.2, etc.) and displays the layout label as a chip. Supports all Dolby Atmos and DTS:X channel codes. |
-| `VolumeCard.tsx` | **Volume control.** Shows the current volume in a large colour-coded display using the absolute 0-98 scale (green < 55, orange < 70, red ≥ 70). Provides a slider for precise adjustment, +/- buttons for step changes, and a mute toggle. The slider uses local state during drag to avoid jitter, committing the value on release. |
-| `InputCard.tsx` | **Smart Select card.** Renders four preset buttons, highlights the active Smart Select, and shows metadata for the active preset including current source, sound mode, audio format, sample rate, video input resolution, and HDR format. Calls the backend Smart Select API when a preset is pressed. |
-| `VideoCard.tsx` | **Video signal information.** Displays a visual signal flow: input resolution → output resolution (e.g. "1080p → 4K"). Shows HDR format as a badge (HDR10, Dolby Vision, HLG) when active, plus HDMI output target and input signal type. |
-| `AudioCard.tsx` | **Audio signal information.** Highlights the current surround mode (e.g. "Dolby Atmos", "DTS:X") as a prominent chip. Lists input audio format, sampling rate, Dynamic EQ, Dynamic Volume, MultEQ mode, and Dialog Enhancer in an info-row layout. |
-| `SubwooferCard.tsx` | **Subwoofer settings.** Displays 1–4 subwoofers with their output level shown as a chip and a gradient progress bar. Shows the LFE (Low Frequency Effect) level as a badge. Supports any number of subwoofers — adapts automatically based on what the receiver reports. |
-| `SystemCard.tsx` | **System information.** Shows power state (ON/OFF/STANDBY) as a coloured chip, ECO mode status, last update timestamp, and a connection status indicator for the AVR link. |
+### Backend API Transport Layer
 
-### Internationalisation (`client/src/i18n/`)
+`server/src/api/` contains one transport concern per file.
 
-| File | Purpose |
-|------|---------|
-| `index.ts` | **i18next configuration.** Initialises i18next with the `react-i18next` plugin, loads the English translation resource, sets `en` as the default and fallback language. To add a new language (e.g. Afrikaans), import the JSON file and add it to the `resources` object. |
-| `en.json` | **English translations.** Contains every user-facing string in the application: dashboard title, connection status labels, card titles, speaker group names, volume/input/video/audio/subwoofer/system labels, and common terms (on, off, auto, unknown). All components reference these keys via the `useTranslation()` hook. |
+| Path | Purpose |
+| --- | --- |
+| `server/src/api/http-client.ts` | Shared axios client and error normalization for receiver-side HTTP calls. |
+| `server/src/api/http-get.ts` | Raw HTTP GET helper for XML and web-control endpoints. |
+| `server/src/api/http-post-xml.ts` | HTTP POST helper for XML payloads. |
+| `server/src/api/fetch-main-zone-status.ts` | Fetches Main Zone XML status from the legacy `:8080` interface. |
+| `server/src/api/fetch-app-command-0300.ts` | Executes AppCommand0300 requests. |
+| `server/src/api/fetch-http-status.ts` | Orchestrates full status refresh by combining Main Zone, AppCommand0300, web-control, HEOS, and speaker-preset reads. |
+| `server/src/api/fetch-web-control-config.ts` | Reads newer web-control config endpoints from port `11080`. |
+| `server/src/api/fetch-speaker-preset.ts` | Reads the active speaker preset from `/ajax/speakers/get_config?type=11`. |
+| `server/src/api/set-speaker-preset.ts` | Helper for writing speaker preset changes through `/ajax/speakers/set_config?type=11`. Exported and tested, but not used by the current REST runtime path. |
+| `server/src/api/get-heos-player-id.ts` | Resolves the HEOS player identifier for the receiver. |
+| `server/src/api/heos-command.ts` | Executes HEOS CLI commands. |
+| `server/src/api/fetch-heos-quick-select-names.ts` | Pulls Quick Select names from HEOS when needed. |
+| `server/src/api/index.ts` | Re-export surface for backend API helpers. |
+| `server/src/api/types.ts` | Internal transport-layer types for aggregated HTTP status results. |
 
----
+### Backend Parsers
 
-## E2E Tests (`e2e/`)
+| Path | Purpose |
+| --- | --- |
+| `server/src/api/parsers/parse-active-speakers.ts` | Parses AppCommand0300 speaker-activity results. |
+| `server/src/api/parsers/parse-audio-info.ts` | Parses audio input, output, and processing data. |
+| `server/src/api/parsers/parse-network-info.ts` | Extracts network transport and IP address from web-control XML. |
+| `server/src/api/parsers/parse-processor-model.ts` | Resolves the branded processor model name from web-control endpoints. |
+| `server/src/api/parsers/parse-smart-select-names.ts` | Builds Smart Select names from AppCommand results. |
+| `server/src/api/parsers/parse-software-version.ts` | Extracts firmware/software version details. |
+| `server/src/api/parsers/parse-source-renames.ts` | Maps source rename responses into display labels. |
+| `server/src/api/parsers/parse-speaker-layout.ts` | Helper logic for speaker-layout derivation. |
+| `server/src/api/parsers/parse-speaker-preset.ts` | Parses the active speaker preset from web-control XML. |
+| `server/src/api/parsers/parse-video-info.ts` | Parses HDMI and resolution information. |
+| `server/src/api/parsers/index.ts` | Re-export surface for parser helpers. |
 
-| File | Purpose |
-|------|---------|
-| `dashboard.spec.ts` | **Playwright E2E test.** Browser automation tests that verify the full dashboard renders and functions correctly end-to-end. |
+## End-To-End Tests
 
----
+| Path | Purpose |
+| --- | --- |
+| `e2e/dashboard.spec.ts` | Playwright coverage for page load, header rendering, connection chips, major cards, responsive layout, and API smoke checks. |
 
-## Test Infrastructure
+## Unit Tests
 
-### Server Tests (`server/src/__tests__/`)
+### Backend Tests
 
-| File | Purpose |
-|------|---------|
-| `api.test.ts` | Tests the Express REST API routes (`/api/status`, `/api/volume`, `/api/volume/:direction`, `/api/input`, `/api/mute`, `/api/smartselect/:preset`, `/api/health`, `/api/settings`) including input validation and error handling. |
-| `constants.test.ts` | Tests `parseVolume()` / `volumeToCommand()` round-trip correctness on the absolute 0-98 scale, plus `CHANNEL_MAP`, `SOURCE_MAP`, and `TELNET_EVENT_MAP` coverage. |
-| `marantz-service.test.ts` | Tests `MarantzService` event parsing (MV, MU, SI, MS, etc.), telnet buffer processing, deep-copy isolation, and connection state management. |
+| Path | Purpose |
+| --- | --- |
+| `server/src/__tests__/api.test.ts` | Validates REST routes, input validation, and error responses. |
+| `server/src/__tests__/constants.test.ts` | Covers volume conversion helpers and protocol lookup tables. |
+| `server/src/__tests__/http-client.test.ts` | Covers aggregated HTTP status fetch behavior and response parsing. |
+| `server/src/__tests__/index.test.ts` | Covers runtime helpers, WebSocket broadcast wiring, config loading, and shutdown registration. |
+| `server/src/__tests__/marantz-service.test.ts` | Covers telnet parsing, HTTP merge behavior, speaker-layout logic, reconnection, and command dispatch. |
 
-### Client Tests (`client/src/__tests__/`)
+### Frontend Tests
 
-| File | Purpose |
-|------|---------|
-| `App.test.tsx` | Verifies the top-level dashboard renders the cards in the intended visual order. |
-| `setup.ts` | Test environment setup — configures jsdom globals and testing-library matchers. |
-| `test-utils.tsx` | Shared test helpers — `renderWithProviders()` wraps components in MUI theme + i18n context, provides default mock `AVRStatus`. |
-| `components/AudioCard.test.tsx` | Tests AudioCard rendering of codec, surround mode, and Audyssey fields. |
-| `components/InputCard.test.tsx` | Tests Smart Select button rendering, active preset metadata, and fallback preset names. |
-| `components/SpeakerCard.test.tsx` | Tests SpeakerCard block layout, active/inactive highlighting, and config label. |
-| `components/SubwooferCard.test.tsx` | Tests SubwooferCard level display, progress bars, and LFE badge. |
-| `components/SystemCard.test.tsx` | Tests SystemCard power/ECO/connection chips and timestamp formatting. |
-| `components/VideoCard.test.tsx` | Tests VideoCard signal flow, HDR badge, and resolution display. |
-| `components/VolumeCard.test.tsx` | Tests VolumeCard absolute volume display, slider range (0 to maxVolume), colour thresholds, mute toggle, and percentage calculation. |
+| Path | Purpose |
+| --- | --- |
+| `client/src/__tests__/setup.ts` | jsdom and matcher setup. |
+| `client/src/__tests__/test-utils.tsx` | Shared render helpers and mock status builders. |
+| `client/src/__tests__/App.test.tsx` | Verifies dashboard card ordering. |
+| `client/src/__tests__/hooks/useAVRStatus.test.tsx` | Covers WebSocket handling, optimistic state, timeout rollback, and API helper calls. |
+| `client/src/__tests__/components/AudioCard.test.tsx` | Covers audio card rendering. |
+| `client/src/__tests__/components/InputCard.test.tsx` | Covers Smart Select rendering and active metadata. |
+| `client/src/__tests__/components/SpeakerPresetCard.test.tsx` | Covers preset switching UI and speaker-layout rendering. |
+| `client/src/__tests__/components/SubwooferCard.test.tsx` | Covers subwoofer level display and progress bars. |
+| `client/src/__tests__/components/SystemCard.test.tsx` | Covers power, network, IP, and timestamp presentation. |
+| `client/src/__tests__/components/VideoCard.test.tsx` | Covers signal and HDR presentation. |
+| `client/src/__tests__/components/VolumeCard.test.tsx` | Covers volume rendering, controls, thresholds, and callbacks. |
+
+## Generated And Support Artifacts
+
+The repository also contains generated or support directories such as `client/coverage/`, `server/coverage/`, `test-results/`, and `.tmp-ui/`. Those are operational artifacts rather than primary source modules, so they are only referenced here when they affect testing or documentation.

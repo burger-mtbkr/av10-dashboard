@@ -1,48 +1,54 @@
 # Home Theater Status Dashboard
 
-A modern, real-time dashboard for the **Marantz AV10** processor built with React, MUI, Vite, and a Node.js backend.
+A real-time dashboard for the Marantz AV10 built with React, Vite, MUI, and a Node.js backend.
 
 ## Architecture
 
+```text
+┌────────────────────────────────────────────────────────────────────┐
+│ Browser                                                          │
+│ React 19 + MUI 6 + i18next                                       │
+│ App.tsx -> useAVRStatus -> dashboard cards                       │
+│  ↕ WebSocket /ws (live status stream)                            │
+│  ↕ REST /api/* (control actions)                                 │
+├────────────────────────────────────────────────────────────────────┤
+│ Node.js Backend :3001                                            │
+│ Express 5 + ws                                                   │
+│ createApp() + createRealtimeServer() + MarantzService            │
+│  ↕ Telnet TCP :23            for live events + commands          │
+│  ↕ HTTP/XML :8080             for Main Zone + AppCommand0300     │
+│  ↕ Web Control :11080        for model, firmware, network,       │
+│                              and speaker preset reads            │
+│  ↕ HEOS CLI :1255            for Quick Select names fallback     │
+├────────────────────────────────────────────────────────────────────┤
+│ Marantz AV10                                                     │
+└────────────────────────────────────────────────────────────────────┘
 ```
-┌─────────────────────────────────────────────┐
-│                  Browser                     │
-│  React + MUI + i18n (Vite dev server :5173) │
-│         ↕ WebSocket (real-time)             │
-│         ↕ REST API (controls)               │
-├─────────────────────────────────────────────┤
-│            Node.js Backend (:3001)          │
-│     Express + WebSocket Server              │
-│         ↕ Telnet TCP:23 (real-time)         │
-│         ↕ HTTP XML API :8080 (polling)      │
-├─────────────────────────────────────────────┤
-│           Marantz AV10 Processor            │
-│              (LAN Connected)                │
-└─────────────────────────────────────────────┘
-```
+
+The frontend keeps optimistic UI state for volume, mute, input, Smart Select, and speaker preset changes. The backend maintains a single in-memory `IAVRStatus` snapshot, updates it from telnet events, enriches it with HTTP and web-control polling, and broadcasts changes over WebSocket.
 
 ## Features
 
-- **Real-time status** via Telnet/TCP connection to the receiver
-- **Speaker configuration** block layout — auto-detects active speakers, displays layout (e.g. 7.2.4)
-- **Volume control** with slider, +/-, and mute toggle (absolute 0-98 scale)
-- **Smart Select recall** with receiver/HEOS custom labels plus live source, audio, and video metadata
-- **Video signal info** — input → output resolution, HDR format
-- **Audio signal info** — codec, surround mode, sampling rate, Audyssey settings
-- **Subwoofer levels** — supports up to 4 subs with LFE crossover display
-- **System info** — power state, ECO mode, connection status
-- **Dark mode** — modern MUI dark theme, fully responsive/mobile-friendly
-- **Internationalization** — English included, ready for additional languages
+- Real-time status over telnet plus WebSocket broadcast to the browser
+- Volume control with slider, step controls, mute toggle, and optimistic updates on the absolute `0-98` scale
+- Smart Select recall with friendly preset names and live metadata for source, format, sampling rate, and video input
+- Speaker preset switching with live layout visualization and stale-layout protection during preset transitions
+- Video signal card with input/output resolution, input signal type, HDR format, and HDMI output target
+- Audio signal card with surround mode, input format, sampling rate, Dynamic EQ, Dynamic Volume, MultEQ, and dialog enhancer
+- Subwoofer status card for `1-4` subs with per-sub level display
+- System card with power state, processor model, software version, network transport, IP address, last update time, and receiver connectivity
+- Responsive dark UI for desktop and mobile viewports
+- English i18n bundle with additional language support ready to extend
 
 ## Prerequisites
 
 - Node.js 22+
-- Marantz AV10 (or compatible Denon/Marantz AVR) connected to your local network
-- The receiver's IP address
+- A Marantz AV10, or a compatible Denon/Marantz receiver exposing the same control surfaces
+- Network access to the receiver from the backend machine
 
 ## Quick Start
 
-### 1. Clone and install dependencies
+### 1. Install dependencies
 
 ```bash
 git clone <repo-url>
@@ -50,24 +56,22 @@ cd av10-dashboard
 npm run install:all
 ```
 
-> **Note:** The project includes an `.npmrc` that pins the registry to `https://registry.npmjs.org`. This ensures installs work regardless of any corporate/private npm registry configured on your machine.
+The repository includes an `.npmrc` pinned to `https://registry.npmjs.org`, so installs are not affected by a machine's global registry override.
 
-### 2. Configure the receiver IP
-
-Copy the example env file and edit it with your receiver's IP:
+### 2. Configure the backend
 
 ```bash
 cp server/.env.example server/.env
 ```
 
-Then edit `server/.env`:
+Edit `server/.env`:
 
 ```env
-AVR_HOST=192.168.1.170   # ← Your Marantz AV10's IP address
-AVR_PORT=23               # Telnet port (default)
-AVR_HTTP_PORT=8080        # HTTP API port (default for 2016+ models)
-SERVER_PORT=3001          # Backend server port
-POLL_INTERVAL=30000       # HTTP poll backup interval in ms
+AVR_HOST=192.168.1.170
+AVR_PORT=23
+AVR_HTTP_PORT=8080
+SERVER_PORT=3001
+POLL_INTERVAL=30000
 ```
 
 ### 3. Start development
@@ -76,182 +80,128 @@ POLL_INTERVAL=30000       # HTTP poll backup interval in ms
 npm run dev
 ```
 
-This starts both the backend (port 3001) and frontend (port 5173) concurrently via `concurrently`.
+Then open `http://localhost:5173`.
 
-Open **http://localhost:5173** in your browser.
-
-### Available Scripts
+## Scripts
 
 | Script | Description |
-|--------|-------------|
-| `npm run dev` | Start both backend + frontend in dev mode |
-| `npm run dev:server` | Start only the backend (Express + WebSocket) |
-| `npm run dev:client` | Start only the Vite frontend |
-| `npm run build` | Production build of the frontend |
-| `npm start` | Start the backend in production mode |
-| `npm run install:all` | Install dependencies for root, server, and client |
-| `npm test` | Run server + client unit tests via Vitest |
-| `npm run test:coverage` | Run server + client tests with V8 coverage reports |
+| --- | --- |
+| `npm run dev` | Start backend and frontend together |
+| `npm run dev:server` | Start only the backend |
+| `npm run dev:client` | Start only the frontend |
+| `npm run build` | Build the frontend production bundle |
+| `npm start` | Start the compiled backend from `server/dist` |
+| `npm test` | Run server and client unit tests |
+| `npm run test:coverage` | Run server and client tests with coverage |
+| `npm run test:e2e` | Run Playwright end-to-end tests |
+| `npm run install:all` | Install root, server, and client dependencies |
 
-## Project Structure
+## Project Layout
 
-```
+```text
 av10-dashboard/
-├── .gitignore             # Root gitignore (node_modules, dist, .env, logs)
-├── .npmrc                 # Forces public npm registry (avoids corporate proxy issues)
-├── settings.json          # App configuration (title, language, input overrides)
-├── sample-data.json       # Sample AVR status payload for development/testing
-├── package.json           # Root monorepo scripts (concurrently)
-├── playwright.config.ts   # Playwright E2E test configuration
-├── README.md
-│
-├── e2e/                   # Playwright E2E tests
-│   └── dashboard.spec.ts
-│
-├── server/                # Node.js backend (Express + WebSocket + Telnet)
-│   ├── .env               # Environment variables — NOT committed (see .env.example)
-│   ├── .env.example       # Template for .env
-│   ├── .gitignore
-│   ├── tsconfig.json      # TypeScript config (ES2022, Node types)
-│   ├── vitest.config.ts   # Vitest configuration for server tests
-│   ├── package.json
-│   └── src/
-│       ├── index.ts            # Express + WebSocket server entry point
-│       ├── marantz-service.ts  # Telnet TCP connection + event parsing
-│       ├── http-client.ts      # HTTP/XML API client (AppCommand endpoints)
-│       ├── constants.ts        # Protocol constants, channel/source mappings
-│       ├── types.ts            # Shared TypeScript interfaces
-│       └── __tests__/          # Server unit tests
-│           ├── api.test.ts
-│           ├── constants.test.ts
-│           └── marantz-service.test.ts
-│
-├── client/                # React frontend (Vite + MUI + i18next)
-│   ├── .gitignore
-│   ├── index.html         # HTML entry point
-│   ├── vite.config.ts     # Vite config (proxy to backend, aliases)
-│   ├── vitest.config.ts   # Vitest configuration for client tests
-│   ├── vite-env.d.ts      # Vite type declarations
-│   ├── tsconfig.json      # TypeScript config (DOM, React JSX)
-│   ├── package.json
-│   ├── public/
-│   │   └── vite.svg       # Favicon
-│   └── src/
-│       ├── App.tsx         # Main dashboard layout (Grid2)
-│       ├── main.tsx        # React entry point
-│       ├── theme.ts        # MUI dark theme configuration
-│       ├── types.ts        # Frontend type definitions (mirrors server types)
-│       ├── __tests__/      # Client unit tests
-│       │   ├── App.test.tsx
-│       │   ├── setup.ts
-│       │   ├── test-utils.tsx
-│       │   └── components/
-│       │       ├── AudioCard.test.tsx
-│       │       ├── InputCard.test.tsx
-│       │       ├── SpeakerCard.test.tsx
-│       │       ├── SubwooferCard.test.tsx
-│       │       ├── SystemCard.test.tsx
-│       │       ├── VideoCard.test.tsx
-│       │       └── VolumeCard.test.tsx
-│       ├── hooks/
-│       │   └── useAVRStatus.ts  # WebSocket hook for real-time data + API helpers
-│       ├── components/
-│       │   ├── SpeakerCard.tsx    # Speaker block layout (auto-detects config)
-│       │   ├── VolumeCard.tsx     # Volume slider + mute + absolute 0-98 display
-│       │   ├── InputCard.tsx      # Smart Select buttons + active preset metadata
-│       │   ├── VideoCard.tsx      # Video signal flow (input → output + HDR)
-│       │   ├── AudioCard.tsx      # Audio codec, surround mode, Audyssey
-│       │   ├── SubwooferCard.tsx  # Subwoofer levels (1-4) + LFE
-│       │   └── SystemCard.tsx     # Power, ECO mode, connection status
-│       └── i18n/
-│           ├── index.ts   # i18next configuration
-│           └── en.json    # English translations (all UI strings)
+├── architecture/          # PlantUML sources and generated SVG diagrams
+├── client/                # React frontend
+├── e2e/                   # Playwright end-to-end tests
+├── server/                # Express + WebSocket backend and Marantz transport
+├── README.md              # High-level setup and architecture guide
+├── STRUCTURE.md           # Detailed file responsibility reference
+├── settings.json          # Non-secret application settings and placeholders
+└── sample-data.json       # Sample AVR status payload
 ```
+
+See `STRUCTURE.md` for the detailed source, config, and test file map.
 
 ## Configuration
 
-### settings.json
+### `settings.json`
 
-Non-sensitive configuration lives in `settings.json` at the project root:
+Only a small subset of `settings.json` is consumed at runtime today:
 
-- **app.title** — Title returned by `/api/settings`
-- **app.defaultLanguage** — Default language returned by `/api/settings`
-- **inputLabels.overrides** — Reserved override map in config; the current runtime still uses receiver renames/default source names
+- `app.title` is exposed through `/api/settings`
+- `app.defaultLanguage` is exposed through `/api/settings`
+
+The following fields exist in the file but are not currently used by the running application:
+
+- `app.refreshInterval`
+- `avr.*`
+- `inputLabels.overrides`
+- `speakerLayout`
+
+Backend connectivity is controlled by `server/.env`, not by the `avr` block in `settings.json`.
 
 ### Environment Variables
 
-Sensitive/environment-specific config uses `.env` files in `server/`:
-
 | Variable | Default | Description |
-|----------|---------|-------------|
-| `AVR_HOST` | `192.168.1.170` | Marantz receiver IP address |
-| `AVR_PORT` | `23` | Telnet port |
-| `AVR_HTTP_PORT` | `8080` | HTTP API port |
-| `SERVER_PORT` | `3001` | Backend server port |
-| `POLL_INTERVAL` | `30000` | HTTP poll interval in ms |
+| --- | --- | --- |
+| `AVR_HOST` | `192.168.1.170` | Receiver IP address |
+| `AVR_PORT` | `23` | Telnet control port |
+| `AVR_HTTP_PORT` | `8080` | Legacy HTTP/XML API port |
+| `SERVER_PORT` | `3001` | Backend HTTP + WebSocket port |
+| `POLL_INTERVAL` | `30000` | Periodic HTTP refresh interval in milliseconds |
+
+## Testing
+
+Latest local verification from this repository state:
+
+| Suite | Result |
+| --- | --- |
+| Server unit tests | `133/133` passed |
+| Client unit tests | `70/70` passed |
+| Playwright E2E | `17` passed, `1` skipped |
+
+Latest local coverage artifacts:
+
+| Package | Statements | Branches | Functions | Lines |
+| --- | --- | --- | --- | --- |
+| `server` | `78.45%` | `67.46%` | `81.74%` | `78.54%` |
+| `client` | `92.98%` | `79.83%` | `94.80%` | `93.96%` |
+
+If you need fresh JSON coverage summaries, regenerate them inside each package:
+
+```bash
+cd server && npx vitest run --coverage --coverage.reporter=json-summary --coverage.reporter=text
+cd client && npx vitest run --coverage --coverage.reporter=json-summary --coverage.reporter=text
+```
+
+## Receiver Protocols And Endpoints
+
+- Telnet `:23` provides live events such as volume, mute, input, surround mode, Smart Select, speaker profile, and system audio updates.
+- Legacy HTTP/XML `:8080` is used for Main Zone status and `AppCommand0300` detail queries.
+- Web Control `:11080` is used for newer configuration endpoints, including firmware version, network info, processor model, and speaker preset reads. An exported write helper also exists in the codebase, but it is not the live runtime path.
+- HEOS CLI `:1255` is queried as a fallback source for Quick Select names.
+
+Current runtime speaker preset writes use telnet via `MarantzService.setSpeakerPreset()`:
+
+```text
+SPPR {1|2}
+```
+
+After a preset change, the backend immediately publishes a pending preset state, sends `SPPR {1|2}` over telnet, then performs a short burst of refreshes and ignores stale speaker-layout data until the new preset is confirmed. The repository also contains a Web Control helper for preset writes, but that helper is not wired into the live REST path.
+
+## Architecture Artifacts
+
+The repository now includes PlantUML source and generated SVG output under `architecture/`:
+
+- `system-architecture.puml` and `system-architecture.svg`
+- `control-sequence.puml` and `control-sequence.svg`
 
 ## Adding Languages
 
-1. Copy `client/src/i18n/en.json` to a new file, e.g. `af.json` for Afrikaans
-2. Translate all values
-3. Register in `client/src/i18n/index.ts`:
-   ```ts
-   import af from './af.json';
-   const resources = {
-     en: { translation: en },
-     af: { translation: af },
-   };
-   ```
-
-## Communication Protocol
-
-The Marantz AV10 uses the **Denon/Marantz IP Control Protocol**:
-
-- **Telnet (TCP port 23)** — Real-time bidirectional communication. Events are CR-terminated strings like `MV50`, `SIBD`, `MSDOLBY ATMOS`. Volume uses an absolute 0-98 scale (e.g. `MV50` = volume 50, `MVMAX 75` = max limit 75).
-- **HTTP/XML API (port 8080)** — RESTful XML endpoints for detailed queries:
-  - `/goform/formMainZone_MainZoneXmlStatus.xml` — Main zone status
-  - `/goform/AppCommand.xml` — Simple commands
-  - `/goform/AppCommand0300.xml` — Advanced queries (speakers, video, audio, source rename, Smart Select names)
-- **HEOS CLI (TCP port 1255)** — Used to fetch Quick Select names when the AVR exposes them through HEOS rather than AppCommand0300
-
-## Future: AWS Amplify Deployment
-
-The monorepo structure is designed for single-deployment to AWS Amplify Gen 2:
-- Frontend: Static build served from Amplify hosting
-- Backend: Will need a persistent compute layer (EC2/ECS/Fargate) with network access to your receiver (via VPN)
-- The `settings.json` approach works for both local and deployed configurations
-
-## Resuming on Another Machine
-
-After cloning the repo on a new machine:
-
-```bash
-git clone <repo-url>
-cd av10-dashboard
-npm run install:all
-cp server/.env.example server/.env
-# Edit server/.env with your Marantz IP
-npm run dev
-```
-
-> The `.npmrc` at the project root ensures `npm install` uses the public npm registry, so it works on any machine regardless of global npm config.
-
-> `server/.env` is git-ignored. You must create it from `.env.example` on each machine.
+1. Copy `client/src/i18n/en.json` to a new file such as `af.json`.
+2. Translate the values.
+3. Register the file in `client/src/i18n/index.ts`.
 
 ## Tech Stack
 
-| Layer | Technology | Version |
-|-------|-----------|---------|
-| Frontend | React | 19.x |
-| UI Library | MUI (Material UI) | 6.x |
-| Bundler | Vite | 6.x |
-| Language | TypeScript | 5.8.x |
-| i18n | i18next + react-i18next | 25.x / 15.x |
-| Backend | Node.js + Express | 5.x |
-| Real-time | WebSocket (ws) | 8.x |
-| XML Parsing | xml2js | 0.6.x |
-| Monorepo | concurrently | 9.x |
+| Layer | Technology |
+| --- | --- |
+| Frontend | React 19, Vite 6, TypeScript 5, MUI 6 |
+| State flow | `useAVRStatus` with optimistic reconciliation |
+| Backend | Node.js, Express 5, `ws`, `axios`, `xml2js` |
+| Tests | Vitest, Testing Library, Playwright |
+| Receiver transports | Telnet, HTTP/XML, Web Control, HEOS CLI |
 
 ## License
 
-Private — personal use.
+Private repository for personal use.
