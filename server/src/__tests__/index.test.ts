@@ -124,7 +124,7 @@ describe('index runtime helpers', () => {
 
     wss.emit('connection', client);
     expect(client.send).toHaveBeenCalledWith(JSON.stringify({ type: 'status', data: { power: 'ON', connected: true } }));
-  expect(marantz.refreshStatus).toHaveBeenCalledTimes(1);
+    expect(marantz.refreshStatus).toHaveBeenCalledTimes(1);
 
     marantz.emit('connected');
     marantz.emit('event', { event: 'MV', parameter: '50' });
