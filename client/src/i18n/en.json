@@ -35,9 +35,7 @@
       "hdrFormat": "HDR"
     },
     "speakerPreset": {
-      "title": "Speaker Preset",
       "preset": "Preset {{number}}",
-      "selectedConfiguration": "Selected Configuration",
       "updatingConfiguration": "Updating..."
     },
     "video": {
