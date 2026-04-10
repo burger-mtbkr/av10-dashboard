@@ -22,7 +22,7 @@ av10-dashboard/
 | --- | --- |
 | `.gitignore` | Root ignore rules for dependencies, build output, env files, and test artifacts. |
 | `.npmrc` | Pins installs to the public npm registry. |
-| `package.json` | Root scripts for `dev`, `test`, `test:coverage`, `test:e2e`, `build`, and `install:all`. |
+| `package.json` | Root scripts for `start`, `dev`, `test`, `test:coverage`, `test:e2e`, `build`, and `install:all`. |
 | `playwright.config.ts` | Playwright config. Starts `npm run dev` as the web server and runs Chromium plus mobile projects. |
 | `settings.json` | Non-secret app settings. Only `app.title` and `app.defaultLanguage` are used at runtime; the remaining fields are placeholders today. |
 | `sample-data.json` | Sample AVR status payload used for development and testing. |
