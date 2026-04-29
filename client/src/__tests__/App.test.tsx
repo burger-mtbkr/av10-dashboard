@@ -16,6 +16,21 @@ vi.mock("../hooks", () => ({
     selectSmartPreset: vi.fn(),
     selectSpeakerPreset: vi.fn(),
   }),
+  useEqProfiles: () => ({
+    profiles: [],
+    selectedProfile: null,
+    draftBands: [],
+    isLoading: false,
+    isSaving: false,
+    isApplying: false,
+    hasUnsavedChanges: false,
+    error: "",
+    statusMessage: "",
+    selectProfile: vi.fn(),
+    setBandGain: vi.fn(),
+    saveProfile: vi.fn(),
+    applyProfile: vi.fn(),
+  }),
 }));
 
 const expectBefore = (first: HTMLElement, second: HTMLElement) => {
@@ -37,13 +52,15 @@ describe("App", () => {
     const subwoofer = screen.getByText("Subwoofer Settings");
     const input = screen.getByText("Smart Select");
     const speakerConfig = screen.getByText("Speaker Configuration");
+    const eqProfiles = screen.getByText("EQ Profiles");
     const audio = screen.getByText("Audio Signal");
     const video = screen.getByText("Video Signal");
     const system = screen.getByText("System Info");
 
     expectBefore(volume, input);
     expectBefore(input, speakerConfig);
-    expectBefore(speakerConfig, subwoofer);
+    expectBefore(speakerConfig, eqProfiles);
+    expectBefore(eqProfiles, subwoofer);
     expectBefore(subwoofer, audio);
     expectBefore(audio, video);
     expectBefore(video, system);

@@ -1,0 +1,217 @@
+{
+  "version": 1,
+  "bandFrequenciesHz": [
+    31,
+    63,
+    125,
+    250,
+    500,
+    1000,
+    2000,
+    4000,
+    8000,
+    16000
+  ],
+  "presets": {
+    "1": {
+      "defaultProfiles": [
+        {
+          "id": "preset1-flat",
+          "name": "Flat",
+          "readonly": true,
+          "updatedAt": "2026-01-01T00:00:00.000Z",
+          "bands": [
+            {
+              "frequencyHz": 31,
+              "gainDb": 0
+            },
+            {
+              "frequencyHz": 63,
+              "gainDb": 0
+            },
+            {
+              "frequencyHz": 125,
+              "gainDb": 0
+            },
+            {
+              "frequencyHz": 250,
+              "gainDb": 0
+            },
+            {
+              "frequencyHz": 500,
+              "gainDb": 0
+            },
+            {
+              "frequencyHz": 1000,
+              "gainDb": 0
+            },
+            {
+              "frequencyHz": 2000,
+              "gainDb": 0
+            },
+            {
+              "frequencyHz": 4000,
+              "gainDb": 0
+            },
+            {
+              "frequencyHz": 8000,
+              "gainDb": 0
+            },
+            {
+              "frequencyHz": 16000,
+              "gainDb": 0
+            }
+          ]
+        }
+      ],
+      "customProfiles": [{
+        "id": "preset1-default",
+        "name": "Default",
+        "readonly": true,
+        "updatedAt": "2026-01-01T00:00:00.000Z",
+        "bands": [
+          {
+            "frequencyHz": 31,
+            "gainDb": 0
+          },
+          {
+            "frequencyHz": 63,
+            "gainDb": 0
+          },
+          {
+            "frequencyHz": 125,
+            "gainDb": 0
+          },
+          {
+            "frequencyHz": 250,
+            "gainDb": 0
+          },
+          {
+            "frequencyHz": 500,
+            "gainDb": 0
+          },
+          {
+            "frequencyHz": 1000,
+            "gainDb": 0
+          },
+          {
+            "frequencyHz": 2000,
+            "gainDb": 0
+          },
+          {
+            "frequencyHz": 4000,
+            "gainDb": 0
+          },
+          {
+            "frequencyHz": 8000,
+            "gainDb": 0
+          },
+          {
+            "frequencyHz": 16000,
+            "gainDb": 0
+          }
+        ]
+      }]
+    },
+    "2": {
+      "defaultProfiles": [
+        {
+          "id": "preset2-flat",
+          "name": "Flat",
+          "readonly": true,
+          "updatedAt": "2026-01-01T00:00:00.000Z",
+          "bands": [
+            {
+              "frequencyHz": 31,
+              "gainDb": 0
+            },
+            {
+              "frequencyHz": 63,
+              "gainDb": 0
+            },
+            {
+              "frequencyHz": 125,
+              "gainDb": 0
+            },
+            {
+              "frequencyHz": 250,
+              "gainDb": 0
+            },
+            {
+              "frequencyHz": 500,
+              "gainDb": 0
+            },
+            {
+              "frequencyHz": 1000,
+              "gainDb": 0
+            },
+            {
+              "frequencyHz": 2000,
+              "gainDb": 0
+            },
+            {
+              "frequencyHz": 4000,
+              "gainDb": 0
+            },
+            {
+              "frequencyHz": 8000,
+              "gainDb": 0
+            },
+            {
+              "frequencyHz": 16000,
+              "gainDb": 0
+            }
+          ]
+        }
+      ],
+      "customProfiles": [{
+        "id": "preset2-default",
+        "name": "Default",
+        "readonly": true,
+        "updatedAt": "2026-01-01T00:00:00.000Z",
+        "bands": [
+          {
+            "frequencyHz": 31,
+            "gainDb": 0
+          },
+          {
+            "frequencyHz": 63,
+            "gainDb": 0
+          },
+          {
+            "frequencyHz": 125,
+            "gainDb": 0
+          },
+          {
+            "frequencyHz": 250,
+            "gainDb": 0
+          },
+          {
+            "frequencyHz": 500,
+            "gainDb": 0
+          },
+          {
+            "frequencyHz": 1000,
+            "gainDb": 0
+          },
+          {
+            "frequencyHz": 2000,
+            "gainDb": 0
+          },
+          {
+            "frequencyHz": 4000,
+            "gainDb": 0
+          },
+          {
+            "frequencyHz": 8000,
+            "gainDb": 0
+          },
+          {
+            "frequencyHz": 16000,
+            "gainDb": 0
+          }
+        ]
+      }]
+    }
+  }
+}

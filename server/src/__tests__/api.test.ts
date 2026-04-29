@@ -58,6 +58,7 @@ const mockMarantz = {
   setInput: vi.fn(),
   setSmartSelect: vi.fn(),
   setSpeakerPreset: vi.fn(),
+  applyEqProfile: vi.fn().mockResolvedValue({ sent: 10, profileId: 'preset1-flat' }),
   sendCommand: vi.fn(),
 };
 
@@ -285,6 +286,39 @@ describe('API Routes', () => {
       const res = await request(app)
         .post('/api/speakerpreset/abc');
       expect(res.status).toBe(400);
+    });
+  });
+
+  describe('EQ profile routes', () => {
+    it('lists EQ profiles for preset 1', async () => {
+      const res = await request(app).get('/api/eq/presets/1/profiles');
+      expect(res.status).toBe(200);
+      expect(Array.isArray(res.body.bandFrequenciesHz)).toBe(true);
+      expect(Array.isArray(res.body.profiles)).toBe(true);
+    });
+
+    it('creates a custom EQ profile', async () => {
+      const list = await request(app).get('/api/eq/presets/1/profiles');
+      const bands = list.body.bandFrequenciesHz.map((frequencyHz: number) => ({
+        frequencyHz,
+        gainDb: 0,
+      }));
+      const uniqueName = `Movie Night ${Date.now()}`;
+      const res = await request(app)
+        .post('/api/eq/presets/1/profiles')
+        .send({ name: uniqueName, bands });
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      expect(res.body.profile.name).toBe(uniqueName);
+      expect(res.body.profile.readonly).toBe(false);
+    });
+
+    it('applies an existing EQ profile', async () => {
+      const res = await request(app).post('/api/eq/presets/1/profiles/preset1-flat/apply');
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      expect(mockMarantz.applyEqProfile).toHaveBeenCalled();
     });
   });
 });

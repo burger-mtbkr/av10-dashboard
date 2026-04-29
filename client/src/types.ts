@@ -73,6 +73,24 @@ export interface IWSMessage {
   data: IAVRStatus | unknown;
 }
 
+export interface IEqBand {
+  frequencyHz: number;
+  gainDb: number;
+}
+
+export interface IEqProfile {
+  id: string;
+  name: string;
+  readonly: boolean;
+  updatedAt: string;
+  bands: IEqBand[];
+}
+
+export interface IEqProfilesResponse {
+  bandFrequenciesHz: number[];
+  profiles: IEqProfile[];
+}
+
 export type SpeakerStatus = ISpeakerStatus;
 export type VideoInfo = IVideoInfo;
 export type AudioInfo = IAudioInfo;

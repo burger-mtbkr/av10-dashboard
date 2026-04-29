@@ -8,8 +8,12 @@ import { resolve } from 'path';
 import { pathToFileURL } from 'url';
 import { MarantzService } from './marantz-service.js';
 import type { IAVRStatus, IWSMessage } from './types.js';
+import { EqProfilesStore, parsePreset } from './eq/index.js';
+import type { IEqProfile, SpeakerPreset } from './eq/types.js';
 
-type MarantzApi = Pick<MarantzService, 'getStatus' | 'setVolume' | 'setInput' | 'setSmartSelect' | 'setSpeakerPreset' | 'sendCommand'>;
+type MarantzApi = Pick<MarantzService, 'getStatus' | 'setVolume' | 'setInput' | 'setSmartSelect' | 'setSpeakerPreset' | 'sendCommand'> & {
+  applyEqProfile?: (preset: SpeakerPreset, profile: IEqProfile) => Promise<{ sent: number; profileId: string }>;
+};
 type MarantzRealtimeApi = Pick<MarantzService, 'getStatus' | 'on' | 'refreshStatus'>;
 
 export interface ISettings {
@@ -51,7 +55,7 @@ export const getRuntimeConfig = (env = process.env): IRuntimeConfig => {
   };
 };
 
-export const createApp = (marantz: MarantzApi, settings: ISettings = {}): express.Express => {
+export const createApp = (marantz: MarantzApi, settings: ISettings = {}, eqStore = new EqProfilesStore()): express.Express => {
   const app = express();
   app.use(cors());
   app.use(express.json());
@@ -132,6 +136,64 @@ export const createApp = (marantz: MarantzApi, settings: ISettings = {}): expres
       res.json({ success: true, preset: num });
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Failed to set speaker preset';
+      res.status(502).json({ error: message });
+    }
+  });
+
+  app.get('/api/eq/presets/:preset/profiles', (req, res) => {
+    const preset = parsePreset(req.params.preset);
+    if (preset === null) {
+      res.status(400).json({ error: 'Preset must be 1-2' });
+      return;
+    }
+    try {
+      res.json(eqStore.listProfiles(preset));
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to load EQ profiles';
+      res.status(500).json({ error: message });
+    }
+  });
+
+  app.post('/api/eq/presets/:preset/profiles', (req, res) => {
+    const preset = parsePreset(req.params.preset);
+    if (preset === null) {
+      res.status(400).json({ error: 'Preset must be 1-2' });
+      return;
+    }
+
+    const { profileId, name, bands } = req.body as { profileId?: string; name: string; bands: IEqProfile['bands'] };
+    try {
+      const profile = eqStore.saveCustomProfile(preset, { profileId, name, bands });
+      res.json({ success: true, profile });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to save EQ profile';
+      res.status(400).json({ error: message });
+    }
+  });
+
+  app.post('/api/eq/presets/:preset/profiles/:profileId/apply', async (req, res) => {
+    const preset = parsePreset(req.params.preset);
+    if (preset === null) {
+      res.status(400).json({ error: 'Preset must be 1-2' });
+      return;
+    }
+
+    const profile = eqStore.findProfile(preset, req.params.profileId);
+    if (!profile) {
+      res.status(404).json({ error: 'EQ profile not found' });
+      return;
+    }
+
+    if (!marantz.applyEqProfile) {
+      res.status(501).json({ error: 'EQ apply is not available on this runtime' });
+      return;
+    }
+
+    try {
+      const result = await marantz.applyEqProfile(preset, profile);
+      res.json({ success: true, applied: result });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to apply EQ profile';
       res.status(502).json({ error: message });
     }
   });
@@ -222,7 +284,8 @@ export const startServer = (settings = loadSettings(), config = getRuntimeConfig
     try {
       await marantz.connect();
     } catch (err) {
-      console.error('[Server] Initial connection failed:', err.message);
+      const message = err instanceof Error ? err.message : String(err);
+      console.error('[Server] Initial connection failed:', message);
     }
   });
 

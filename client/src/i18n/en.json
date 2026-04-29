@@ -57,6 +57,23 @@
       "dynamicVolume": "Dynamic Volume",
       "multEq": "MultEQ"
     },
+    "eqProfiles": {
+      "title": "EQ Profiles",
+      "selectPresetHint": "Select speaker preset 1 or 2 to manage EQ profiles.",
+      "profile": "Profile",
+      "profileName": "Profile name",
+      "defaultSuffix": "default",
+      "save": "Save",
+      "saveAs": "Save As",
+      "apply": "Apply",
+      "saved": "Saved",
+      "applied": "Applied to processor",
+      "unsavedChanges": "You have unsaved changes.",
+      "readonlyHint": "Default profiles are read-only. Use Save As with a new profile name to create an editable copy.",
+      "loadError": "Failed to load EQ profiles",
+      "saveError": "Failed to save EQ profile",
+      "applyError": "Failed to apply EQ profile"
+    },
     "subwoofer": {
       "title": "Subwoofer Settings",
       "outputLevel": "Output Level",

@@ -3,6 +3,7 @@ import { EventEmitter } from 'events';
 import { CHANNEL_MAP, OPINFASP_CHANNEL_ORDER, PLACEHOLDER_VALUE, SOURCE_MAP, SMART_SELECT_DEFAULTS, SMART_SELECT_SLOTS, TELNET_EVENT_MAP, parseVolume, volumeToCommand } from './constants.js';
 import { fetchHttpStatus } from './api/index.js';
 import type { IAVRStatus, IInputSource, ISmartSelectPreset, ISpeakerStatus, ITelnetEvent } from './types.js';
+import type { IEqProfile, SpeakerPreset } from './eq/types.js';
 
 export class MarantzService extends EventEmitter {
   private static readonly SPEAKER_PRESET_REFRESH_DELAYS_MS = [100, 300, 600, 1000, 1500, 2000, 3000, 4000, 6000, 8000] as const;
@@ -607,10 +608,10 @@ export class MarantzService extends EventEmitter {
     // Merge audio info — only overwrite with non-placeholder HTTP values
     // so telnet-sourced data (SYSDA, SSINFAISFSV) is not clobbered
     if (http.audio) {
-      const httpAudio = http.audio as Record<string, string>;
+      const httpAudio = http.audio as unknown as Record<string, string>;
       for (const [key, value] of Object.entries(httpAudio)) {
         if (value && value !== PLACEHOLDER_VALUE) {
-          (this.status.audio as Record<string, string>)[key] = value;
+          (this.status.audio as unknown as Record<string, string>)[key] = value;
         }
       }
     }
@@ -676,6 +677,16 @@ export class MarantzService extends EventEmitter {
 
     this.sendCommand(`SPPR ${preset}`);
     this.scheduleSpeakerPresetRefreshBurst();
+  }
+
+  async applyEqProfile(preset: SpeakerPreset, profile: IEqProfile): Promise<{ sent: number; profileId: string }> {
+    await this.setSpeakerPreset(preset);
+    for (const band of profile.bands) {
+      const gain = band.gainDb >= 0 ? `+${band.gainDb}` : `${band.gainDb}`;
+      // Command format can be adjusted once AV10 exposes a definitive band write command map.
+      this.sendCommand(`PSGEQ ${band.frequencyHz} ${gain}`);
+    }
+    return { sent: profile.bands.length, profileId: profile.id };
   }
 
   disconnect(): void {

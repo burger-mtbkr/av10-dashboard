@@ -17,6 +17,31 @@ import {
   parseVideoInfo,
 } from './parsers/index.js';
 
+const UNAVAILABLE_HTTP_STATUS_CODES = ['403', '404', '500'];
+const loggedUnavailableEndpoints = new Set<string>();
+
+const getErrorMessage = (error: unknown): string =>
+  error instanceof Error ? error.message : String(error);
+
+const isUnavailableEndpointError = (message: string): boolean =>
+  UNAVAILABLE_HTTP_STATUS_CODES.some((code) => message.includes(`status code ${code}`));
+
+const logHttpFetchIssue = (key: string, label: string, error: unknown): void => {
+  const message = getErrorMessage(error);
+
+  if (isUnavailableEndpointError(message)) {
+    if (!loggedUnavailableEndpoints.has(key)) {
+      loggedUnavailableEndpoints.add(key);
+      console.warn(
+        `[HTTP] ${label} unavailable (${message}). Continuing with telnet/AppCommand data.`,
+      );
+    }
+    return;
+  }
+
+  console.error(`[HTTP] ${label} error:`, message);
+};
+
 export const fetchHttpStatus = async (host: string, httpPort: number): Promise<IHttpStatusResult> => {
   let result: IHttpStatusResult = {};
 
@@ -52,7 +77,7 @@ export const fetchHttpStatus = async (host: string, httpPort: number): Promise<I
       }
     }
   } catch (error) {
-    console.error('[HTTP] MainZone fetch error:', (error as Error).message);
+    logHttpFetchIssue('main-zone', 'MainZone fetch', error);
   }
 
   try {
@@ -120,8 +145,7 @@ export const fetchHttpStatus = async (host: string, httpPort: number): Promise<I
   if (generalInfoResult.status === 'fulfilled') {
     result.softwareVersion = parseSoftwareVersion(generalInfoResult.value);
   } else {
-    const reason = generalInfoResult.reason;
-    console.error('[HTTP] Web control general config fetch error:', reason instanceof Error ? reason.message : reason);
+    logHttpFetchIssue('web-control-general', 'Web control general config fetch', generalInfoResult.reason);
   }
 
   if (networkInfoResult.status === 'fulfilled') {
