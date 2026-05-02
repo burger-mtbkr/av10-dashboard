@@ -1,22 +1,26 @@
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   Alert,
-  Box,
   Button,
   Card,
   CardContent,
+  Chip,
   MenuItem,
-  Slider,
   Stack,
   TextField,
   Typography,
 } from "@mui/material";
 import GraphicEqIcon from "@mui/icons-material/GraphicEq";
+import GraphicEqBands from "./GraphicEqBands";
+import { EQ_PROFILE_ADD_NEW_ID } from "../hooks";
 import type { IEqBand, IEqProfile } from "../types";
 
 interface IEqProfilesCardProps {
   preset: 1 | 2 | null;
+  /** When false, show disabled messaging and grey bars (adjustments off for this speaker preset). */
+  eqAdjustmentsDisabled: boolean;
   profiles: IEqProfile[];
+  selectionId: string;
   selectedProfile: IEqProfile | null;
   draftBands: IEqBand[];
   isLoading: boolean;
@@ -36,7 +40,9 @@ const formatFrequency = (frequencyHz: number): string =>
 
 const EqProfilesCard = ({
   preset,
+  eqAdjustmentsDisabled,
   profiles,
+  selectionId,
   selectedProfile,
   draftBands,
   isLoading,
@@ -52,106 +58,170 @@ const EqProfilesCard = ({
 }: IEqProfilesCardProps) => {
   const [profileName, setProfileName] = useState("");
 
-  const saveLabel = useMemo(() => {
-    if (!selectedProfile) return "Save";
-    return selectedProfile.readonly ? "Save As" : "Save";
-  }, [selectedProfile]);
+  const showSaveRow =
+    selectionId === EQ_PROFILE_ADD_NEW_ID ||
+    Boolean(selectedProfile && !selectedProfile.readonly);
 
-  const canEdit = !selectedProfile?.readonly;
+  useEffect(() => {
+    if (selectionId === EQ_PROFILE_ADD_NEW_ID) {
+      setProfileName("");
+      return;
+    }
+    if (selectedProfile && !selectedProfile.readonly) {
+      setProfileName(selectedProfile.name);
+    }
+  }, [selectionId, selectedProfile]);
+
+  const applyDisabled =
+    isApplying ||
+    !selectedProfile ||
+    selectionId === EQ_PROFILE_ADD_NEW_ID ||
+    isLoading ||
+    eqAdjustmentsDisabled;
+
+  const saveDisabled =
+    isSaving || !profileName.trim() || draftBands.length === 0;
+
+  const renderSelectValue = useCallback(
+    (value: unknown) => {
+      if (value === EQ_PROFILE_ADD_NEW_ID) return "New profile";
+      const id = typeof value === "string" ? value : "";
+      const p = profiles.find((x) => x.id === id);
+      if (!p) return "";
+      return p.readonly ? `${p.name} (read-only)` : p.name;
+    },
+    [profiles],
+  );
 
   return (
     <Card sx={{ height: "100%" }}>
       <CardContent sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-        <Typography variant="h6" sx={{ color: "primary.main" }}>
-          <GraphicEqIcon sx={{ mr: 1, verticalAlign: "middle", fontSize: 22 }} />
-          EQ Profiles
-        </Typography>
-
-        {preset === null ? (
-          <Alert severity="info">Select speaker preset 1 or 2 to manage EQ profiles.</Alert>
+        {preset == null ? (
+          <>
+            <Typography variant="h6" sx={{ color: "primary.main" }}>
+              <GraphicEqIcon sx={{ mr: 1, verticalAlign: "middle", fontSize: 22 }} />
+              EQ Profiles
+            </Typography>
+            <Alert severity="info">Select speaker preset 1 or 2 on the AVR to manage EQ profiles.</Alert>
+          </>
+        ) : eqAdjustmentsDisabled ? (
+          <>
+            <Typography variant="h6" sx={{ color: "primary.main" }}>
+              <GraphicEqIcon sx={{ mr: 1, verticalAlign: "middle", fontSize: 22 }} />
+              EQ Profiles
+            </Typography>
+            <Typography variant="subtitle1" color="text.secondary" sx={{ fontWeight: 600 }}>
+              Graphic EQ is disabled for speaker preset {preset}.
+            </Typography>
+            <GraphicEqBands
+              bands={draftBands}
+              disabled={isSaving || isLoading}
+              neutralFlat
+              formatFrequency={formatFrequency}
+              onBandChange={onBandChange}
+            />
+          </>
         ) : (
           <>
-            <TextField
-              select
-              size="small"
-              label="Profile"
-              value={selectedProfile?.id ?? ""}
-              onChange={(event) => onSelectProfile(event.target.value)}
-              disabled={isLoading || profiles.length === 0}
-            >
-              {profiles.map((profile) => (
-                <MenuItem key={profile.id} value={profile.id}>
-                  {profile.name}
-                  {profile.readonly ? " (default)" : ""}
-                </MenuItem>
-              ))}
-            </TextField>
-
-            <Box sx={{ display: "grid", gap: 1 }}>
-              {draftBands.map((band) => (
-                <Box key={band.frequencyHz}>
-                  <Box
-                    sx={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "center",
-                    }}
-                  >
-                    <Typography variant="caption">{formatFrequency(band.frequencyHz)}</Typography>
-                    <Typography variant="caption">{band.gainDb.toFixed(1)} dB</Typography>
-                  </Box>
-                  <Slider
-                    value={band.gainDb}
-                    min={-12}
-                    max={12}
-                    step={0.5}
-                    onChange={(_, value) =>
-                      onBandChange(
-                        band.frequencyHz,
-                        Array.isArray(value) ? value[0] : value,
-                      )
-                    }
-                    disabled={!canEdit || isSaving}
-                  />
-                </Box>
-              ))}
-            </Box>
-
-            <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
-              <TextField
+            <Stack direction="row" alignItems="center" spacing={1} flexWrap="wrap" sx={{ rowGap: 0.5 }}>
+              <Typography variant="h6" sx={{ color: "primary.main" }}>
+                <GraphicEqIcon sx={{ mr: 1, verticalAlign: "middle", fontSize: 22 }} />
+                EQ Profiles
+              </Typography>
+              <Chip
                 size="small"
-                label="Profile name"
-                value={profileName}
-                onChange={(event) => setProfileName(event.target.value)}
-                placeholder={selectedProfile?.name ?? "Movie Night"}
-                fullWidth
+                label={`Speaker preset ${preset}`}
+                variant="outlined"
+                sx={{ borderColor: "divider", color: "text.secondary", fontWeight: 600 }}
               />
+            </Stack>
+
+            <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap">
+              <TextField
+                select
+                size="small"
+                label="Profile"
+                value={selectionId}
+                onChange={(event) => onSelectProfile(event.target.value)}
+                disabled={isLoading || profiles.length === 0}
+                sx={{
+                  flex: "1 1 auto",
+                  minWidth: 160,
+                  maxWidth: 280,
+                }}
+                slotProps={{
+                  select: {
+                    displayEmpty: true,
+                    renderValue: renderSelectValue,
+                  },
+                }}
+              >
+                {profiles.map((profile) => (
+                  <MenuItem key={profile.id} value={profile.id}>
+                    {profile.name}
+                    {profile.readonly ? " · read-only" : ""}
+                  </MenuItem>
+                ))}
+                <MenuItem divider value={EQ_PROFILE_ADD_NEW_ID}>
+                  Add new profile…
+                </MenuItem>
+              </TextField>
               <Button
                 variant="contained"
-                disabled={isSaving || !profileName.trim()}
-                onClick={() => onSave(profileName.trim())}
-              >
-                {saveLabel}
-              </Button>
-              <Button
-                variant="outlined"
-                disabled={isApplying || !selectedProfile}
+                disabled={applyDisabled}
                 onClick={() => void onApply()}
+                sx={{ flexShrink: 0 }}
               >
                 Apply
               </Button>
             </Stack>
 
-            {selectedProfile?.readonly && (
+            <Typography variant="caption" color="text.secondary">
+              Apply sends the <strong>saved</strong> profile selected above to the processor. Adjust sliders, then
+              save (new or custom) before applying if you changed bands.
+            </Typography>
+
+            {showSaveRow && (
+              <Stack direction={{ xs: "column", sm: "row" }} spacing={1} alignItems={{ sm: "center" }}>
+                <TextField
+                  size="small"
+                  label="Profile name"
+                  value={profileName}
+                  onChange={(event) => setProfileName(event.target.value)}
+                  placeholder={
+                    selectionId === EQ_PROFILE_ADD_NEW_ID ? "e.g. Movies, Music" : undefined
+                  }
+                  fullWidth
+                />
+                <Button
+                  variant="outlined"
+                  disabled={saveDisabled}
+                  onClick={() => void onSave(profileName.trim())}
+                  sx={{ flexShrink: 0, alignSelf: { xs: "stretch", sm: "center" } }}
+                >
+                  Save
+                </Button>
+              </Stack>
+            )}
+
+            {selectedProfile?.readonly && selectionId !== EQ_PROFILE_ADD_NEW_ID && (
               <Typography variant="caption" color="text.secondary">
-                Default profiles are read-only. Use Save As with a new profile name to create an editable copy.
+                Default is read-only. Choose &quot;Add new profile…&quot; to copy your slider edits into a named
+                profile, then Apply.
               </Typography>
             )}
-            {hasUnsavedChanges && canEdit && (
+            {hasUnsavedChanges && selectedProfile && !selectedProfile.readonly && (
               <Typography variant="caption" color="warning.main">
-                You have unsaved changes.
+                Unsaved changes — click Save to update this profile before Apply.
               </Typography>
             )}
+
+            <GraphicEqBands
+              bands={draftBands}
+              disabled={isSaving || isLoading}
+              formatFrequency={formatFrequency}
+              onBandChange={onBandChange}
+            />
           </>
         )}
 

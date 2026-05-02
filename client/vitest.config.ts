@@ -11,6 +11,8 @@ export default defineConfig({
     },
   },
   test: {
+    /** Fork workers occasionally hang on Windows; threads pool is more reliable here. */
+    pool: 'threads',
     globals: true,
     environment: 'jsdom',
     setupFiles: ['./src/__tests__/setup.ts'],

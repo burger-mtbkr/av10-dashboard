@@ -42,6 +42,14 @@ export interface ISmartSelectPreset {
   active: boolean;
 }
 
+/** Graphic EQ bands reported by the processor */
+export interface IGraphicEqStatus {
+  bands: IEqBand[];
+  updatedAt: string;
+  /** False when the AVR reports graphic EQ adjustments bypassed / off (telnet). */
+  adjustmentsEnabled?: boolean;
+}
+
 export interface IAVRStatus {
   power: 'ON' | 'OFF' | 'STANDBY';
   processorModel: string;
@@ -66,6 +74,7 @@ export interface IAVRStatus {
   surroundMode: string;
   connected: boolean;
   lastUpdate: string;
+  graphicEq?: IGraphicEqStatus | null;
 }
 
 export interface IWSMessage {
@@ -89,6 +98,8 @@ export interface IEqProfile {
 export interface IEqProfilesResponse {
   bandFrequenciesHz: number[];
   profiles: IEqProfile[];
+  /** False when graphic EQ adjustments are disabled for this speaker preset (see eq-profiles.json). */
+  graphicEqAdjustmentsEnabled?: boolean;
 }
 
 export type SpeakerStatus = ISpeakerStatus;

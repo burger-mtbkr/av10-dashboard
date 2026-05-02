@@ -1,7 +1,8 @@
 import type { IEqBand, IEqProfile, IEqProfilesStoreData, SpeakerPreset } from './types.js';
 
-const EQ_MIN_DB = -12;
-const EQ_MAX_DB = 12;
+/** Marantz / Denon graphic EQ band gain range (dB). */
+const EQ_MIN_DB = -20;
+const EQ_MAX_DB = 6;
 
 const isFiniteNumber = (value: unknown): value is number =>
   typeof value === 'number' && Number.isFinite(value);
@@ -39,6 +40,15 @@ export const validateStoreData = (data: IEqProfilesStoreData): string | null => 
   }
   if (!data.presets?.[1] || !data.presets?.[2]) {
     return 'Both preset 1 and 2 profile sections are required';
+  }
+  for (const key of [1, 2] as const) {
+    const bucket = data.presets[key];
+    if (
+      'graphicEqAdjustmentsEnabled' in bucket &&
+      typeof bucket.graphicEqAdjustmentsEnabled !== 'boolean'
+    ) {
+      return 'graphicEqAdjustmentsEnabled must be a boolean when set';
+    }
   }
   return null;
 };

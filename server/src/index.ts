@@ -9,10 +9,11 @@ import { pathToFileURL } from 'url';
 import { MarantzService } from './marantz-service.js';
 import type { IAVRStatus, IWSMessage } from './types.js';
 import { EqProfilesStore, parsePreset } from './eq/index.js';
-import type { IEqProfile, SpeakerPreset } from './eq/types.js';
+import type { IEqBand, IEqProfile, SpeakerPreset } from './eq/types.js';
 
 type MarantzApi = Pick<MarantzService, 'getStatus' | 'setVolume' | 'setInput' | 'setSmartSelect' | 'setSpeakerPreset' | 'sendCommand'> & {
   applyEqProfile?: (preset: SpeakerPreset, profile: IEqProfile) => Promise<{ sent: number; profileId: string }>;
+  readGraphicEqBands?: (preset: SpeakerPreset, frequenciesHz: number[]) => Promise<IEqBand[]>;
 };
 type MarantzRealtimeApi = Pick<MarantzService, 'getStatus' | 'on' | 'refreshStatus'>;
 
@@ -151,6 +152,26 @@ export const createApp = (marantz: MarantzApi, settings: ISettings = {}, eqStore
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Failed to load EQ profiles';
       res.status(500).json({ error: message });
+    }
+  });
+
+  app.get('/api/eq/presets/:preset/processor', async (req, res) => {
+    const preset = parsePreset(req.params.preset);
+    if (preset === null) {
+      res.status(400).json({ error: 'Preset must be 1-2' });
+      return;
+    }
+    if (!marantz.readGraphicEqBands) {
+      res.status(501).json({ error: 'Reading EQ from the processor is not available' });
+      return;
+    }
+    try {
+      const { bandFrequenciesHz } = eqStore.listProfiles(preset);
+      const bands = await marantz.readGraphicEqBands(preset, bandFrequenciesHz);
+      res.json({ bandFrequenciesHz, bands });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to read EQ from processor';
+      res.status(502).json({ error: message });
     }
   });
 

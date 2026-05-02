@@ -1,6 +1,20 @@
 import { apiClient } from "./client";
 import type { IEqBand, IEqProfile, IEqProfilesResponse } from "../types";
 
+export interface IEqProcessorBandsResponse {
+  bandFrequenciesHz: number[];
+  bands: IEqBand[];
+}
+
+export const getEqFromProcessorRequest = async (
+  preset: 1 | 2,
+): Promise<IEqProcessorBandsResponse> => {
+  const response = await apiClient.get<IEqProcessorBandsResponse>(
+    `/api/eq/presets/${preset}/processor`,
+  );
+  return response.data;
+};
+
 export const getEqProfilesRequest = async (
   preset: 1 | 2,
 ): Promise<IEqProfilesResponse> => {

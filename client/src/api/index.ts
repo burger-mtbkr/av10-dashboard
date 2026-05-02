@@ -8,6 +8,7 @@ export { volumeDownRequest } from "./volume-down";
 export { volumeUpRequest } from "./volume-up";
 export {
   applyEqProfileRequest,
+  getEqFromProcessorRequest,
   getEqProfilesRequest,
   saveEqProfileRequest,
 } from "./eq-profiles";

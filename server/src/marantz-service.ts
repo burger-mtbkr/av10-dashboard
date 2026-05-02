@@ -3,7 +3,13 @@ import { EventEmitter } from 'events';
 import { CHANNEL_MAP, OPINFASP_CHANNEL_ORDER, PLACEHOLDER_VALUE, SOURCE_MAP, SMART_SELECT_DEFAULTS, SMART_SELECT_SLOTS, TELNET_EVENT_MAP, parseVolume, volumeToCommand } from './constants.js';
 import { fetchHttpStatus } from './api/index.js';
 import type { IAVRStatus, IInputSource, ISmartSelectPreset, ISpeakerStatus, ITelnetEvent } from './types.js';
-import type { IEqProfile, SpeakerPreset } from './eq/types.js';
+import type { IEqBand, IEqProfile, SpeakerPreset } from './eq/types.js';
+import { clampGainDb } from './eq/validators.js';
+import {
+  formatGraphicEqFrequencyHz,
+  formatGraphicEqGainDb,
+  parseGraphicEqTelnetLine,
+} from './graphic-eq-protocol.js';
 
 export class MarantzService extends EventEmitter {
   private static readonly SPEAKER_PRESET_REFRESH_DELAYS_MS = [100, 300, 600, 1000, 1500, 2000, 3000, 4000, 6000, 8000] as const;
@@ -21,6 +27,15 @@ export class MarantzService extends EventEmitter {
   private speakerPresetRefreshTimers: ReturnType<typeof setTimeout>[] = [];
   private pendingSpeakerPreset: 1 | 2 | null = null;
   private preSwitchSpeakerLayout: string | null = null;
+  private applyEqInFlight = false;
+
+  private nextTelnetWaiterId = 0;
+  private telnetLineWaiters: Array<{
+    id: number;
+    predicate: (line: string) => boolean;
+    resolve: (line: string) => void;
+    timer: ReturnType<typeof setTimeout>;
+  }> = [];
 
   private status: IAVRStatus = this.getDefaultStatus();
 
@@ -76,6 +91,7 @@ export class MarantzService extends EventEmitter {
       surroundMode: PLACEHOLDER_VALUE,
       connected: false,
       lastUpdate: new Date().toISOString(),
+      graphicEq: null,
     };
   }
 
@@ -201,10 +217,78 @@ export class MarantzService extends EventEmitter {
 
     for (const line of lines) {
       const trimmed = line.trim();
-      if (trimmed) {
-        this.handleTelnetEvent(trimmed);
-      }
+      if (!trimmed) continue;
+      if (this.tryConsumeTelnetWaiter(trimmed)) continue;
+      this.handleTelnetEvent(trimmed);
     }
+  }
+
+  private tryConsumeTelnetWaiter(line: string): boolean {
+    const idx = this.telnetLineWaiters.findIndex((w) => w.predicate(line));
+    if (idx === -1) return false;
+    const w = this.telnetLineWaiters[idx];
+    this.telnetLineWaiters.splice(idx, 1);
+    clearTimeout(w.timer);
+    w.resolve(line);
+    return true;
+  }
+
+  /** Wait for a telnet line matching `predicate` (e.g. PSGEQ query response). Register before sending the command. */
+  private waitForTelnetLine(predicate: (line: string) => boolean, timeoutMs: number): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const id = ++this.nextTelnetWaiterId;
+      const timer = setTimeout(() => {
+        this.telnetLineWaiters = this.telnetLineWaiters.filter((w) => w.id !== id);
+        reject(new Error('Timed out waiting for receiver response'));
+      }, timeoutMs);
+      this.telnetLineWaiters.push({
+        id,
+        predicate,
+        resolve: (ln: string) => resolve(ln),
+        timer,
+      });
+    });
+  }
+
+  /**
+   * Read graphic EQ band gains from the processor via telnet (PSGEQ nnnnn ?).
+   * Switches to the given speaker preset first so EQ matches that preset’s stored curve.
+   */
+  async readGraphicEqBands(preset: SpeakerPreset, frequenciesHz: number[]): Promise<IEqBand[]> {
+    if (!this.socket || !this.connected) {
+      throw new Error('Not connected to receiver');
+    }
+    await this.setSpeakerPreset(preset);
+    await new Promise((r) => setTimeout(r, 400));
+
+    const bands: IEqBand[] = [];
+    for (const frequencyHz of frequenciesHz) {
+      const hz = formatGraphicEqFrequencyHz(frequencyHz);
+      const wait = this.waitForTelnetLine((line) => {
+        const parsed = parseGraphicEqTelnetLine(line);
+        return parsed !== null && parsed.frequencyHz === frequencyHz;
+      }, 3500);
+      this.sendCommand(`PSGEQ ${hz} ?`);
+      const line = await wait;
+      const parsed = parseGraphicEqTelnetLine(line);
+      if (!parsed) {
+        throw new Error(`Could not parse EQ response: ${line}`);
+      }
+      bands.push({
+        frequencyHz,
+        gainDb: clampGainDb(parsed.gainDb),
+      });
+    }
+
+    const adjustmentsEnabled = this.status.graphicEq?.adjustmentsEnabled ?? true;
+    this.status.graphicEq = {
+      bands: bands.map((b) => ({ ...b })),
+      updatedAt: new Date().toISOString(),
+      adjustmentsEnabled,
+    };
+    this.status.lastUpdate = new Date().toISOString();
+    this.emit('statusChanged', this.status);
+    return bands;
   }
 
   private handleTelnetEvent(line: string): void {
@@ -402,7 +486,52 @@ export class MarantzService extends EventEmitter {
       this.status.audio.multEq = param.replace('MULTEQ:', '').trim();
     } else if (param.startsWith('DIL')) {
       this.status.audio.dialogEnhancer = param.replace('DIL ', '').trim();
+    } else if (param.startsWith('GEQ')) {
+      const compact = param.replace(/\s+/g, '').toUpperCase();
+      if (compact === 'GEQOFF') {
+        this.setGraphicEqAdjustmentsEnabled(false);
+      } else if (compact === 'GEQON') {
+        this.setGraphicEqAdjustmentsEnabled(true);
+      } else {
+        const parsed = parseGraphicEqTelnetLine(`PS${param}`);
+        if (parsed) {
+          this.mergeGraphicEqBandFromTelnet(parsed);
+        }
+      }
     }
+  }
+
+  /** Graphic EQ bypass/on — preserves band list from last snapshot when toggling. */
+  private setGraphicEqAdjustmentsEnabled(enabled: boolean): void {
+    const prevBands = this.status.graphicEq?.bands ?? [];
+    this.status.graphicEq = {
+      bands: prevBands.map((b) => ({ ...b })),
+      updatedAt: new Date().toISOString(),
+      adjustmentsEnabled: enabled,
+    };
+  }
+
+  private mergeGraphicEqBandFromTelnet(parsed: { frequencyHz: number; gainDb: number }): void {
+    const gainDb = clampGainDb(parsed.gainDb);
+    const prev = this.status.graphicEq?.bands ?? [];
+    let bands: IEqBand[];
+    if (prev.length === 0) {
+      bands = [{ frequencyHz: parsed.frequencyHz, gainDb }];
+    } else if (prev.some((b) => b.frequencyHz === parsed.frequencyHz)) {
+      bands = prev.map((b) =>
+        b.frequencyHz === parsed.frequencyHz ? { ...b, gainDb } : b,
+      );
+    } else {
+      bands = [...prev, { frequencyHz: parsed.frequencyHz, gainDb }].sort(
+        (a, b) => a.frequencyHz - b.frequencyHz,
+      );
+    }
+    const adjustmentsEnabled = this.status.graphicEq?.adjustmentsEnabled ?? true;
+    this.status.graphicEq = {
+      bands,
+      updatedAt: new Date().toISOString(),
+      adjustmentsEnabled,
+    };
   }
 
   private handleSystemSettings(param: string): boolean {
@@ -680,13 +809,35 @@ export class MarantzService extends EventEmitter {
   }
 
   async applyEqProfile(preset: SpeakerPreset, profile: IEqProfile): Promise<{ sent: number; profileId: string }> {
-    await this.setSpeakerPreset(preset);
-    for (const band of profile.bands) {
-      const gain = band.gainDb >= 0 ? `+${band.gainDb}` : `${band.gainDb}`;
-      // Command format can be adjusted once AV10 exposes a definitive band write command map.
-      this.sendCommand(`PSGEQ ${band.frequencyHz} ${gain}`);
+    if (this.applyEqInFlight) {
+      throw new Error('EQ apply already in progress');
     }
-    return { sent: profile.bands.length, profileId: profile.id };
+    this.applyEqInFlight = true;
+    try {
+      if (this.status.speakerPreset !== preset) {
+        await this.setSpeakerPreset(preset);
+        await new Promise((r) => setTimeout(r, 400));
+      }
+      for (const band of profile.bands) {
+        const hz = formatGraphicEqFrequencyHz(band.frequencyHz);
+        const gain = formatGraphicEqGainDb(band.gainDb);
+        this.sendCommand(`PSGEQ ${hz} ${gain}`);
+        await new Promise((r) => setTimeout(r, 80));
+      }
+      this.status.graphicEq = {
+        bands: profile.bands.map((b) => ({
+          frequencyHz: b.frequencyHz,
+          gainDb: clampGainDb(b.gainDb),
+        })),
+        updatedAt: new Date().toISOString(),
+        adjustmentsEnabled: true,
+      };
+      this.status.lastUpdate = new Date().toISOString();
+      this.emit('statusChanged', this.status);
+      return { sent: profile.bands.length, profileId: profile.id };
+    } finally {
+      this.applyEqInFlight = false;
+    }
   }
 
   disconnect(): void {

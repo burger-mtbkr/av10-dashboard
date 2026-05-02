@@ -16,6 +16,8 @@ export interface IEqProfile {
 export interface IEqPresetProfiles {
   defaultProfiles: IEqProfile[];
   customProfiles: IEqProfile[];
+  /** When false, graphic EQ adjustments are off for this speaker preset (UI shows stored curve only). */
+  graphicEqAdjustmentsEnabled?: boolean;
 }
 
 export interface IEqProfilesStoreData {

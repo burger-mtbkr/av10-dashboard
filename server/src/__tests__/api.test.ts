@@ -1,5 +1,9 @@
-import { describe, it, expect, vi, beforeAll } from 'vitest';
+import { mkdtempSync, rmSync } from 'fs';
+import { tmpdir } from 'os';
+import { join } from 'path';
+import { describe, it, expect, vi, beforeAll, afterAll } from 'vitest';
 import request from 'supertest';
+import { EqProfilesStore } from '../eq/index.js';
 import { createApp } from '../index.js';
 
 // Create a mock status object
@@ -49,6 +53,7 @@ const mockStatus = {
   surroundMode: 'Dolby Atmos',
   connected: true,
   lastUpdate: '2025-01-01T00:00:00.000Z',
+  graphicEq: null,
 };
 
 // Create mock marantz instance
@@ -58,20 +63,36 @@ const mockMarantz = {
   setInput: vi.fn(),
   setSmartSelect: vi.fn(),
   setSpeakerPreset: vi.fn(),
-  applyEqProfile: vi.fn().mockResolvedValue({ sent: 10, profileId: 'preset1-flat' }),
+  applyEqProfile: vi.fn().mockResolvedValue({ sent: 9, profileId: 'default' }),
+  readGraphicEqBands: vi.fn().mockResolvedValue([]),
   sendCommand: vi.fn(),
 };
 
 describe('API Routes', () => {
   let app: ReturnType<typeof createApp>;
+  let eqTempDir: string;
 
   beforeAll(() => {
-    app = createApp(mockMarantz as any, {
-      app: {
-        title: 'Home Theater Status',
-        defaultLanguage: 'en',
+    eqTempDir = mkdtempSync(join(tmpdir(), 'eq-api-test-'));
+    const eqStore = new EqProfilesStore(join(eqTempDir, 'eq-profiles.json'));
+    app = createApp(
+      mockMarantz as any,
+      {
+        app: {
+          title: 'Home Theater Status',
+          defaultLanguage: 'en',
+        },
       },
-    });
+      eqStore,
+    );
+  });
+
+  afterAll(() => {
+    try {
+      rmSync(eqTempDir, { recursive: true, force: true });
+    } catch {
+      /* temp cleanup best-effort */
+    }
   });
 
   describe('GET /api/health', () => {
@@ -295,6 +316,7 @@ describe('API Routes', () => {
       expect(res.status).toBe(200);
       expect(Array.isArray(res.body.bandFrequenciesHz)).toBe(true);
       expect(Array.isArray(res.body.profiles)).toBe(true);
+      expect(res.body.graphicEqAdjustmentsEnabled).toBe(true);
     });
 
     it('creates a custom EQ profile', async () => {
@@ -315,10 +337,24 @@ describe('API Routes', () => {
     });
 
     it('applies an existing EQ profile', async () => {
-      const res = await request(app).post('/api/eq/presets/1/profiles/preset1-flat/apply');
+      const list = await request(app).get('/api/eq/presets/1/profiles');
+      const profileId = list.body.profiles?.[0]?.id;
+      const res = await request(app).post(`/api/eq/presets/1/profiles/${profileId}/apply`);
       expect(res.status).toBe(200);
       expect(res.body.success).toBe(true);
       expect(mockMarantz.applyEqProfile).toHaveBeenCalled();
+    });
+
+    it('reads EQ bands from processor', async () => {
+      const listed = await request(app).get('/api/eq/presets/1/profiles');
+      const freqs = listed.body.bandFrequenciesHz as number[];
+      mockMarantz.readGraphicEqBands.mockResolvedValueOnce(
+        freqs.map((frequencyHz: number) => ({ frequencyHz, gainDb: 0 })),
+      );
+      const res = await request(app).get('/api/eq/presets/1/processor');
+      expect(res.status).toBe(200);
+      expect(res.body.bands).toHaveLength(freqs.length);
+      expect(mockMarantz.readGraphicEqBands).toHaveBeenCalledWith(1, freqs);
     });
   });
 });

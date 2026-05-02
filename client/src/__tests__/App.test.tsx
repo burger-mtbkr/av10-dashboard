@@ -4,6 +4,7 @@ import App from "../App";
 import { createMockStatus, renderWithProviders } from "./test-utils";
 
 vi.mock("../hooks", () => ({
+  EQ_PROFILE_ADD_NEW_ID: "__eq_add_new__",
   useAVRStatus: () => ({
     status: createMockStatus(),
     selectedSpeakerPresetLayout: "7.2.4",
@@ -17,7 +18,10 @@ vi.mock("../hooks", () => ({
     selectSpeakerPreset: vi.fn(),
   }),
   useEqProfiles: () => ({
+    presetForEq: null,
+    graphicEqAdjustmentsEnabled: true,
     profiles: [],
+    selectionId: "",
     selectedProfile: null,
     draftBands: [],
     isLoading: false,
@@ -58,9 +62,9 @@ describe("App", () => {
     const system = screen.getByText("System Info");
 
     expectBefore(volume, input);
-    expectBefore(input, speakerConfig);
-    expectBefore(speakerConfig, eqProfiles);
-    expectBefore(eqProfiles, subwoofer);
+    expectBefore(input, eqProfiles);
+    expectBefore(eqProfiles, speakerConfig);
+    expectBefore(speakerConfig, subwoofer);
     expectBefore(subwoofer, audio);
     expectBefore(audio, video);
     expectBefore(video, system);

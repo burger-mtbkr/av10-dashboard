@@ -1,4 +1,14 @@
+import type { IEqBand } from './eq/types.js';
+
 // Shared types between server and client
+
+/** Live graphic EQ snapshot from the processor (telnet PSGEQ). */
+export interface IGraphicEqStatus {
+  bands: IEqBand[];
+  updatedAt: string;
+  /** False when graphic EQ adjustments are off / bypassed (parsed from telnet when possible). */
+  adjustmentsEnabled?: boolean;
+}
 export interface ISpeakerStatus {
   /** Speaker channel code e.g. "FL", "FR", "C", "SW" */
   code: string;
@@ -114,6 +124,8 @@ export interface IAVRStatus {
   connected: boolean;
   /** Last update timestamp */
   lastUpdate: string;
+  /** Graphic EQ bands last read from the processor (or pushed via telnet); null if unknown */
+  graphicEq: IGraphicEqStatus | null;
 }
 
 export interface IWSMessage {

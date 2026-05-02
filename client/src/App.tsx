@@ -39,7 +39,10 @@ export default function App() {
     selectSpeakerPreset,
   } = useAVRStatus();
   const {
+    presetForEq,
+    graphicEqAdjustmentsEnabled,
     profiles,
+    selectionId,
     selectedProfile,
     draftBands,
     isLoading: eqLoading,
@@ -52,7 +55,12 @@ export default function App() {
     setBandGain,
     saveProfile,
     applyProfile,
-  } = useEqProfiles(status.speakerPreset);
+  } = useEqProfiles(status.speakerPreset, status.graphicEq ?? null, status.lastUpdate);
+
+  /** Disabled UI when blocked in eq-profiles.json or AVR reports adjustments off (WebSocket). */
+  const eqAdjustmentsDisabled =
+    !graphicEqAdjustmentsEnabled || status.graphicEq?.adjustmentsEnabled === false;
+
   const dashboardTitle =
     status.processorModel && status.processorModel !== PLACEHOLDER_VALUE
       ? `${status.processorModel} Status`
@@ -192,8 +200,10 @@ export default function App() {
             {/* EQ profiles — full width above speaker layout on desktop */}
             <Grid size={{ xs: 12 }}>
               <EqProfilesCard
-                preset={status.speakerPreset}
+                preset={presetForEq}
+                eqAdjustmentsDisabled={eqAdjustmentsDisabled}
                 profiles={profiles}
+                selectionId={selectionId}
                 selectedProfile={selectedProfile}
                 draftBands={draftBands}
                 isLoading={eqLoading}
