@@ -98,7 +98,7 @@ export interface IEqProfile {
 export interface IEqProfilesResponse {
   bandFrequenciesHz: number[];
   profiles: IEqProfile[];
-  /** False when graphic EQ adjustments are disabled for this speaker preset (see eq-profiles.json). */
+  /** False when graphic EQ adjustments are disabled for this speaker preset (from server EQ profile storage). */
   graphicEqAdjustmentsEnabled?: boolean;
 }
 

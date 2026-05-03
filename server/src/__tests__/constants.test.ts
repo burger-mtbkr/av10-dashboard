@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { parseVolume, volumeToCommand, CHANNEL_MAP, SOURCE_MAP, TELNET_EVENT_MAP, OPINFASP_CHANNEL_ORDER } from '../constants.js';
+import { parseVolume, volumeToCommand, CHANNEL_MAP, SOURCE_MAP, TELNET_EVENT_MAP, OPINFASP_CHANNEL_ORDER } from '../core/constants.js';
 
 describe('parseVolume', () => {
   it('should parse 2-digit integer volume values', () => {

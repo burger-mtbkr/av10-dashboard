@@ -66,7 +66,7 @@ The frontend is a React 19 single-page app built with Vite and MUI. It renders t
 
 ### Frontend API Helpers
 
-Each action has its own request module under `client/src/api/`.
+Generic AVR control actions live under `client/src/api/`. EQ-specific client logic is grouped under `client/src/features/eq/`.
 
 | Path | Purpose |
 | --- | --- |
@@ -81,12 +81,21 @@ Each action has its own request module under `client/src/api/`.
 | `client/src/api/select-smart-preset.ts` | Recall a Smart Select preset. |
 | `client/src/api/select-speaker-preset.ts` | Switch speaker preset 1 or 2. |
 
-### Frontend Hook
+### Frontend Hooks
 
 | Path | Purpose |
 | --- | --- |
 | `client/src/hooks/useAVRStatus.ts` | Maintains live AVR state, opens the WebSocket, handles reconnects, applies optimistic updates, and reconciles them against server-confirmed status. |
 | `client/src/hooks/index.ts` | Re-export surface for hooks. |
+
+### Frontend EQ Feature
+
+| Path | Purpose |
+| --- | --- |
+| `client/src/features/eq/api.ts` | EQ request helpers (`get`, `save`, `apply`, and processor sync). |
+| `client/src/features/eq/gain-range.ts` | Shared EQ gain math/constants used by UI and hook logic. |
+| `client/src/features/eq/use-eq-profiles.ts` | EQ profile state/hook orchestration for load/edit/save/apply flows. |
+| `client/src/features/eq/index.ts` | Barrel export for EQ feature utilities and hook. |
 
 ### Frontend Components
 
@@ -121,6 +130,7 @@ The backend is an Express 5 and WebSocket service that keeps a single AVR status
 | `server/package.json` | Backend dependencies and scripts for `dev`, `build`, `start`, `test`, and `test:coverage`. |
 | `server/tsconfig.json` | Backend TypeScript settings. |
 | `server/vitest.config.ts` | Vitest configuration for backend tests. |
+| `server/data/eq-profiles.json` | Persistent EQ profiles data file (default store location). |
 | `server/debug/` | Optional local-only folder for ad hoc probe and debugging scripts for receiver endpoints and transports. Not committed by default. |
 | `server/coverage/` | Generated coverage artifacts for the backend test suite. |
 
@@ -129,30 +139,36 @@ The backend is an Express 5 and WebSocket service that keeps a single AVR status
 | Path | Purpose |
 | --- | --- |
 | `server/src/index.ts` | Backend entry point. Loads settings, exposes the REST API, creates the WebSocket server, and wires `MarantzService` events into broadcasts. |
-| `server/src/marantz-service.ts` | Long-lived receiver integration service. Maintains the canonical `IAVRStatus`, parses telnet events, runs HTTP refreshes, performs speaker-preset transition guarding, and emits status updates. |
-| `server/src/constants.ts` | Receiver protocol constants, channel/source maps, and volume conversion helpers. |
-| `server/src/types.ts` | Shared backend types, mirrored on the client. |
+| `server/src/services/marantz.service.ts` | Marantz telnet/service runtime implementation. Maintains canonical AVR state and emits status updates. |
+| `server/src/core/constants.ts` | Receiver protocol constants, channel/source maps, and volume conversion helpers. |
+| `server/src/types/index.ts` | Central barrel for backend type definitions. |
+| `server/src/types/core.ts` | Core runtime status/event types shared across the server runtime. |
+| `server/src/types/api.ts` | API transport-layer request/response support types. |
+| `server/src/types/eq.ts` | EQ domain types (bands, profiles, preset store model). |
+| `server/src/lib/graphic-eq-protocol.ts` | Graphic EQ telnet formatter/parser entrypoint used by services and tests. |
 
 ### Backend API Transport Layer
 
-`server/src/api/` contains one transport concern per file.
+`server/src/api/` is now split by responsibility (`http/`, `heos/`, `status/`, and `parsers/`).
 
 | Path | Purpose |
 | --- | --- |
-| `server/src/api/http-client.ts` | Shared axios client and error normalization for receiver-side HTTP calls. |
-| `server/src/api/http-get.ts` | Raw HTTP GET helper for XML and web-control endpoints. |
-| `server/src/api/http-post-xml.ts` | HTTP POST helper for XML payloads. |
-| `server/src/api/fetch-main-zone-status.ts` | Fetches Main Zone XML status from the legacy `:8080` interface. |
-| `server/src/api/fetch-app-command-0300.ts` | Executes AppCommand0300 requests. |
-| `server/src/api/fetch-http-status.ts` | Orchestrates full status refresh by combining Main Zone, AppCommand0300, web-control, HEOS, and speaker-preset reads. |
-| `server/src/api/fetch-web-control-config.ts` | Reads newer web-control config endpoints from port `11080`. |
-| `server/src/api/fetch-speaker-preset.ts` | Reads the active speaker preset from `/ajax/speakers/get_config?type=11`. |
-| `server/src/api/set-speaker-preset.ts` | Helper for writing speaker preset changes through `/ajax/speakers/set_config?type=11`. Exported and tested, but not used by the current REST runtime path. |
-| `server/src/api/get-heos-player-id.ts` | Resolves the HEOS player identifier for the receiver. |
-| `server/src/api/heos-command.ts` | Executes HEOS CLI commands. |
-| `server/src/api/fetch-heos-quick-select-names.ts` | Pulls Quick Select names from HEOS when needed. |
-| `server/src/api/index.ts` | Re-export surface for backend API helpers. |
-| `server/src/api/types.ts` | Internal transport-layer types for aggregated HTTP status results. |
+| `server/src/api/index.ts` | Re-export surface for backend API namespaces and selected helpers. |
+| `server/src/api/http/index.ts` | HTTP transport namespace (axios-backed REST/XML helpers and fetchers). |
+| `server/src/api/http/client.ts` | Shared axios client and HTTP error normalization. |
+| `server/src/api/http/get.ts` | Raw HTTP GET helper for XML and web-control endpoints. |
+| `server/src/api/http/post-xml.ts` | HTTP POST helper for XML payloads. |
+| `server/src/api/http/fetch-main-zone-status.ts` | Fetches Main Zone XML status from the legacy `:8080` interface. |
+| `server/src/api/http/fetch-app-command-0300.ts` | Executes AppCommand0300 requests. |
+| `server/src/api/http/fetch-web-control-config.ts` | Reads newer web-control config endpoints from port `11080`. |
+| `server/src/api/http/fetch-speaker-preset.ts` | Reads the active speaker preset from `/ajax/speakers/get_config?type=11`. |
+| `server/src/api/http/set-speaker-preset.ts` | Writes speaker preset changes through `/ajax/speakers/set_config?type=11`. |
+| `server/src/api/heos/index.ts` | HEOS transport namespace (raw TCP command helpers). |
+| `server/src/api/heos/command.ts` | Executes HEOS CLI commands over TCP. |
+| `server/src/api/heos/get-player-id.ts` | Resolves the HEOS player identifier for the receiver. |
+| `server/src/api/heos/fetch-quick-select-names.ts` | Pulls Quick Select names from HEOS. |
+| `server/src/api/status/fetch-http-status.ts` | Aggregates full receiver status across HTTP and HEOS sources. |
+| `server/src/api/status/index.ts` | Status namespace barrel for aggregate status fetchers. |
 
 ### Backend Parsers
 

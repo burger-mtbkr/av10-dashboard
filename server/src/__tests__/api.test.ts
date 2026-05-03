@@ -3,7 +3,7 @@ import { tmpdir } from 'os';
 import { join } from 'path';
 import { describe, it, expect, vi, beforeAll, afterAll } from 'vitest';
 import request from 'supertest';
-import { EqProfilesStore } from '../eq/index.js';
+import { EqProfilesStore } from '../features/eq/index.js';
 import { createApp } from '../index.js';
 
 // Create a mock status object

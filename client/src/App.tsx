@@ -57,7 +57,7 @@ export default function App() {
     applyProfile,
   } = useEqProfiles(status.speakerPreset, status.graphicEq ?? null, status.lastUpdate);
 
-  /** Disabled UI when blocked in eq-profiles.json or AVR reports adjustments off (WebSocket). */
+  /** Disabled UI when blocked in server EQ profile storage or AVR reports adjustments off (WebSocket). */
   const eqAdjustmentsDisabled =
     !graphicEqAdjustmentsEnabled || status.graphicEq?.adjustmentsEnabled === false;
 

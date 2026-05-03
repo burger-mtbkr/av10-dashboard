@@ -1,9 +1,10 @@
 import { describe, it, expect } from 'vitest';
 import {
+  formatGraphicEqBandCommand,
   formatGraphicEqFrequencyHz,
   formatGraphicEqGainDb,
   parseGraphicEqTelnetLine,
-} from '../graphic-eq-protocol.js';
+} from '../lib/graphic-eq-protocol.js';
 
 describe('graphic-eq-protocol', () => {
   it('formats frequency as 5 digits', () => {
@@ -18,6 +19,11 @@ describe('graphic-eq-protocol', () => {
     expect(formatGraphicEqGainDb(-3)).toBe('-03.0');
     expect(formatGraphicEqGainDb(-20)).toBe('-20.0');
     expect(formatGraphicEqGainDb(-25)).toBe('-20.0');
+  });
+
+  it('formats compact band write commands', () => {
+    expect(formatGraphicEqBandCommand(63, 4)).toBe('PSGEQ00063+04.0');
+    expect(formatGraphicEqBandCommand(1000, -3.5)).toBe('PSGEQ01000-03.5');
   });
 
   it('parses telnet PSGEQ lines', () => {

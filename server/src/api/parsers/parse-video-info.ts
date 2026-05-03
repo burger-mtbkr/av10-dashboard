@@ -1,5 +1,5 @@
-import { PLACEHOLDER_VALUE } from '../../constants.js';
-import type { IVideoSignalInfo } from '../types.js';
+import { PLACEHOLDER_VALUE } from '../../core/constants.js';
+import type { IVideoSignalInfo } from '../../types/api.js';
 
 export const parseVideoInfo = (data: unknown): IVideoSignalInfo => {
   const result: IVideoSignalInfo = {

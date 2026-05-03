@@ -1,5 +1,5 @@
-import { PLACEHOLDER_VALUE } from '../../constants.js';
-import type { IAudioSignalInfo } from '../types.js';
+import { PLACEHOLDER_VALUE } from '../../core/constants.js';
+import type { IAudioSignalInfo } from '../../types/api.js';
 
 export const parseAudioInfo = (data: unknown): IAudioSignalInfo => {
   const result: IAudioSignalInfo = {

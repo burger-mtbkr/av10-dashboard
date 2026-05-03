@@ -1,4 +1,4 @@
-import { PLACEHOLDER_VALUE } from '../../constants.js';
+import { PLACEHOLDER_VALUE } from '../../core/constants.js';
 
 export const parseSoftwareVersion = (data: unknown): string => {
   const version = (data as { Information?: { Firmware?: { Version?: string } } })?.Information?.Firmware?.Version;

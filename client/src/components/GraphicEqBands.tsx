@@ -8,7 +8,7 @@ import {
   clampEqGainDb,
   eqDbToTopPercent,
   isEqSegmentLit,
-} from "../eqGainRange";
+} from "../features/eq";
 
 /** Same height as the bar column — scale ticks must match this. */
 const EQ_COLUMN_HEIGHT_PX = 136;

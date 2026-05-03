@@ -1,12 +1,16 @@
-export { fetchAppCommand0300 } from './fetch-app-command-0300.js';
-export { fetchHeosQuickSelectNames } from './fetch-heos-quick-select-names.js';
-export { fetchHttpStatus } from './fetch-http-status.js';
-export { fetchMainZoneStatus } from './fetch-main-zone-status.js';
-export { fetchSpeakerPreset } from './fetch-speaker-preset.js';
-export { fetchWebControlConfig } from './fetch-web-control-config.js';
-export { getHeosPlayerId } from './get-heos-player-id.js';
-export { heosCommand } from './heos-command.js';
-export { httpGet } from './http-get.js';
-export { receiverHttpClient, toHttpRequestError } from './http-client.js';
-export { httpPostXml } from './http-post-xml.js';
-export { setSpeakerPreset } from './set-speaker-preset.js';
+export * as httpApi from './http/index.js';
+export * as heosApi from './heos/index.js';
+export * as statusApi from './status/index.js';
+export { fetchHttpStatus } from './status/fetch-http-status.js';
+export { fetchHeosQuickSelectNames, getHeosPlayerId, heosCommand } from './heos/index.js';
+export {
+  fetchAppCommand0300,
+  fetchMainZoneStatus,
+  fetchSpeakerPreset,
+  fetchWebControlConfig,
+  httpGet,
+  httpPostXml,
+  receiverHttpClient,
+  setSpeakerPreset,
+  toHttpRequestError,
+} from './http/index.js';

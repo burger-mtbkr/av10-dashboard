@@ -6,9 +6,3 @@ export { setMuteRequest } from "./set-mute";
 export { setVolumeRequest } from "./set-volume";
 export { volumeDownRequest } from "./volume-down";
 export { volumeUpRequest } from "./volume-up";
-export {
-  applyEqProfileRequest,
-  getEqFromProcessorRequest,
-  getEqProfilesRequest,
-  saveEqProfileRequest,
-} from "./eq-profiles";

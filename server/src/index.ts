@@ -6,13 +6,13 @@ import { WebSocketServer, WebSocket } from 'ws';
 import { readFileSync } from 'fs';
 import { resolve } from 'path';
 import { pathToFileURL } from 'url';
-import { MarantzService } from './marantz-service.js';
-import type { IAVRStatus, IWSMessage } from './types.js';
-import { EqProfilesStore, parsePreset } from './eq/index.js';
-import type { IEqBand, IEqProfile, SpeakerPreset } from './eq/types.js';
+import { MarantzService } from './services/marantz.service.js';
+import type { IAVRStatus, IWSMessage } from './types/core.js';
+import { EqProfilesStore, parsePreset } from './features/eq/index.js';
+import type { IEqBand, IEqProfile, SpeakerPreset } from './types/eq.js';
 
 type MarantzApi = Pick<MarantzService, 'getStatus' | 'setVolume' | 'setInput' | 'setSmartSelect' | 'setSpeakerPreset' | 'sendCommand'> & {
-  applyEqProfile?: (preset: SpeakerPreset, profile: IEqProfile) => Promise<{ sent: number; profileId: string }>;
+  applyEqProfile?: (preset: SpeakerPreset, profile: IEqProfile) => Promise<{ sent: number; profileId: string; bands?: IEqBand[]; verifiedBands?: number }>;
   readGraphicEqBands?: (preset: SpeakerPreset, frequenciesHz: number[]) => Promise<IEqBand[]>;
 };
 type MarantzRealtimeApi = Pick<MarantzService, 'getStatus' | 'on' | 'refreshStatus'>;
