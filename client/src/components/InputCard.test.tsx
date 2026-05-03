@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from "vitest";
 import { screen, fireEvent } from "@testing-library/react";
-import { InputCard } from "./InputCard";
+import InputCard from "./InputCard";
 import { renderWithProviders } from "../test/test-utils";
 
 const defaultPresets = [

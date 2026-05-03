@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { screen } from "@testing-library/react";
-import { SubwooferCard } from "./SubwooferCard";
+import SubwooferCard from "./SubwooferCard";
 import { renderWithProviders } from "../test/test-utils";
 
 describe("SubwooferCard", () => {

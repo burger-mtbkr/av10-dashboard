@@ -15,7 +15,7 @@
     "test": "npm run test:server && npm run test:client",
     "test:server": "cd server && npm test",
     "test:client": "cd client && npm test",
-    "test:e2e": "npx playwright test",
+    "test:e2e": "npx playwright test e2e",
     "test:coverage": "npm run test:server -- --coverage && npm run test:client -- --coverage",
     "install:all": "npm install && cd server && npm install && cd ../client && npm install"
   },

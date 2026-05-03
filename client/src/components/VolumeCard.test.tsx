@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from "vitest";
 import { screen, fireEvent } from "@testing-library/react";
-import { VolumeCard } from "./VolumeCard";
+import VolumeCard from "./VolumeCard";
 import { renderWithProviders } from "../test/test-utils";
 
 const defaultProps = {

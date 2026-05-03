@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from "vitest";
 import { fireEvent, screen } from "@testing-library/react";
-import { SpeakerPresetCard } from "./SpeakerPresetCard";
+import SpeakerPresetCard from "./SpeakerPresetCard";
 import { renderWithProviders, createMockSpeakers } from "../test/test-utils";
 
 describe("SpeakerPresetCard", () => {
