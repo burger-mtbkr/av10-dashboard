@@ -1,9 +1,9 @@
 import { EventEmitter } from 'events';
 import type { AxiosResponse } from 'axios';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { receiverHttpClient } from '../api/http-client.js';
+import { receiverHttpClient } from '../api/http/client.js';
 
-vi.mock('../api/http-client.js', () => ({
+vi.mock('../api/http/client.js', () => ({
   receiverHttpClient: {
     get: vi.fn(),
     post: vi.fn(),
@@ -316,7 +316,7 @@ describe('setSpeakerPreset', () => {
       config: {} as any,
     } as AxiosResponse<string>);
 
-    const { setSpeakerPreset } = await import('../api/set-speaker-preset.js');
+    const { setSpeakerPreset } = await import('../api/http/set-speaker-preset.js');
     await setSpeakerPreset('192.168.1.170', 2);
 
     expect(receiverHttpClient.get).toHaveBeenCalledWith(

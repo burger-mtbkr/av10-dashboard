@@ -12,6 +12,7 @@ import { useTranslation } from "react-i18next";
 import theme from "./theme";
 import {
   AudioCard,
+  EqProfilesCard,
   InputCard,
   SpeakerPresetCard,
   SubwooferCard,
@@ -19,9 +20,9 @@ import {
   VideoCard,
   VolumeCard,
 } from "./components";
-import { useAVRStatus } from "./hooks";
+import { useAVRStatus, useEqProfiles } from "./hooks";
 import FiberManualRecordIcon from "@mui/icons-material/FiberManualRecord";
-import { PLACEHOLDER_VALUE } from "./constants";
+import { PLACEHOLDER_VALUE } from "./types";
 
 export default function App() {
   const { t } = useTranslation();
@@ -37,6 +38,29 @@ export default function App() {
     selectSmartPreset,
     selectSpeakerPreset,
   } = useAVRStatus();
+  const {
+    presetForEq,
+    graphicEqAdjustmentsEnabled,
+    profiles,
+    selectionId,
+    selectedProfile,
+    draftBands,
+    isLoading: eqLoading,
+    isSaving: eqSaving,
+    isApplying: eqApplying,
+    hasUnsavedChanges,
+    error: eqError,
+    statusMessage: eqStatusMessage,
+    selectProfile,
+    setBandGain,
+    saveProfile,
+    applyProfile,
+  } = useEqProfiles(status.speakerPreset, status.graphicEq ?? null, status.lastUpdate);
+
+  /** Disabled UI when blocked in server EQ profile storage or AVR reports adjustments off (WebSocket). */
+  const eqAdjustmentsDisabled =
+    !graphicEqAdjustmentsEnabled || status.graphicEq?.adjustmentsEnabled === false;
+
   const dashboardTitle =
     status.processorModel && status.processorModel !== PLACEHOLDER_VALUE
       ? `${status.processorModel} Status`
@@ -170,6 +194,28 @@ export default function App() {
                 surroundMode={status.surroundMode}
                 video={status.video}
                 onSelectPreset={selectSmartPreset}
+              />
+            </Grid>
+
+            {/* EQ profiles — full width above speaker layout on desktop */}
+            <Grid size={{ xs: 12 }}>
+              <EqProfilesCard
+                preset={presetForEq}
+                eqAdjustmentsDisabled={eqAdjustmentsDisabled}
+                profiles={profiles}
+                selectionId={selectionId}
+                selectedProfile={selectedProfile}
+                draftBands={draftBands}
+                isLoading={eqLoading}
+                isSaving={eqSaving}
+                isApplying={eqApplying}
+                hasUnsavedChanges={hasUnsavedChanges}
+                error={eqError}
+                statusMessage={eqStatusMessage}
+                onSelectProfile={selectProfile}
+                onBandChange={setBandGain}
+                onSave={saveProfile}
+                onApply={applyProfile}
               />
             </Grid>
 

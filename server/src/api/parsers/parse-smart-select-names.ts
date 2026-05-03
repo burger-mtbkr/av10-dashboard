@@ -1,5 +1,5 @@
-import { SMART_SELECT_DEFAULTS, SMART_SELECT_SLOTS } from '../../constants.js';
-import type { ISmartSelectPreset } from '../../types.js';
+import { SMART_SELECT_DEFAULTS, SMART_SELECT_SLOTS } from '../../core/constants.js';
+import type { ISmartSelectPreset } from '../../types/core.js';
 
 export const parseSmartSelectNames = (data: unknown): ISmartSelectPreset[] => {
   const presets: ISmartSelectPreset[] = SMART_SELECT_SLOTS.map((slot) => ({

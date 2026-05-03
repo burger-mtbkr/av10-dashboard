@@ -2,8 +2,7 @@ import { Card, CardContent, Typography, Box, Chip } from "@mui/material";
 import { useTranslation } from "react-i18next";
 import AudiotrackIcon from "@mui/icons-material/Audiotrack";
 import SurroundSoundIcon from "@mui/icons-material/SurroundSound";
-import { PLACEHOLDER_VALUE } from "../constants";
-import type { IAudioInfo } from "../types";
+import { PLACEHOLDER_VALUE, type IAudioInfo } from "../types";
 
 interface IAudioCardProps {
   audio: IAudioInfo;

@@ -1,8 +1,8 @@
-export { apiClient } from "./client";
-export { selectSmartPresetRequest } from "./select-smart-preset";
-export { selectSpeakerPresetRequest } from "./select-speaker-preset";
-export { setInputRequest } from "./set-input";
-export { setMuteRequest } from "./set-mute";
-export { setVolumeRequest } from "./set-volume";
-export { volumeDownRequest } from "./volume-down";
-export { volumeUpRequest } from "./volume-up";
+export { apiClient } from "./http/client";
+export { selectSmartPresetRequest } from "./http/select-smart-preset";
+export { selectSpeakerPresetRequest } from "./http/select-speaker-preset";
+export { setInputRequest } from "./http/set-input";
+export { setMuteRequest } from "./http/set-mute";
+export { setVolumeRequest } from "./http/set-volume";
+export { volumeDownRequest } from "./http/volume-down";
+export { volumeUpRequest } from "./http/volume-up";

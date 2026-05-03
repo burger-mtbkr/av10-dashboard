@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { MarantzService } from '../marantz-service.js';
+import { MarantzService } from '../services/marantz.service.js';
 
 // Mock net module to avoid real TCP connections
 vi.mock('net', () => {

@@ -58,7 +58,7 @@ vi.mock('ws', () => ({
   WebSocket: { OPEN: 1 },
 }));
 
-vi.mock('../marantz-service.js', () => ({
+vi.mock('../services/marantz.service.js', () => ({
   MarantzService: MockMarantzService,
 }));
 

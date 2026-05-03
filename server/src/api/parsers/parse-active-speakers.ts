@@ -1,5 +1,5 @@
-import { CHANNEL_MAP } from '../../constants.js';
-import type { ISpeakerStatus } from '../../types.js';
+import { CHANNEL_MAP } from '../../core/constants.js';
+import type { ISpeakerStatus } from '../../types/core.js';
 
 export const parseActiveSpeakers = (data: unknown): ISpeakerStatus[] => {
   const speakers: ISpeakerStatus[] = [];

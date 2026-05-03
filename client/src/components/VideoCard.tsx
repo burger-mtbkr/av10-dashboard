@@ -3,8 +3,7 @@ import { useTranslation } from "react-i18next";
 import VideocamIcon from "@mui/icons-material/Videocam";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 import HdrOnIcon from "@mui/icons-material/HdrOn";
-import { PLACEHOLDER_VALUE } from "../constants";
-import type { IVideoInfo } from "../types";
+import { PLACEHOLDER_VALUE, type IVideoInfo } from "../types";
 
 interface IVideoCardProps {
   video: IVideoInfo;

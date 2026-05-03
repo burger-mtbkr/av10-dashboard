@@ -1,4 +1,5 @@
 export { default as AudioCard } from "./AudioCard";
+export { default as EqProfilesCard } from "./EqProfilesCard";
 export { default as InputCard } from "./InputCard";
 export { default as SpeakerPresetCard } from "./SpeakerPresetCard";
 export { default as SubwooferCard } from "./SubwooferCard";

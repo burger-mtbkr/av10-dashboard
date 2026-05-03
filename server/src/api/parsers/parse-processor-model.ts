@@ -1,4 +1,4 @@
-import { PLACEHOLDER_VALUE } from '../../constants.js';
+import { PLACEHOLDER_VALUE } from '../../core/constants.js';
 
 const BRAND_NAME_MAP: Record<string, string> = {
   '1': 'Denon',

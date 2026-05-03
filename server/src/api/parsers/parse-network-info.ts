@@ -1,5 +1,5 @@
-import { PLACEHOLDER_VALUE } from '../../constants.js';
-import type { INetworkInfo } from '../types.js';
+import { PLACEHOLDER_VALUE } from '../../core/constants.js';
+import type { INetworkInfo } from '../../types/api.js';
 
 const NETWORK_CONNECTION_MAP: Record<string, string> = {
   '3': 'Ethernet',

@@ -1,5 +1,6 @@
 import { defineConfig, devices } from '@playwright/test';
 
+/** Playwright E2E specs live under `./e2e` (see `npm run test:e2e`). Unit tests are colocated in `client/src`. */
 export default defineConfig({
   testDir: './e2e',
   fullyParallel: true,
