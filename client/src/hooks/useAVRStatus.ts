@@ -8,8 +8,7 @@ import {
   volumeDownRequest,
   volumeUpRequest,
 } from '../api';
-import { PLACEHOLDER_VALUE } from '../constants';
-import type { IAVRStatus, IWSMessage } from '../types';
+import { PLACEHOLDER_VALUE, type IAVRStatus, type IWSMessage } from '../types';
 
 type OptimisticStatus = Partial<
   Pick<

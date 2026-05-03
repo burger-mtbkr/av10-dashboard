@@ -76,6 +76,9 @@ web_modules/
 .env.*
 !.env.example
 
+# Obsolete — canonical file is server/data/eq-profiles.json (see EqProfilesStore)
+/eq-profiles.json
+
 # parcel-bundler cache (https://parceljs.org/)
 .cache
 .parcel-cache

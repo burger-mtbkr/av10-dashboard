@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from "vitest";
 import { fireEvent, screen } from "@testing-library/react";
-import { SpeakerPresetCard } from "../../components";
-import { renderWithProviders, createMockSpeakers } from "../test-utils";
+import { SpeakerPresetCard } from "./SpeakerPresetCard";
+import { renderWithProviders, createMockSpeakers } from "../test/test-utils";
 
 describe("SpeakerPresetCard", () => {
   it("should render the title and both preset buttons", () => {

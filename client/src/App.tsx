@@ -22,7 +22,7 @@ import {
 } from "./components";
 import { useAVRStatus, useEqProfiles } from "./hooks";
 import FiberManualRecordIcon from "@mui/icons-material/FiberManualRecord";
-import { PLACEHOLDER_VALUE } from "./constants";
+import { PLACEHOLDER_VALUE } from "./types";
 
 export default function App() {
   const { t } = useTranslation();

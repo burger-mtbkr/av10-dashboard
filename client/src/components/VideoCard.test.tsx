@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { screen } from "@testing-library/react";
-import { VideoCard } from "../../components";
-import { renderWithProviders } from "../test-utils";
+import { VideoCard } from "./VideoCard";
+import { renderWithProviders } from "../test/test-utils";
 
 describe("VideoCard", () => {
   it("should render the title", () => {
@@ -62,7 +62,6 @@ describe("VideoCard", () => {
         }}
       />,
     );
-    // HDR badge should not be present (only the resolution chips and HDMI)
     expect(screen.queryByText("---")).not.toBeInTheDocument();
   });
 

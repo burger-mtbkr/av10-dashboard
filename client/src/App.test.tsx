@@ -1,9 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
 import { screen } from "@testing-library/react";
-import App from "../App";
-import { createMockStatus, renderWithProviders } from "./test-utils";
+import App from "./App";
+import { createMockStatus, renderWithProviders } from "./test/test-utils";
 
-vi.mock("../hooks", () => ({
+vi.mock("./hooks", () => ({
   EQ_PROFILE_ADD_NEW_ID: "__eq_add_new__",
   useAVRStatus: () => ({
     status: createMockStatus(),

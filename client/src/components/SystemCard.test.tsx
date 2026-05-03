@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { screen } from "@testing-library/react";
-import { SystemCard } from "../../components";
-import { renderWithProviders } from "../test-utils";
+import { SystemCard } from "./SystemCard";
+import { renderWithProviders } from "../test/test-utils";
 
 describe("SystemCard", () => {
   it("should render the title", () => {
@@ -97,7 +97,6 @@ describe("SystemCard", () => {
     renderWithProviders(
       <SystemCard power="ON" lastUpdate="" connected={true} />,
     );
-    // The formatTime function returns '---' for empty strings
     expect(screen.getAllByText("---").length).toBeGreaterThan(0);
   });
 
@@ -113,7 +112,6 @@ describe("SystemCard", () => {
         connected={true}
       />,
     );
-    // Should display a time string (exact format depends on locale)
     const labels = [
       "Power",
       "Model",

@@ -1,10 +1,10 @@
 import { act, renderHook } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { apiClient } from "../../api/client";
-import { useAVRStatus } from "../../hooks";
-import { createMockStatus } from "../test-utils";
+import { apiClient } from "../api/http/client";
+import { useAVRStatus } from "./useAVRStatus";
+import { createMockStatus } from "../test/test-utils";
 
-vi.mock("../../api/client", () => ({
+vi.mock("../api/http/client", () => ({
   apiClient: {
     post: vi.fn(),
   },

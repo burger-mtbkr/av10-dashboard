@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from "vitest";
 import { screen, fireEvent } from "@testing-library/react";
-import { VolumeCard } from "../../components";
-import { renderWithProviders } from "../test-utils";
+import { VolumeCard } from "./VolumeCard";
+import { renderWithProviders } from "../test/test-utils";
 
 const defaultProps = {
   volume: 45,
@@ -27,7 +27,6 @@ describe("VolumeCard", () => {
 
   it("should display percentage label", () => {
     renderWithProviders(<VolumeCard {...defaultProps} />);
-    // Percentage based on 45/75 = 60%
     expect(screen.getByText(/60%/)).toBeInTheDocument();
   });
 
@@ -46,10 +45,8 @@ describe("VolumeCard", () => {
     renderWithProviders(
       <VolumeCard {...defaultProps} onVolumeUp={onVolumeUp} />,
     );
-    // Find the volume up button (there are multiple, pick the icon button group)
     const buttons = screen.getAllByRole("button");
-    // The volume down is first, volume up second, mute third
-    fireEvent.click(buttons[1]); // Volume up
+    fireEvent.click(buttons[1]);
     expect(onVolumeUp).toHaveBeenCalledTimes(1);
   });
 
@@ -59,7 +56,7 @@ describe("VolumeCard", () => {
       <VolumeCard {...defaultProps} onVolumeDown={onVolumeDown} />,
     );
     const buttons = screen.getAllByRole("button");
-    fireEvent.click(buttons[0]); // Volume down
+    fireEvent.click(buttons[0]);
     expect(onVolumeDown).toHaveBeenCalledTimes(1);
   });
 
@@ -69,7 +66,7 @@ describe("VolumeCard", () => {
       <VolumeCard {...defaultProps} onToggleMute={onToggleMute} />,
     );
     const buttons = screen.getAllByRole("button");
-    fireEvent.click(buttons[2]); // Mute toggle
+    fireEvent.click(buttons[2]);
     expect(onToggleMute).toHaveBeenCalledTimes(1);
   });
 
@@ -90,9 +87,7 @@ describe("VolumeCard", () => {
   });
 
   it("should display different volumes correctly", () => {
-    const { rerender } = renderWithProviders(
-      <VolumeCard {...defaultProps} volume={0} />,
-    );
+    renderWithProviders(<VolumeCard {...defaultProps} volume={0} />);
     expect(screen.getAllByText("0").length).toBeGreaterThanOrEqual(1);
   });
 });

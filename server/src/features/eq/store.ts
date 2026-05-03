@@ -1,28 +1,75 @@
-import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from 'fs';
+import {
+  copyFileSync,
+  existsSync,
+  mkdirSync,
+  readFileSync,
+  renameSync,
+  unlinkSync,
+  writeFileSync,
+} from 'fs';
 import { dirname, resolve } from 'path';
 import { fileURLToPath } from 'url';
 import type { IEqBand, IEqProfile, IEqProfilesStoreData, SpeakerPreset } from '../../types/eq.js';
 import { clampGainDb, ensureUniqueName, sanitizeProfileName, validateBands, validateStoreData } from './validators.js';
 
-/** Resolve the EQ profiles store path, defaulting to `server/data/eq-profiles.json`. */
+/** Single canonical store: `server/data/eq-profiles.json` (override with `EQ_PROFILES_JSON_PATH`). */
+function canonicalEqProfilesPath(): string {
+  const moduleDir = dirname(fileURLToPath(import.meta.url));
+  return resolve(moduleDir, '../../../data/eq-profiles.json');
+}
+
+const LEGACY_EQ_FILENAMES = ['eq-profiles.json'] as const;
+
+function legacyEqProfileCandidates(): string[] {
+  const cwd = process.cwd();
+  const out: string[] = [];
+  for (const name of LEGACY_EQ_FILENAMES) {
+    out.push(resolve(cwd, name));
+    out.push(resolve(cwd, '..', name));
+  }
+  return out;
+}
+
+/** Resolve the EQ profiles JSON path. Legacy repo-root copies are migrated or removed so only one file remains. */
 export function discoverEqProfilesJsonPath(): string {
   const env = process.env.EQ_PROFILES_JSON_PATH?.trim();
   if (env) {
     return resolve(env);
   }
 
-  // Works in both tsx (`src/features/eq`) and built output (`dist/features/eq`).
-  const moduleDir = dirname(fileURLToPath(import.meta.url));
-  const canonicalPath = resolve(moduleDir, '../../../data/eq-profiles.json');
+  const canonicalPath = canonicalEqProfilesPath();
+  const legacyPaths = legacyEqProfileCandidates().filter(
+    (p) => existsSync(p) && resolve(p) !== resolve(canonicalPath),
+  );
+
   if (existsSync(canonicalPath)) {
+    for (const legacy of legacyPaths) {
+      try {
+        unlinkSync(legacy);
+      } catch {
+        /* ignore — best-effort cleanup of obsolete duplicate */
+      }
+    }
     return canonicalPath;
   }
 
-  // Backward-compat fallback for older local setups.
-  const legacyInCwd = resolve(process.cwd(), 'eq-profiles.json');
-  const legacyInParent = resolve(process.cwd(), '..', 'eq-profiles.json');
-  if (existsSync(legacyInCwd)) return legacyInCwd;
-  if (existsSync(legacyInParent)) return legacyInParent;
+  // Migrate first legacy file found into the canonical location (older setups used repo root).
+  mkdirSync(dirname(canonicalPath), { recursive: true });
+  const donor = legacyPaths[0];
+  if (donor) {
+    try {
+      renameSync(donor, canonicalPath);
+    } catch {
+      copyFileSync(donor, canonicalPath);
+      try {
+        unlinkSync(donor);
+      } catch {
+        /* ignore */
+      }
+    }
+    return canonicalPath;
+  }
+
   return canonicalPath;
 }
 

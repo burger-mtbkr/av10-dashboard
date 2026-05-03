@@ -1,4 +1,4 @@
-import { apiClient } from "../../api/client";
+import { apiClient } from "../../api";
 import type { IEqBand, IEqProfile, IEqProfilesResponse } from "../../types";
 
 export interface IEqProcessorBandsResponse {

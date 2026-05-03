@@ -1,8 +1,8 @@
-import '@testing-library/jest-dom/vitest';
-import { vi } from 'vitest';
-import { apiClient } from '../api/client';
+import "@testing-library/jest-dom/vitest";
+import { vi } from "vitest";
+import { apiClient } from "../api/http/client";
 
-vi.mock('../api/client', () => ({
+vi.mock("../api/http/client", () => ({
   apiClient: {
     post: vi.fn(),
   },
@@ -24,10 +24,9 @@ class MockWebSocket {
 
   constructor(url: string) {
     this.url = url;
-    // Simulate connection in next tick
     setTimeout(() => {
       if (this.onopen) {
-        this.onopen(new Event('open'));
+        this.onopen(new Event("open"));
       }
     }, 0);
   }
@@ -38,8 +37,7 @@ class MockWebSocket {
   }
 }
 
-// Assign to global
-Object.defineProperty(globalThis, 'WebSocket', {
+Object.defineProperty(globalThis, "WebSocket", {
   value: MockWebSocket,
   writable: true,
 });
@@ -47,7 +45,7 @@ Object.defineProperty(globalThis, 'WebSocket', {
 vi.mocked(apiClient.post).mockResolvedValue({
   status: 200,
   data: { success: true },
-  statusText: 'OK',
+  statusText: "OK",
   headers: {},
   config: {} as any,
 } as any);

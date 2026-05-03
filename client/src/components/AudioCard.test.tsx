@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { screen } from "@testing-library/react";
-import { AudioCard } from "../../components";
-import { renderWithProviders } from "../test-utils";
+import { AudioCard } from "./AudioCard";
+import { renderWithProviders } from "../test/test-utils";
 
 describe("AudioCard", () => {
   const defaultAudio = {
@@ -34,8 +34,8 @@ describe("AudioCard", () => {
     );
     expect(screen.getByText("Dolby TrueHD")).toBeInTheDocument();
     expect(screen.getByText("48kHz")).toBeInTheDocument();
-    expect(screen.getByText("ON")).toBeInTheDocument(); // Dynamic EQ
-    expect(screen.getByText("OFF")).toBeInTheDocument(); // Dynamic Volume
+    expect(screen.getByText("ON")).toBeInTheDocument();
+    expect(screen.getByText("OFF")).toBeInTheDocument();
     expect(screen.getByText("AUDYSSEY")).toBeInTheDocument();
   });
 

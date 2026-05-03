@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { screen } from "@testing-library/react";
-import { SubwooferCard } from "../../components";
-import { renderWithProviders } from "../test-utils";
+import { SubwooferCard } from "./SubwooferCard";
+import { renderWithProviders } from "../test/test-utils";
 
 describe("SubwooferCard", () => {
   it("should render the title", () => {

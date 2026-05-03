@@ -3,7 +3,7 @@ export interface ISpeakerStatus {
   code: string;
   name: string;
   active: boolean;
-  group: 'ear' | 'height' | 'sub' | 'wide' | 'back';
+  group: "ear" | "height" | "sub" | "wide" | "back";
 }
 
 export interface IVideoInfo {
@@ -51,7 +51,7 @@ export interface IGraphicEqStatus {
 }
 
 export interface IAVRStatus {
-  power: 'ON' | 'OFF' | 'STANDBY';
+  power: "ON" | "OFF" | "STANDBY";
   processorModel: string;
   softwareVersion: string;
   volume: number;
@@ -78,7 +78,7 @@ export interface IAVRStatus {
 }
 
 export interface IWSMessage {
-  type: 'status' | 'event' | 'error' | 'connected' | 'disconnected';
+  type: "status" | "event" | "error" | "connected" | "disconnected";
   data: IAVRStatus | unknown;
 }
 
@@ -110,3 +110,5 @@ export type InputSource = IInputSource;
 export type SmartSelectPreset = ISmartSelectPreset;
 export type AVRStatus = IAVRStatus;
 export type WSMessage = IWSMessage;
+
+export { PLACEHOLDER_VALUE } from "./constants";

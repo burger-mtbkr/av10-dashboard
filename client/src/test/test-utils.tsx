@@ -86,7 +86,6 @@ export const createMockStatus = (
 /** Create mock speakers for a 7.2.4 setup */
 export const createMockSpeakers = (): ISpeakerStatus[] => {
   return [
-    // Ear level (7)
     { code: "FL", name: "Front Left", active: true, group: "ear" },
     { code: "FR", name: "Front Right", active: true, group: "ear" },
     { code: "C", name: "Center", active: true, group: "ear" },
@@ -94,10 +93,8 @@ export const createMockSpeakers = (): ISpeakerStatus[] => {
     { code: "SR", name: "Surround Right", active: true, group: "ear" },
     { code: "SBL", name: "Surround Back Left", active: true, group: "back" },
     { code: "SBR", name: "Surround Back Right", active: true, group: "back" },
-    // Subs (2)
     { code: "SW", name: "Subwoofer", active: true, group: "sub" },
     { code: "SW2", name: "Subwoofer 2", active: true, group: "sub" },
-    // Height (4)
     { code: "TFL", name: "Top Front Left", active: true, group: "height" },
     { code: "TFR", name: "Top Front Right", active: true, group: "height" },
     { code: "TRL", name: "Top Rear Left", active: true, group: "height" },

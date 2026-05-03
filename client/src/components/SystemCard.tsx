@@ -8,7 +8,7 @@ import SettingsSuggestIcon from "@mui/icons-material/SettingsSuggest";
 import WifiIcon from "@mui/icons-material/Wifi";
 import SettingsEthernetIcon from "@mui/icons-material/SettingsEthernet";
 import DnsIcon from "@mui/icons-material/Dns";
-import { PLACEHOLDER_VALUE } from "../constants";
+import { PLACEHOLDER_VALUE } from "../types";
 
 interface ISystemCardProps {
   power: "ON" | "OFF" | "STANDBY";

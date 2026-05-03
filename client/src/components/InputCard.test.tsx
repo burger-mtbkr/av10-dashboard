@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from "vitest";
 import { screen, fireEvent } from "@testing-library/react";
-import { InputCard } from "../../components";
-import { renderWithProviders } from "../test-utils";
+import { InputCard } from "./InputCard";
+import { renderWithProviders } from "../test/test-utils";
 
 const defaultPresets = [
   { number: 1, name: "Apple TV", active: true },
@@ -71,7 +71,6 @@ describe("InputCard", () => {
   it("should show metadata panel when a preset is active", () => {
     renderWithProviders(<InputCard {...defaultProps} />);
     expect(screen.getByText("Active Preset")).toBeInTheDocument();
-    // Active preset name appears in both the button and the metadata panel
     expect(screen.getAllByText("Apple TV").length).toBeGreaterThanOrEqual(2);
   });
 

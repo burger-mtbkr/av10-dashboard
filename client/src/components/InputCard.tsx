@@ -1,12 +1,12 @@
 import { Card, CardContent, Typography, Box, ButtonBase } from "@mui/material";
 import { useTranslation } from "react-i18next";
 import TouchAppIcon from "@mui/icons-material/TouchApp";
-import { PLACEHOLDER_VALUE } from "../constants";
-import type {
-  IAudioInfo,
-  IInputSource,
-  ISmartSelectPreset,
-  IVideoInfo,
+import {
+  PLACEHOLDER_VALUE,
+  type IAudioInfo,
+  type IInputSource,
+  type ISmartSelectPreset,
+  type IVideoInfo,
 } from "../types";
 
 interface IInputCardProps {
