@@ -1,4 +1,4 @@
 {
     "zenMode.silentNotifications": false,
-    "extensions.ignoreRecommendations": false
+    "extensions.ignoreRecommendations": true
 }
