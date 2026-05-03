@@ -1,14 +1,20 @@
-name: Tests
+name: Unit tests
 
 on:
   push:
-    branches: [main]
+    branches: [main, master]
   pull_request:
-    branches: [main]
+    branches: [main, master]
+  workflow_dispatch:
+
+concurrency:
+  group: unit-tests-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 
 jobs:
-  test:
+  unit:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
 
     steps:
       - uses: actions/checkout@v4
@@ -25,14 +31,14 @@ jobs:
       - name: Install dependencies
         run: npm run install:all
 
-      - name: Run server tests
+      - name: Server unit tests
         run: npm run test:server
 
-      - name: Run client tests
+      - name: Client unit tests
         run: npm run test:client
 
-      - name: Install Playwright browsers
-        run: npx playwright install --with-deps
+      - name: Build server (TypeScript)
+        run: cd server && npm run build
 
-      - name: Run e2e tests
-        run: npm run test:e2e
+      - name: Build client
+        run: cd client && npm run build

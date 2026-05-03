@@ -20,7 +20,7 @@ av10-dashboard/
 
 | Path | Purpose |
 | --- | --- |
-| `.gitignore` | Root ignore rules for dependencies, build output, env files, and test artifacts. |
+| `.gitignore` | Root ignore rules for dependencies, build output, env files, test artifacts, and obsolete root `eq-profiles.json` (canonical store is under `server/data/`). |
 | `.npmrc` | Pins installs to the public npm registry. |
 | `package.json` | Root scripts for `start`, `dev`, `test`, `test:coverage`, `test:e2e`, `build`, and `install:all`. |
 | `playwright.config.ts` | Playwright config. Starts `npm run dev` as the web server and runs Chromium plus mobile projects. |
@@ -58,28 +58,28 @@ The frontend is a React 19 single-page app built with Vite and MUI. It renders t
 
 | Path | Purpose |
 | --- | --- |
-| `client/src/App.tsx` | Top-level dashboard composition. Renders header chips plus Volume, Smart Select, Speaker Preset, Subwoofer, Audio, Video, and System cards. |
+| `client/src/App.tsx` | Top-level dashboard composition (allowed at `src/` root alongside `main.tsx`). Renders header chips plus Volume, Smart Select, EQ Profiles, Speaker Preset, Subwoofer, Audio, Video, and System cards. |
 | `client/src/main.tsx` | React bootstrap entry point. |
-| `client/src/theme.ts` | Shared MUI theme configuration. |
-| `client/src/constants.ts` | Shared frontend constants such as placeholder values. |
-| `client/src/types.ts` | Frontend type definitions that mirror the backend status model. |
+| `client/src/theme/index.ts` | Shared MUI theme configuration (default export). |
+| `client/src/types/index.ts` | Frontend interfaces/types mirroring the backend status model (barrel). |
+| `client/src/types/constants.ts` | Shared UI constants (e.g. `PLACEHOLDER_VALUE`); re-exported from `types/index.ts`. |
 
 ### Frontend API Helpers
 
-Generic AVR control actions live under `client/src/api/`. EQ-specific client logic is grouped under `client/src/features/eq/`.
+Only `client/src/api/index.ts` sits at the API folder root (barrel). HTTP helpers live under `client/src/api/http/`. EQ-specific client calls live under `client/src/features/eq/`.
 
 | Path | Purpose |
 | --- | --- |
-| `client/src/api/client.ts` | Shared axios instance for browser API calls. |
-| `client/src/api/request.ts` | Small helpers for POST and JSON POST requests. |
-| `client/src/api/index.ts` | Re-export surface for the action helpers. |
-| `client/src/api/set-volume.ts` | Set absolute volume. |
-| `client/src/api/volume-up.ts` | Send volume-up command. |
-| `client/src/api/volume-down.ts` | Send volume-down command. |
-| `client/src/api/set-input.ts` | Change the input source. |
-| `client/src/api/set-mute.ts` | Toggle mute state. |
-| `client/src/api/select-smart-preset.ts` | Recall a Smart Select preset. |
-| `client/src/api/select-speaker-preset.ts` | Switch speaker preset 1 or 2. |
+| `client/src/api/index.ts` | Public exports: `apiClient`, volume/input/mute helpers, Smart Select / speaker preset actions. |
+| `client/src/api/http/client.ts` | Shared axios instance for browser API calls. |
+| `client/src/api/http/request.ts` | POST / JSON POST helpers built on `apiClient`. |
+| `client/src/api/http/set-volume.ts` | Set absolute volume. |
+| `client/src/api/http/volume-up.ts` | Volume-up command. |
+| `client/src/api/http/volume-down.ts` | Volume-down command. |
+| `client/src/api/http/set-input.ts` | Change input source. |
+| `client/src/api/http/set-mute.ts` | Toggle mute. |
+| `client/src/api/http/select-smart-preset.ts` | Recall a Smart Select preset. |
+| `client/src/api/http/select-speaker-preset.ts` | Switch speaker preset 1 or 2. |
 
 ### Frontend Hooks
 
@@ -108,7 +108,11 @@ Generic AVR control actions live under `client/src/api/`. EQ-specific client log
 | `client/src/components/AudioCard.tsx` | Current sound mode and audio-processing details. |
 | `client/src/components/VideoCard.tsx` | Signal resolution, HDR, and HDMI output view. |
 | `client/src/components/SystemCard.tsx` | Power, model, firmware, network, IP, last update, and connection status. |
-| `client/src/components/index.ts` | Re-export surface for the dashboard cards. |
+| `client/src/components/EqProfilesCard.tsx` | EQ profile picker, save/apply/sync, uses feature hook and graphic EQ UI. |
+| `client/src/components/GraphicEqBands.tsx` | Graphic EQ band sliders / visualization. |
+| `client/src/components/index.ts` | Re-export surface for dashboard cards. |
+
+Colocated unit tests: each `*.tsx` card may have a matching `*.test.tsx` in the same folder.
 
 ### Frontend i18n
 
@@ -146,6 +150,15 @@ The backend is an Express 5 and WebSocket service that keeps a single AVR status
 | `server/src/types/api.ts` | API transport-layer request/response support types. |
 | `server/src/types/eq.ts` | EQ domain types (bands, profiles, preset store model). |
 | `server/src/lib/graphic-eq-protocol.ts` | Graphic EQ telnet formatter/parser entrypoint used by services and tests. |
+
+### Backend EQ Feature
+
+| Path | Purpose |
+| --- | --- |
+| `server/src/features/eq/index.ts` | Barrel: store, validators, preset helpers. |
+| `server/src/features/eq/store.ts` | `EqProfilesStore`: read/write `eq-profiles.json`, list/save profiles per speaker preset. |
+| `server/src/features/eq/validators.ts` | Band and store validation; gain clamping. |
+| `server/data/eq-profiles.json` | Default on-disk EQ profiles database (override path with `EQ_PROFILES_JSON_PATH`). |
 
 ### Backend API Transport Layer
 
@@ -188,37 +201,39 @@ The backend is an Express 5 and WebSocket service that keeps a single AVR status
 
 ## End-To-End Tests
 
+All Playwright specs live under `e2e/` (`playwright.config.ts` sets `testDir: './e2e'`). Root script: `npm run test:e2e` → `npx playwright test e2e`.
+
 | Path | Purpose |
 | --- | --- |
-| `e2e/dashboard.spec.ts` | Playwright coverage for page load, header rendering, connection chips, major cards, responsive layout, and API smoke checks. |
+| `e2e/dashboard.spec.ts` | Page load, header, connection chips, card titles, dark theme, mobile viewport, API health smoke checks. |
 
 ## Unit Tests
 
 ### Backend Tests
 
+Vitest discovers `server/src/**/*.test.ts` (currently under `server/src/__tests__/`).
+
 | Path | Purpose |
 | --- | --- |
-| `server/src/__tests__/api.test.ts` | Validates REST routes, input validation, and error responses. |
-| `server/src/__tests__/constants.test.ts` | Covers volume conversion helpers and protocol lookup tables. |
-| `server/src/__tests__/http-client.test.ts` | Covers aggregated HTTP status fetch behavior and response parsing. |
-| `server/src/__tests__/index.test.ts` | Covers runtime helpers, WebSocket broadcast wiring, config loading, and shutdown registration. |
-| `server/src/__tests__/marantz-service.test.ts` | Covers telnet parsing, HTTP merge behavior, speaker-layout logic, reconnection, and command dispatch. |
+| `server/src/__tests__/api.test.ts` | REST routes, validation, error responses. |
+| `server/src/__tests__/constants.test.ts` | Volume conversion helpers and protocol lookup tables. |
+| `server/src/__tests__/graphic-eq-protocol.test.ts` | Graphic EQ telnet parse/format helpers. |
+| `server/src/__tests__/http-client.test.ts` | HTTP status aggregation and parsing. |
+| `server/src/__tests__/index.test.ts` | Express bootstrap, WebSocket wiring, config, shutdown. |
+| `server/src/__tests__/marantz-service.test.ts` | Telnet parsing, HTTP merge, speaker layout, reconnect, commands. |
 
 ### Frontend Tests
 
+Vitest discovers `client/src/**/*.test.{ts,tsx}`. Tests are **colocated** with source (no `__tests__` tree). Shared setup lives under `client/src/test/`.
+
 | Path | Purpose |
 | --- | --- |
-| `client/src/__tests__/setup.ts` | jsdom and matcher setup. |
-| `client/src/__tests__/test-utils.tsx` | Shared render helpers and mock status builders. |
-| `client/src/__tests__/App.test.tsx` | Verifies dashboard card ordering. |
-| `client/src/__tests__/hooks/useAVRStatus.test.tsx` | Covers WebSocket handling, optimistic state, timeout rollback, and API helper calls. |
-| `client/src/__tests__/components/AudioCard.test.tsx` | Covers audio card rendering. |
-| `client/src/__tests__/components/InputCard.test.tsx` | Covers Smart Select rendering and active metadata. |
-| `client/src/__tests__/components/SpeakerPresetCard.test.tsx` | Covers preset switching UI and speaker-layout rendering. |
-| `client/src/__tests__/components/SubwooferCard.test.tsx` | Covers subwoofer level display and progress bars. |
-| `client/src/__tests__/components/SystemCard.test.tsx` | Covers power, network, IP, and timestamp presentation. |
-| `client/src/__tests__/components/VideoCard.test.tsx` | Covers signal and HDR presentation. |
-| `client/src/__tests__/components/VolumeCard.test.tsx` | Covers volume rendering, controls, thresholds, and callbacks. |
+| `client/src/test/setup.ts` | Vitest setup: `jest-dom`, axios/WebSocket mocks (loaded via `client/vitest.config.ts` `setupFiles`). |
+| `client/src/test/test-utils.tsx` | `renderWithProviders`, `createMockStatus`, `createMockSpeakers`. |
+| `client/src/App.test.tsx` | Dashboard card ordering with hooks mocked. |
+| `client/src/hooks/useAVRStatus.test.tsx` | WebSocket flow, optimistic updates, REST helpers. |
+| `client/src/components/*.test.tsx` | Per-card UI tests next to each component module. |
+| `client/src/features/eq/gain-range.test.ts` | EQ gain-range math. |
 
 ## Generated And Support Artifacts
 

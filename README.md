@@ -33,6 +33,7 @@ The frontend keeps optimistic UI state for volume, mute, input, Smart Select, an
 - Volume control with slider, step controls, mute toggle, and optimistic updates on the absolute `0-98` scale
 - Smart Select recall with friendly preset names and live metadata for source, format, sampling rate, and video input
 - Speaker preset switching with live layout visualization and stale-layout protection during preset transitions
+- Saved EQ profiles per speaker preset with graphic EQ bands, apply/sync to processor, and server-backed profile storage (`server/data/eq-profiles.json`)
 - Video signal card with input/output resolution, input signal type, HDR format, and HDMI output target
 - Audio signal card with surround mode, input format, sampling rate, Dynamic EQ, Dynamic Volume, MultEQ, and dialog enhancer
 - Subwoofer status card for `1-4` subs with per-sub level display
@@ -89,11 +90,11 @@ Then open `http://localhost:5173`.
 | `npm run dev` | Start backend and frontend together |
 | `npm run dev:server` | Start only the backend |
 | `npm run dev:client` | Start only the frontend |
-| `npm run build` | Build the frontend production bundle |
-| `npm start` | Start the compiled backend from `server/dist` |
-| `npm test` | Run server and client unit tests |
+| `npm run build` | Build the frontend production bundle (`client/`) |
+| `npm start` | Same as `npm run start:all`: runs `server` production start and the Vite client dev server together |
+| `npm test` | Run server then client unit tests (Vitest) |
 | `npm run test:coverage` | Run server and client tests with coverage |
-| `npm run test:e2e` | Run Playwright end-to-end tests |
+| `npm run test:e2e` | Playwright: runs specs under `e2e/` only (`npx playwright test e2e`) |
 | `npm run install:all` | Install root, server, and client dependencies |
 
 ## Project Layout
@@ -101,14 +102,17 @@ Then open `http://localhost:5173`.
 ```text
 av10-dashboard/
 ├── architecture/          # PlantUML sources and generated SVG diagrams
-├── client/                # React frontend
-├── e2e/                   # Playwright end-to-end tests
-├── server/                # Express + WebSocket backend and Marantz transport
-├── README.md              # High-level setup and architecture guide
-├── STRUCTURE.md           # Detailed file responsibility reference
-├── settings.json          # Non-secret application settings and placeholders
-└── sample-data.json       # Sample AVR status payload
+├── client/                # React frontend (Vite; unit tests colocated in src/)
+├── e2e/                   # Playwright E2E specs only (`*.spec.ts`)
+├── server/                # Express + WebSocket backend; EQ data in server/data/
+├── playwright.config.ts   # Playwright: testDir ./e2e, webServer via npm run dev
+├── README.md
+├── STRUCTURE.md           # Detailed file map (keep in sync with refactors)
+├── settings.json
+└── sample-data.json
 ```
+
+The canonical EQ profiles file on disk is `server/data/eq-profiles.json`. A legacy root-level `eq-profiles.json` is ignored via `.gitignore` and should not be committed.
 
 See `STRUCTURE.md` for the detailed source, config, and test file map.
 
@@ -142,26 +146,19 @@ Backend connectivity is controlled by `server/.env`, not by the `avr` block in `
 
 ## Testing
 
-Latest local verification from this repository state:
+| Suite | Where | Command |
+| --- | --- | --- |
+| Server unit tests | `server/src/**/*.test.ts` (Vitest) | `npm run test:server` |
+| Client unit tests | Colocated `*.test.ts(x)` next to source under `client/src/` | `npm run test:client` |
+| End-to-end tests | `e2e/*.spec.ts` (Playwright); config `playwright.config.ts`, `testDir: ./e2e` | `npm run test:e2e` |
 
-| Suite | Result |
-| --- | --- |
-| Server unit tests | `133/133` passed |
-| Client unit tests | `70/70` passed |
-| Playwright E2E | `17` passed, `1` skipped |
+Run everything: `npm run test`. Full-stack E2E listing: `npx playwright test e2e --list`.
 
-Latest local coverage artifacts:
-
-| Package | Statements | Branches | Functions | Lines |
-| --- | --- | --- | --- | --- |
-| `server` | `78.45%` | `67.46%` | `81.74%` | `78.54%` |
-| `client` | `92.98%` | `79.83%` | `94.80%` | `93.96%` |
-
-If you need fresh JSON coverage summaries, regenerate them inside each package:
+Coverage thresholds and included file globs are defined per package in `server/vitest.config.ts` and `client/vitest.config.ts`. Regenerate LCOV or JSON summaries from each package:
 
 ```bash
-cd server && npx vitest run --coverage --coverage.reporter=json-summary --coverage.reporter=text
-cd client && npx vitest run --coverage --coverage.reporter=json-summary --coverage.reporter=text
+cd server && npm run test:coverage
+cd client && npm run test:coverage
 ```
 
 ## Receiver Protocols And Endpoints
