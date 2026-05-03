@@ -2,29 +2,6 @@
 
 A real-time dashboard for the Marantz AV10 built with React, Vite, MUI, and a Node.js backend.
 
-## Architecture
-
-```text
-┌────────────────────────────────────────────────────────────────────┐
-│ Browser                                                          │
-│ React 19 + MUI 6 + i18next                                       │
-│ App.tsx -> useAVRStatus -> dashboard cards                       │
-│  ↕ WebSocket /ws (live status stream)                            │
-│  ↕ REST /api/* (control actions)                                 │
-├────────────────────────────────────────────────────────────────────┤
-│ Node.js Backend :3001                                            │
-│ Express 5 + ws                                                   │
-│ createApp() + createRealtimeServer() + MarantzService            │
-│  ↕ Telnet TCP :23            for live events + commands          │
-│  ↕ HTTP/XML :8080             for Main Zone + AppCommand0300     │
-│  ↕ Web Control :11080        for model, firmware, network,       │
-│                              and speaker preset reads            │
-│  ↕ HEOS CLI :1255            for Quick Select names fallback     │
-├────────────────────────────────────────────────────────────────────┤
-│ Marantz AV10                                                     │
-└────────────────────────────────────────────────────────────────────┘
-```
-
 The frontend keeps optimistic UI state for volume, mute, input, Smart Select, and speaker preset changes. The backend maintains a single in-memory `IAVRStatus` snapshot, updates it from telnet events, enriches it with HTTP and web-control polling, and broadcasts changes over WebSocket.
 
 ## Features
